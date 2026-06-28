@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
   component: Onboarding,
 });
 
-type Step = 0 | 1 | 2 | 3 | 4;
+type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 function Onboarding() {
   const navigate = useNavigate();
@@ -96,7 +96,7 @@ function Onboarding() {
           <button onClick={() => setStep((s) => (s - 1) as Step)} className="text-muted-foreground"><ArrowLeft className="w-5 h-5" /></button>
         ) : <div className="w-5" />}
         <div className="flex gap-1.5">
-          {[0,1,2,3,4].map((i) => (
+          {[0,1,2,3,4,5].map((i) => (
             <div key={i} className={`h-1.5 rounded-full transition-all ${i === step ? "w-6 bg-primary" : i < step ? "w-3 bg-primary/50" : "w-3 bg-border"}`} />
           ))}
         </div>
