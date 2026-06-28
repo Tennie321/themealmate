@@ -175,11 +175,21 @@ ${catalogForPrompt
         prompt: userPrompt,
         experimental_output: Output.object({ schema: PlanSchema }),
       });
-      parsed = result.experimental_output ?? result.output;
-      if (!parsed) {
-        // Fallback: try to parse text as JSON
-        parsed = JSON.parse(result.text);
+      const candidate =
+        result?.experimental_output ??
+        result?.output ??
+        (() => {
+          const text: string = result?.text ?? "";
+          // Strip ```json fences and extract first {...} block
+          const cleaned = text.replace(/```json|```/gi, "").trim();
+          const match = cleaned.match(/\{[\s\S]*\}/);
+          const jsonStr = match ? match[0] : cleaned;
+          try { return JSON.parse(jsonStr); } catch { return null; }
+        })();
+      if (!candidate || !Array.isArray(candidate.items)) {
+        throw new Error("Model did not return any meal items.");
       }
+      parsed = candidate;
     } catch (e: any) {
       throw new Error(`Plan generation failed: ${e?.message ?? "unknown error"}`);
     }
