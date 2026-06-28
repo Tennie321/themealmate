@@ -17,6 +17,7 @@ import { getReminderSettings, markBriefingShown } from "@/lib/reminders.function
 import { useMealReminders, requestNotificationPermission } from "@/hooks/useMealReminders";
 import { MorningBriefing } from "@/components/MorningBriefing";
 import { FoodImage } from "@/components/FoodImage";
+import { StoreLogo } from "@/components/StoreLogo";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
