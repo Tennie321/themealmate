@@ -92,7 +92,7 @@ function Dashboard() {
 
       <section className="mt-6 bg-card border border-border rounded-3xl p-5">
         <div className="flex justify-around items-center">
-          <MacroRing value={totals.cal} target={goals?.calorie_target ?? 0} label="kcal" unit="" color="primary" />
+          <MacroRing value={totals.cal} target={goals?.calorie_target ?? 0} label="cal" unit="" color="primary" />
           <MacroRing value={totals.pro} target={goals?.protein_target ?? 0} label="protein" unit="g" color="accent" />
         </div>
         <div className="mt-4 flex items-center justify-between text-sm">
@@ -153,7 +153,7 @@ function Dashboard() {
                       <div className="flex-1 min-w-0">
                         <div className="font-medium leading-tight">{it.catalog_items?.name}</div>
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          {it.catalog_items?.brand ? `${it.catalog_items.brand} · ` : ""}{Math.round((it.catalog_items?.calories ?? 0) * Number(it.servings ?? 1))} kcal · {Math.round(Number(it.catalog_items?.protein_g ?? 0) * Number(it.servings ?? 1))}g protein {Number(it.servings) !== 1 ? `· ×${it.servings}` : ""}
+                          {it.catalog_items?.brand ? `${it.catalog_items.brand} · ` : ""}{Math.round((it.catalog_items?.calories ?? 0) * Number(it.servings ?? 1))} cal · {Math.round(Number(it.catalog_items?.protein_g ?? 0) * Number(it.servings ?? 1))}g protein {Number(it.servings) !== 1 ? `· ×${it.servings}` : ""}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5">{fmt(Number(it.catalog_items?.price_cents ?? 0) * Number(it.servings ?? 1))}</div>
                       </div>
@@ -233,10 +233,10 @@ function SwapSheet({ target, onClose }: { target: any; onClose: () => void }) {
             >
               <div className="font-medium">{alt.name}</div>
               <div className="text-xs text-muted-foreground mt-0.5">
-                {alt.brand ?? ""} · {alt.calories} kcal · {alt.protein_g}g protein · {fmt(alt.price_cents)}
+                {alt.brand ?? ""} · {alt.calories} cal · {alt.protein_g}g protein · {fmt(alt.price_cents)}
               </div>
               <div className="text-[11px] text-muted-foreground mt-1">
-                {alt.deltaCal >= 0 ? `+${alt.deltaCal}` : alt.deltaCal} kcal · {alt.deltaProtein >= 0 ? `+${alt.deltaProtein}` : alt.deltaProtein}g protein
+                {alt.deltaCal >= 0 ? `+${alt.deltaCal}` : alt.deltaCal} cal · {alt.deltaProtein >= 0 ? `+${alt.deltaProtein}` : alt.deltaProtein}g protein
               </div>
             </button>
           ))}

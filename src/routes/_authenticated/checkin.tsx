@@ -60,12 +60,12 @@ function CheckinPage() {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <div className="text-xs text-muted-foreground">You said</div>
-                <div className="font-bold text-lg">{goals?.calorie_target} kcal</div>
+                <div className="font-bold text-lg">{goals?.calorie_target} cal</div>
                 <div className="text-xs text-muted-foreground">{goals?.protein_target}g protein</div>
               </div>
               <div>
                 <div className="text-xs text-muted-foreground">Plan said</div>
-                <div className="font-bold text-lg">{plan.total_calories} kcal</div>
+                <div className="font-bold text-lg">{plan.total_calories} cal</div>
                 <div className="text-xs text-muted-foreground">{Math.round(plan.total_protein)}g protein</div>
               </div>
             </div>
@@ -112,7 +112,7 @@ function CheckinPage() {
               <div key={h.plan_date} className="px-4 py-3 flex items-center justify-between text-sm">
                 <div>
                   <div className="font-medium">{new Date(h.plan_date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</div>
-                  <div className="text-xs text-muted-foreground">{h.calories_actual}/{h.calories_target} kcal · {h.protein_actual}/{h.protein_target}g</div>
+                  <div className="text-xs text-muted-foreground">{h.calories_actual}/{h.calories_target} cal · {h.protein_actual}/{h.protein_target}g</div>
                 </div>
                 <div className={`text-sm font-bold ${h.adherence_pct >= 90 ? "text-primary" : h.adherence_pct >= 70 ? "text-foreground" : "text-destructive"}`}>{h.adherence_pct}%</div>
               </div>

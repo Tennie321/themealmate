@@ -27,9 +27,9 @@ function ProfilePage() {
 
       <div className="bg-card border border-border rounded-3xl p-5 space-y-3">
         <Row label="Goal" value={goals?.goal_type ?? "—"} />
-        <Row label="Calorie target" value={goals?.calorie_target ? `${goals.calorie_target} kcal` : "—"} />
+        <Row label="Calorie target" value={goals?.calorie_target ? `${goals.calorie_target} cal` : "—"} />
         <Row label="Protein target" value={goals?.protein_target ? `${goals.protein_target} g` : "—"} />
-        <Row label="TDEE" value={goals?.tdee ? `${goals.tdee} kcal` : "—"} />
+        <Row label="TDEE" value={goals?.tdee ? `${goals.tdee} cal` : "—"} />
         <Row label="Daily budget" value={goals?.daily_budget_cents != null ? `$${(goals.daily_budget_cents / 100).toFixed(2)}` : "—"} />
       </div>
 

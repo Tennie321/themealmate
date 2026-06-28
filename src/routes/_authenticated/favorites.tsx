@@ -39,7 +39,7 @@ function FavoritesPage() {
           <div key={it.id} className="bg-card border border-border rounded-2xl p-4 flex items-start gap-3">
             <div className="flex-1 min-w-0">
               <div className="font-medium">{it.name}</div>
-              <div className="text-xs text-muted-foreground">{it.brand ?? ""} · {it.calories} kcal · {it.protein_g}g protein · {fmt(it.price_cents)}</div>
+              <div className="text-xs text-muted-foreground">{it.brand ?? ""} · {it.calories} cal · {it.protein_g}g protein · {fmt(it.price_cents)}</div>
             </div>
             <button onClick={() => remove.mutate(it.id)} className="text-destructive">
               <Heart className="w-5 h-5 fill-current" />

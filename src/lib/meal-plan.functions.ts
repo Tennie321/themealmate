@@ -446,8 +446,8 @@ export const submitCheckin = createServerFn({ method: "POST" })
           model: gateway("google/gemini-3-flash-preview"),
           system:
             "You are MealMate, an encouraging accountability coach. Write ONE short paragraph (2-3 sentences) about the user's day. Be specific with numbers, warm but honest. No lists.",
-          prompt: `Target: ${goals.calorie_target} kcal / ${goals.protein_target}g protein.
-Actual: ${data.caloriesActual} kcal / ${data.proteinActual}g protein.
+          prompt: `Target: ${goals.calorie_target} cal / ${goals.protein_target}g protein.
+Actual: ${data.caloriesActual} cal / ${data.proteinActual}g protein.
 Adherence: ${adherence}%.
 User notes: ${data.notes || "(none)"}`,
         });
