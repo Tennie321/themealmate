@@ -88,10 +88,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "An AI meal planner that tells you exactly what to eat from your grocery store to hit your calorie and protein goals." },
       { name: "theme-color", content: "#16a34a" },
       { property: "og:title", content: "MealMate — Eat this, get there." },
-      { property: "og:description", content: "AI meal plans from real grocery store items — hit your macros with zero guessing." },
+      { property: "og:description", content: "An AI meal planner that tells you exactly what to eat from your grocery store to hit your calorie and protein goals." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "MealMate — Eat this, get there." },
+      { name: "twitter:description", content: "An AI meal planner that tells you exactly what to eat from your grocery store to hit your calorie and protein goals." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8db0b154-f214-443f-a079-d9f477c9e1d2/id-preview-c21bd46e--e5083802-363b-4e08-b0f4-d7d06d7f7082.lovable.app-1782679674115.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8db0b154-f214-443f-a079-d9f477c9e1d2/id-preview-c21bd46e--e5083802-363b-4e08-b0f4-d7d06d7f7082.lovable.app-1782679674115.png" },
     ],
     links: [
       {
