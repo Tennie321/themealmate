@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Coffee, Sun, Moon, Cookie, Droplets, Share2 } from "lucide-react";
+import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Sun, Moon, Cookie, Droplets, Share2, Store as StoreIcon, Check } from "lucide-react";
+import { saveStore } from "@/lib/data.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getReminderSettings, markBriefingShown } from "@/lib/reminders.functions";
@@ -40,6 +41,7 @@ function Dashboard() {
   const [swapTarget, setSwapTarget] = useState<any>(null);
   const reminders = useQuery({ queryKey: ["reminders"], queryFn: () => getReminderSettings() });
   const [briefingOpen, setBriefingOpen] = useState(false);
+  const [storePickerOpen, setStorePickerOpen] = useState(false);
 
   useEffect(() => {
     if (onb.data && !onb.data.onboarded) navigate({ to: "/onboarding" });
@@ -60,13 +62,25 @@ function Dashboard() {
   }, [reminders.data?.enabled]);
 
   const generate = useMutation({
-    mutationFn: () => generatePlan({ data: { regenerate: true } } as any),
+    mutationFn: (vars?: { storeId?: string }) =>
+      generatePlan({ data: { regenerate: true, storeId: vars?.storeId } } as any),
     onSuccess: () => {
       toast.success("Plan ready");
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["shopping"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Couldn't build plan"),
+  });
+
+  const pickStore = useMutation({
+    mutationFn: async (storeId: string) => {
+      await saveStore({ data: { store_id: storeId } } as any);
+    },
+    onSuccess: () => {
+      setStorePickerOpen(false);
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["shopping"] });
+    },
   });
 
   const fav = useMutation({
@@ -104,6 +118,8 @@ function Dashboard() {
   const goals: any = dash.data?.goals;
   const plan: any = dash.data?.plan;
   const items: any[] = plan?.plan_items ?? [];
+  const currentStore: any = dash.data?.currentStore;
+  const stores: any[] = dash.data?.stores ?? [];
 
   const totals = items.reduce(
     (acc, it) => {
@@ -157,6 +173,22 @@ function Dashboard() {
         </button>
       </header>
 
+      <button
+        onClick={() => setStorePickerOpen(true)}
+        className="mt-4 w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-card border border-border"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-secondary grid place-items-center text-primary shrink-0">
+            <StoreIcon className="w-4 h-4" />
+          </div>
+          <div className="text-left min-w-0">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Shopping at</div>
+            <div className="font-semibold truncate">{currentStore?.name ?? "Pick a store"}</div>
+          </div>
+        </div>
+        <span className="text-xs text-primary font-semibold">Change</span>
+      </button>
+
       <section className="mt-6 bg-card border border-border rounded-3xl p-5">
         <div className="flex justify-around items-center">
           <MacroRing value={eaten.cal} target={calTarget} label="eaten" unit="" color="primary" />
@@ -197,9 +229,9 @@ function Dashboard() {
         <div className="mt-6 bg-hero-gradient rounded-3xl p-6 text-white">
           <Sparkles className="w-6 h-6 mb-2" />
           <h2 className="text-xl font-bold">No plan yet for today</h2>
-          <p className="text-white/85 text-sm mt-1">We'll pick real packaged items from your store that hit your macros and budget.</p>
+          <p className="text-white/85 text-sm mt-1">We'll pick real packaged items from {currentStore?.name ?? "your store"} that hit your macros and budget.</p>
           <Button
-            onClick={() => generate.mutate()}
+            onClick={() => generate.mutate(undefined)}
             disabled={generate.isPending}
             className="mt-4 bg-white text-primary hover:bg-white/90 rounded-2xl w-full h-12 font-semibold"
           >
@@ -213,7 +245,7 @@ function Dashboard() {
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-lg">Your meals</h2>
             <button
-              onClick={() => generate.mutate()}
+              onClick={() => generate.mutate(undefined)}
               disabled={generate.isPending}
               className="text-xs text-muted-foreground flex items-center gap-1"
             >
@@ -282,6 +314,34 @@ function Dashboard() {
       )}
 
       <SwapSheet target={swapTarget} onClose={() => setSwapTarget(null)} />
+
+      <Sheet open={storePickerOpen} onOpenChange={setStorePickerOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[80vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Where are you shopping today?</SheetTitle>
+          </SheetHeader>
+          <p className="text-xs text-muted-foreground mt-1">Pick a store and we'll rebuild today's plan with what's in stock there.</p>
+          <div className="mt-4 space-y-2 pb-4">
+            {stores.map((s) => {
+              const active = currentStore?.id === s.id;
+              return (
+                <button
+                  key={s.id}
+                  disabled={pickStore.isPending || generate.isPending}
+                  onClick={async () => {
+                    await pickStore.mutateAsync(s.id);
+                    generate.mutate({ storeId: s.id });
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border ${active ? "border-primary bg-secondary" : "border-border"}`}
+                >
+                  <span className="font-medium text-left">{s.name}</span>
+                  {active && <Check className="w-4 h-4 text-primary" />}
+                </button>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <MorningBriefing
         open={briefingOpen}
