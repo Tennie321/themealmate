@@ -364,6 +364,11 @@ ${catalogForPrompt
     if (items.length < 5) items = buildReliablePlan(ranked.length >= 5 ? ranked : allowed, goals).filter((i) => byId.has(i.catalog_item_id));
     if (items.length === 0) throw new Error("No valid store items available for a meal plan.");
 
+    // Enforce single-serving when the user requires it: clamp every item to exactly 1 serving.
+    if (singleOnly) {
+      items = items.map((i) => ({ ...i, servings: 1 }));
+    }
+
     let totalCal = 0;
     let totalProtein = 0;
     let totalCost = 0;
