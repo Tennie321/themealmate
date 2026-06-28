@@ -152,7 +152,13 @@ RULES:
 - Servings are decimal (e.g. 1, 1.5, 2). Adjust servings to hit macros precisely.
 - Return positions as 0..N per meal_slot for stable ordering.
 
-Return JSON matching the schema. Do NOT invent ids — only use ids from catalog.`;
+Return ONLY a JSON object with this EXACT shape — no prose, no markdown fences, no extra fields:
+{
+  "items": [
+    { "catalog_item_id": "<id from catalog>", "meal_slot": "breakfast|lunch|dinner|snack|drink", "servings": 1.5, "position": 0 }
+  ]
+}
+Do NOT nest items under "meals". Do NOT include name/calories/protein. Do NOT invent ids — only use ids from catalog.`;
 
     const userPrompt = `Goal: ${goals.goal_type}
 Calorie target: ${goals.calorie_target} cal
@@ -177,20 +183,45 @@ ${catalogForPrompt
         prompt: userPrompt,
         experimental_output: Output.object({ schema: PlanSchema }),
       });
-      const candidate =
+      const extractJson = (raw: string): any => {
+        // Strip any markdown fence variants (```json, ``` , ` ` `json with stray spaces)
+        const cleaned = raw.replace(/`+\s*json/gi, "").replace(/`+/g, "").trim();
+        const match = cleaned.match(/\{[\s\S]*\}/);
+        try { return JSON.parse(match ? match[0] : cleaned); } catch { return null; }
+      };
+      let candidate: any =
         result?.experimental_output ??
         result?.output ??
-        (() => {
-          const text: string = result?.text ?? "";
-          // Strip ```json fences and extract first {...} block
-          const cleaned = text.replace(/```json|```/gi, "").trim();
-          const match = cleaned.match(/\{[\s\S]*\}/);
-          const jsonStr = match ? match[0] : cleaned;
-          try { return JSON.parse(jsonStr); } catch { return null; }
-        })();
-      if (!candidate || !Array.isArray(candidate.items)) {
+        extractJson(result?.text ?? "");
+      // Normalize: support nested {meals:[{meal_slot, items:[{id,...}]}]} shape too
+      if (candidate && !Array.isArray(candidate.items) && Array.isArray(candidate.meals)) {
+        const flat: any[] = [];
+        for (const m of candidate.meals) {
+          const slot = m.meal_slot ?? m.slot;
+          const its = Array.isArray(m.items) ? m.items : [];
+          its.forEach((it: any, idx: number) => {
+            flat.push({
+              catalog_item_id: it.catalog_item_id ?? it.id,
+              meal_slot: slot,
+              servings: Number(it.servings ?? 1),
+              position: Number(it.position ?? idx),
+            });
+          });
+        }
+        candidate = { items: flat };
+      }
+      if (!candidate || !Array.isArray(candidate.items) || candidate.items.length === 0) {
         throw new Error("Model did not return any meal items.");
       }
+      // Coerce id field if model used "id"
+      candidate.items = candidate.items
+        .map((it: any) => ({
+          catalog_item_id: it.catalog_item_id ?? it.id,
+          meal_slot: it.meal_slot ?? it.slot,
+          servings: Number(it.servings ?? 1),
+          position: Number(it.position ?? 0),
+        }))
+        .filter((it: any) => it.catalog_item_id && it.meal_slot);
       parsed = candidate;
     } catch (e: any) {
       throw new Error(`Plan generation failed: ${e?.message ?? "unknown error"}`);
