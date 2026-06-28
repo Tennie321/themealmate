@@ -12,6 +12,9 @@ import { Progress } from "@/components/ui/progress";
 import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Coffee, Sun, Moon, Cookie, Droplets, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getReminderSettings, markBriefingShown } from "@/lib/reminders.functions";
+import { useMealReminders, requestNotificationPermission } from "@/hooks/useMealReminders";
+import { MorningBriefing } from "@/components/MorningBriefing";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -35,10 +38,26 @@ function Dashboard() {
   const onb = useQuery({ queryKey: ["onb"], queryFn: () => getOnboardingStatus() });
   const dash = useQuery({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
   const [swapTarget, setSwapTarget] = useState<any>(null);
+  const reminders = useQuery({ queryKey: ["reminders"], queryFn: () => getReminderSettings() });
+  const [briefingOpen, setBriefingOpen] = useState(false);
 
   useEffect(() => {
     if (onb.data && !onb.data.onboarded) navigate({ to: "/onboarding" });
   }, [onb.data, navigate]);
+
+  // Show morning briefing once per day when plan is loaded
+  useEffect(() => {
+    if (!dash.data || !reminders.data) return;
+    if (reminders.data.briefingShownToday) return;
+    setBriefingOpen(true);
+  }, [dash.data, reminders.data]);
+
+  // Ask for notification permission once when reminders are enabled
+  useEffect(() => {
+    if (reminders.data?.enabled) {
+      requestNotificationPermission();
+    }
+  }, [reminders.data?.enabled]);
 
   const generate = useMutation({
     mutationFn: () => generatePlan({ data: { regenerate: true } } as any),
@@ -116,6 +135,12 @@ function Dashboard() {
   const calPct = calTarget > 0 ? Math.min(100, (eaten.cal / calTarget) * 100) : 0;
 
   const sections = ["breakfast", "lunch", "dinner", "snack", "drink"] as const;
+
+  useMealReminders({
+    enabled: !!reminders.data?.enabled && !!plan,
+    items,
+    times: reminders.data?.times ?? {},
+  });
 
   return (
     <div className="max-w-md mx-auto px-5 pt-8">
@@ -257,6 +282,21 @@ function Dashboard() {
       )}
 
       <SwapSheet target={swapTarget} onClose={() => setSwapTarget(null)} />
+
+      <MorningBriefing
+        open={briefingOpen}
+        onClose={async () => {
+          setBriefingOpen(false);
+          try { await markBriefingShown(); } catch { /* ignore */ }
+          qc.invalidateQueries({ queryKey: ["reminders"] });
+        }}
+        items={items}
+        calTarget={calTarget}
+        proTarget={proTarget}
+        budgetCents={goals?.daily_budget_cents ?? 0}
+        spentCents={totals.cost}
+        times={reminders.data?.times ?? {}}
+      />
     </div>
   );
 }

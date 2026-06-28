@@ -381,21 +381,30 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          last_briefing_date: string | null
           onboarded: boolean
+          reminder_times: Json
+          reminders_enabled: boolean
           updated_at: string
         }
         Insert: {
           created_at?: string
           display_name?: string | null
           id: string
+          last_briefing_date?: string | null
           onboarded?: boolean
+          reminder_times?: Json
+          reminders_enabled?: boolean
           updated_at?: string
         }
         Update: {
           created_at?: string
           display_name?: string | null
           id?: string
+          last_briefing_date?: string | null
           onboarded?: boolean
+          reminder_times?: Json
+          reminders_enabled?: boolean
           updated_at?: string
         }
         Relationships: []
