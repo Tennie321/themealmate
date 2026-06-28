@@ -17,6 +17,7 @@ import {
   savePreferences,
   getStores,
 } from "@/lib/data.functions";
+import { TasteQuestions } from "@/components/TasteQuestions";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: Onboarding,
