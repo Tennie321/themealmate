@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { calcTDEE, goalAdjustments } from "@/lib/tdee";
+import { calcTDEE, goalAdjustments, type Activity } from "@/lib/tdee";
 import { ArrowLeft, Loader2, Check } from "lucide-react";
 import {
   saveGoal,
@@ -34,7 +34,7 @@ function Onboarding() {
   const [age, setAge] = useState(28);
   const [heightCm, setHeightCm] = useState(178);
   const [weightKg, setWeightKg] = useState(80);
-  const [activity, setActivity] = useState("moderate");
+  const [activity, setActivity] = useState<Activity>("moderate");
   const [calOverride, setCalOverride] = useState<number | null>(null);
   const [proOverride, setProOverride] = useState<number | null>(null);
   const [storeId, setStoreId] = useState<string>("");
@@ -45,10 +45,10 @@ function Onboarding() {
 
   const stores = useQuery({ queryKey: ["stores"], queryFn: () => getStores() });
 
-  const tdee = calcTDEE({ sex, age, heightCm, weightKg, activity });
-  const adj = goalAdjustments(tdee, goal, weightKg);
-  const calorieTarget = calOverride ?? adj.calories;
-  const proteinTarget = proOverride ?? adj.protein;
+  const tdee = calcTDEE({ sex, age, height_cm: heightCm, weight_kg: weightKg, activity });
+  const adj = goalAdjustments(goal, tdee, weightKg);
+  const calorieTarget = calOverride ?? adj.calorie_target;
+  const proteinTarget = proOverride ?? adj.protein_target;
 
   const saveGoalM = useMutation({ mutationFn: (v: any) => saveGoal({ data: v } as any) });
   const saveBioM = useMutation({ mutationFn: (v: any) => saveBiometrics({ data: v } as any) });
@@ -156,7 +156,7 @@ function Onboarding() {
                     { id: "moderate", label: "Moderate" },
                     { id: "very", label: "Very active" },
                   ].map((a) => (
-                    <button key={a.id} onClick={() => setActivity(a.id)} className={`py-2.5 rounded-xl border-2 text-sm ${activity === a.id ? "border-primary bg-secondary" : "border-border"}`}>{a.label}</button>
+                    <button key={a.id} onClick={() => setActivity(a.id as Activity)} className={`py-2.5 rounded-xl border-2 text-sm ${activity === a.id ? "border-primary bg-secondary" : "border-border"}`}>{a.label}</button>
                   ))}
                 </div>
               </div>
