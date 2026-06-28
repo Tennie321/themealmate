@@ -22,6 +22,15 @@ type Catalog = {
   in_stock: boolean;
 };
 
+type MealSlot = "breakfast" | "lunch" | "dinner" | "snack" | "drink";
+
+type GeneratedPlanItem = {
+  catalog_item_id: string;
+  meal_slot: MealSlot;
+  servings: number;
+  position: number;
+};
+
 const PlanSchema = z.object({
   items: z
     .array(
@@ -39,6 +48,121 @@ const PlanSchema = z.object({
 function todayLocal(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function textForItem(item: Catalog): string {
+  return [item.name, item.brand, item.category, item.aisle, item.serving_label, ...(item.tags ?? []), ...(item.diet_tags ?? [])]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function hasAny(text: string, words: string[]) {
+  return words.some((word) => text.includes(word));
+}
+
+function pickBest(
+  catalog: Catalog[],
+  used: Set<string>,
+  predicate: (item: Catalog, text: string) => boolean,
+  score: (item: Catalog, text: string) => number,
+  allowRepeat = false,
+) {
+  return catalog
+    .filter((item) => (allowRepeat || !used.has(item.id)) && predicate(item, textForItem(item)))
+    .sort((a, b) => score(b, textForItem(b)) - score(a, textForItem(a)))[0];
+}
+
+function buildReliablePlan(catalog: Catalog[], goals: any): GeneratedPlanItem[] {
+  const targetCalories = Number(goals?.calorie_target ?? 2000);
+  const targetProtein = Number(goals?.protein_target ?? 150);
+  const budgetCents = Number(goals?.daily_budget_cents ?? 2000);
+  const used = new Set<string>();
+  const plan: GeneratedPlanItem[] = [];
+
+  const add = (item: Catalog | undefined, meal_slot: MealSlot, servings = 1) => {
+    if (!item) return;
+    const safeServings = Math.max(0.25, Math.min(5, Math.round(servings * 4) / 4));
+    plan.push({ catalog_item_id: item.id, meal_slot, servings: safeServings, position: plan.filter((p) => p.meal_slot === meal_slot).length });
+    if (meal_slot !== "drink") used.add(item.id);
+  };
+
+  const scoreLeanProtein = (item: Catalog, text: string) =>
+    Number(item.protein_g) * 8 - Math.max(0, Number(item.calories) - 350) * 0.15 - Number(item.price_cents) / Math.max(1, budgetCents) + (hasAny(text, ["chicken", "turkey", "tuna", "salmon", "egg", "tofu", "shrimp", "beef"]) ? 25 : 0);
+  const scoreBreakfast = (item: Catalog, text: string) =>
+    Number(item.protein_g) * 5 + (hasAny(text, ["yogurt", "oikos", "skyr", "cottage", "egg", "oatmeal", "oats", "granola"]) ? 60 : 0) - Math.max(0, Number(item.calories) - 450) * 0.1;
+  const scoreSnack = (item: Catalog, text: string) =>
+    Number(item.protein_g) * 5 + (hasAny(text, ["bar", "jerky", "string cheese", "nuts", "hummus", "snack", "quest", "built", "rxbar"]) ? 55 : 0) - Math.max(0, Number(item.calories) - 350) * 0.15;
+  const scoreCarbProduce = (item: Catalog, text: string) =>
+    (hasAny(text, ["rice", "quinoa", "oatmeal", "oats", "tortilla", "potato", "banana", "apple", "berries", "vegetable", "salad", "fruit"]) ? 65 : 0) + Number(item.calories) * 0.15;
+
+  const isDrink = (item: Catalog, text: string) => item.category === "drink" || hasAny(text, ["water", "coffee", "tea", "shake", "fairlife", "premier", "owyn", "celsius", "beverage"]);
+  const isProtein = (item: Catalog, text: string) => item.category === "protein" || item.category === "meal" || Number(item.protein_g) >= 15 || hasAny(text, ["protein", "chicken", "turkey", "tuna", "salmon", "egg", "tofu", "yogurt", "cottage", "skyr", "jerky"]);
+  const isBreakfast = (item: Catalog, text: string) => hasAny(text, ["yogurt", "oikos", "skyr", "cottage", "egg", "oatmeal", "oats", "granola", "berries", "banana"]);
+  const isSnack = (item: Catalog, text: string) => item.category === "snack" || hasAny(text, ["bar", "jerky", "string cheese", "nuts", "hummus", "snack", "quest", "built", "rxbar", "pure protein"]);
+  const isCarbProduce = (item: Catalog, text: string) => item.category === "carb" || item.category === "produce" || hasAny(text, ["rice", "quinoa", "oatmeal", "oats", "tortilla", "potato", "banana", "apple", "berries", "vegetable", "salad", "fruit"]);
+
+  add(pickBest(catalog, used, (i, t) => isBreakfast(i, t), scoreBreakfast), "breakfast");
+  add(pickBest(catalog, used, (i, t) => isCarbProduce(i, t), scoreCarbProduce), "breakfast");
+  add(pickBest(catalog, used, (i, t) => isProtein(i, t), scoreLeanProtein), "lunch");
+  add(pickBest(catalog, used, (i, t) => isCarbProduce(i, t), scoreCarbProduce), "lunch");
+  add(pickBest(catalog, used, (i, t) => isProtein(i, t), scoreLeanProtein), "dinner");
+  add(pickBest(catalog, used, (i, t) => isCarbProduce(i, t), scoreCarbProduce), "dinner");
+  add(pickBest(catalog, used, (i, t) => isSnack(i, t), scoreSnack), "snack");
+  add(pickBest(catalog, used, (i, t) => isDrink(i, t) && (t.includes("water") || Number(i.calories) <= 20), (i) => 100 - Number(i.calories), true), "drink");
+  add(pickBest(catalog, used, (i, t) => isDrink(i, t) && Number(i.protein_g) >= 10, (i) => Number(i.protein_g) * 10 - Number(i.calories) * 0.1, true), "drink");
+
+  while (plan.length < 5) {
+    const next = pickBest(catalog, used, () => true, (item) => Number(item.protein_g) * 4 + Number(item.calories) * 0.05);
+    if (!next) break;
+    add(next, plan.length % 2 === 0 ? "snack" : "lunch");
+  }
+
+  const byId = new Map(catalog.map((item) => [item.id, item]));
+  const totals = () =>
+    plan.reduce(
+      (acc, item) => {
+        const catalogItem = byId.get(item.catalog_item_id);
+        if (!catalogItem) return acc;
+        acc.calories += Number(catalogItem.calories) * item.servings;
+        acc.protein += Number(catalogItem.protein_g) * item.servings;
+        return acc;
+      },
+      { calories: 0, protein: 0 },
+    );
+
+  for (let guard = 0; guard < 16; guard += 1) {
+    const total = totals();
+    if (total.protein >= targetProtein && total.calories >= targetCalories * 0.93) break;
+
+    const proteinNeeded = total.protein < targetProtein;
+    const candidate = proteinNeeded
+      ? pickBest(catalog, used, (i, t) => isProtein(i, t) || isSnack(i, t), (i, t) => Number(i.protein_g) * 10 - Number(i.calories) * 0.08 + (isSnack(i, t) ? 20 : 0))
+      : pickBest(catalog, used, (i, t) => isCarbProduce(i, t) || isSnack(i, t), (i, t) => Number(i.calories) * 0.4 + Number(i.protein_g) * 2);
+
+    if (candidate && plan.length < 15) {
+      add(candidate, proteinNeeded ? "snack" : "dinner", 1);
+      continue;
+    }
+
+    const adjustable = plan
+      .map((item) => ({ item, catalogItem: byId.get(item.catalog_item_id) }))
+      .filter((entry): entry is { item: GeneratedPlanItem; catalogItem: Catalog } => Boolean(entry.catalogItem) && entry.item.servings < 3)
+      .sort((a, b) => (proteinNeeded ? Number(b.catalogItem.protein_g) - Number(a.catalogItem.protein_g) : Number(b.catalogItem.calories) - Number(a.catalogItem.calories)))[0];
+    if (!adjustable) break;
+    adjustable.item.servings = Math.min(3, Math.round((adjustable.item.servings + 0.5) * 4) / 4);
+  }
+
+  for (let guard = 0; guard < 10 && totals().calories > targetCalories * 1.12; guard += 1) {
+    const reducible = plan
+      .map((item) => ({ item, catalogItem: byId.get(item.catalog_item_id) }))
+      .filter((entry): entry is { item: GeneratedPlanItem; catalogItem: Catalog } => Boolean(entry.catalogItem) && entry.item.servings > 0.5)
+      .sort((a, b) => Number(b.catalogItem.calories) / Math.max(1, Number(b.catalogItem.protein_g)) - Number(a.catalogItem.calories) / Math.max(1, Number(a.catalogItem.protein_g)))[0];
+    if (!reducible) break;
+    reducible.item.servings = Math.max(0.5, Math.round((reducible.item.servings - 0.25) * 4) / 4);
+  }
+
+  return plan.map((item, index) => ({ ...item, position: plan.filter((p, idx) => p.meal_slot === item.meal_slot && idx < index).length }));
 }
 
 async function loadCatalogForUser(supabase: any, userId: string): Promise<Catalog[]> {
