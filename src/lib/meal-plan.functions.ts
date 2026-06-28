@@ -376,6 +376,68 @@ ${catalogForPrompt
     if (items.length < 5) items = buildReliablePlan(ranked.length >= 5 ? ranked : allowed, goals).filter((i) => byId.has(i.catalog_item_id));
     if (items.length === 0) throw new Error("No valid store items available for a meal plan.");
 
+    // Hard server-side coherence pass: protein shakes/bars/jerky never count as lunch or dinner.
+    // Relocate them to snack (bars/jerky) or drink (shakes). Then, if lunch/dinner ended up empty,
+    // promote the best real-food protein anchor from the catalog into that slot.
+    {
+      const isShakeText = (t: string) => /shake|fairlife|premier|owyn|core power|orgain|muscle milk|protein drink/i.test(t);
+      const isBarText = (t: string) => /\bbar\b|quest|built|rxbar|barebells|pure protein|think!|kind|clif|one bar/i.test(t);
+      const isJerkyText = (t: string) => /jerky|chomps|epic bar|meat stick|biltong/i.test(t);
+      const isRealFoodProtein = (c: Catalog, t: string) =>
+        c.category === "protein" &&
+        !isShakeText(t) && !isBarText(t) && !isJerkyText(t);
+
+      const relocated: typeof items = [];
+      for (const it of items) {
+        const c = byId.get(it.catalog_item_id)!;
+        const t = `${c.name} ${c.brand ?? ""}`;
+        let slot = it.meal_slot;
+        if (slot === "lunch" || slot === "dinner") {
+          if (isShakeText(t)) slot = "drink";
+          else if (isBarText(t) || isJerkyText(t)) slot = "snack";
+        }
+        relocated.push({ ...it, meal_slot: slot });
+      }
+
+      // Cap bars at 1 per day
+      let barCount = 0;
+      const capped = relocated.filter((it) => {
+        const c = byId.get(it.catalog_item_id)!;
+        const t = `${c.name} ${c.brand ?? ""}`;
+        if (isBarText(t)) { barCount++; return barCount <= 1; }
+        return true;
+      });
+
+      // Ensure lunch + dinner each have a real-food protein anchor
+      const slotsWithRealProtein = new Set(
+        capped
+          .filter((it) => {
+            const c = byId.get(it.catalog_item_id)!;
+            return isRealFoodProtein(c, `${c.name} ${c.brand ?? ""}`);
+          })
+          .map((it) => it.meal_slot),
+      );
+      const usedIds = new Set(capped.map((i) => i.catalog_item_id));
+      for (const slot of ["lunch", "dinner"] as const) {
+        if (slotsWithRealProtein.has(slot)) continue;
+        const anchor = catalog.find(
+          (c) => !usedIds.has(c.id) && isRealFoodProtein(c, `${c.name} ${c.brand ?? ""}`),
+        );
+        if (anchor) {
+          capped.push({ catalog_item_id: anchor.id, meal_slot: slot, servings: 1, position: 0 });
+          usedIds.add(anchor.id);
+        }
+      }
+
+      // Re-number positions per slot
+      const bySlot = new Map<string, number>();
+      items = capped.map((it) => {
+        const n = bySlot.get(it.meal_slot) ?? 0;
+        bySlot.set(it.meal_slot, n + 1);
+        return { ...it, position: n };
+      });
+    }
+
     // Enforce single-serving when the user requires it: clamp every item to exactly 1 serving.
     if (singleOnly) {
       items = items.map((i) => ({ ...i, servings: 1 }));
