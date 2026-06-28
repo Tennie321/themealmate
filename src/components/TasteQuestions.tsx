@@ -21,12 +21,15 @@ export function TasteQuestions({
     queryFn: () => generateTasteQuestions(),
     staleTime: 1000 * 60 * 60,
   });
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (initial?.length) {
-      const map: Record<string, string> = {};
-      initial.forEach((a) => (map[a.id] = a.answer));
+      const map: Record<string, string[]> = {};
+      initial.forEach((a) => {
+        const parts = (a.answer || "").split(",").map((s) => s.trim()).filter(Boolean);
+        map[a.id] = parts.length ? parts : [];
+      });
       setAnswers(map);
     }
   }, [initial]);
@@ -53,8 +56,8 @@ export function TasteQuestions({
 
   const handleSave = () => {
     const payload = questions
-      .filter((qq) => answers[qq.id])
-      .map((qq) => ({ id: qq.id, question: qq.question, answer: answers[qq.id] }));
+      .filter((qq) => answers[qq.id]?.length)
+      .map((qq) => ({ id: qq.id, question: qq.question, answer: answers[qq.id].join(", ") }));
     if (payload.length === 0) {
       toast.error("Pick at least one answer");
       return;
@@ -79,15 +82,25 @@ export function TasteQuestions({
 
       {questions.map((qq) => (
         <div key={qq.id}>
-          <div className="text-sm font-semibold mb-2">{qq.question}</div>
+          <div className="text-sm font-semibold mb-1">{qq.question}</div>
+          <div className="text-xs text-muted-foreground mb-2">Pick all that apply</div>
           <div className="flex flex-wrap gap-2">
             {qq.options.map((opt) => {
-              const active = answers[qq.id] === opt;
+              const selected = answers[qq.id] ?? [];
+              const active = selected.includes(opt);
               return (
                 <button
                   key={opt}
                   type="button"
-                  onClick={() => setAnswers((p) => ({ ...p, [qq.id]: opt }))}
+                  onClick={() =>
+                    setAnswers((p) => {
+                      const cur = p[qq.id] ?? [];
+                      const next = cur.includes(opt)
+                        ? cur.filter((o) => o !== opt)
+                        : [...cur, opt];
+                      return { ...p, [qq.id]: next };
+                    })
+                  }
                   className={`px-3 py-2 rounded-full text-sm border-2 ${active ? "border-primary bg-primary text-white" : "border-border bg-card"}`}
                 >
                   {active && <Check className="w-3 h-3 inline mr-1" />}
