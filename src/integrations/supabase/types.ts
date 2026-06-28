@@ -204,6 +204,7 @@ export type Database = {
       plan_items: {
         Row: {
           catalog_item_id: string
+          consumed: boolean
           created_at: string
           id: string
           is_locked: boolean
@@ -215,6 +216,7 @@ export type Database = {
         }
         Insert: {
           catalog_item_id: string
+          consumed?: boolean
           created_at?: string
           id?: string
           is_locked?: boolean
@@ -226,6 +228,7 @@ export type Database = {
         }
         Update: {
           catalog_item_id?: string
+          consumed?: boolean
           created_at?: string
           id?: string
           is_locked?: boolean
