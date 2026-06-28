@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDashboard } from "@/lib/data.functions";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, LogOut, Settings } from "lucide-react";
+import { Loader2, LogOut, Settings, LineChart, Heart } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
@@ -39,6 +39,11 @@ function ProfilePage() {
         <Row label="Height" value={bio.height_cm ? (() => { const totalIn = Math.round(bio.height_cm / 2.54); return `${Math.floor(totalIn / 12)}′ ${totalIn % 12}″`; })() : "—"} />
         <Row label="Weight" value={bio.weight_kg ? `${Math.round(bio.weight_kg * 2.2046226218)} lb` : "—"} />
         <Row label="Activity" value={bio.activity ?? "—"} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Link to="/progress"><Button variant="outline" className="w-full h-12 rounded-2xl"><LineChart className="w-4 h-4 mr-2" /> Progress</Button></Link>
+        <Link to="/favorites"><Button variant="outline" className="w-full h-12 rounded-2xl"><Heart className="w-4 h-4 mr-2" /> Saved</Button></Link>
       </div>
 
       <Link to="/onboarding">
