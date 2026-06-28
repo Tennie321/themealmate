@@ -56,11 +56,18 @@ async function loadCatalogForUser(supabase: any, userId: string): Promise<Catalo
 
 export const generatePlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { date?: string; regenerate?: boolean }) => input ?? {})
+  .inputValidator((input: { date?: string; regenerate?: boolean; storeId?: string }) => input ?? {})
   .handler(async ({ data, context }: any) => {
     const supabase = context.supabase;
     const userId = context.userId;
     const planDate = data.date ?? todayLocal();
+
+    // If user picked a store for today, persist it first so loadCatalogForUser sees it
+    if (data.storeId) {
+      await supabase
+        .from("user_store")
+        .upsert({ user_id: userId, store_id: data.storeId }, { onConflict: "user_id" });
+    }
 
     const [{ data: goals }, { data: prefs }, { data: favs }, { data: signals }] = await Promise.all([
       supabase.from("user_goals").select("*").eq("user_id", userId).maybeSingle(),
