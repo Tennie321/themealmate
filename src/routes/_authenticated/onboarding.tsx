@@ -49,10 +49,14 @@ function Onboarding() {
   // form state
   const [goal, setGoal] = useState<"cut" | "lean_bulk" | "maintain" | "custom">("maintain");
   const [sex, setSex] = useState<"male" | "female">("male");
-  const [age, setAge] = useState(28);
-  const [heightFt, setHeightFt] = useState(5);
-  const [heightIn, setHeightIn] = useState(10);
-  const [weightLb, setWeightLb] = useState(176);
+  const [ageStr, setAgeStr] = useState("28");
+  const [heightFtStr, setHeightFtStr] = useState("5");
+  const [heightInStr, setHeightInStr] = useState("10");
+  const [weightLbStr, setWeightLbStr] = useState("176");
+  const age = Number(ageStr) || 0;
+  const heightFt = Number(heightFtStr) || 0;
+  const heightIn = Number(heightInStr) || 0;
+  const weightLb = Number(weightLbStr) || 0;
   const [activity, setActivity] = useState<Activity>("moderate");
   const [calOverride, setCalOverride] = useState<number | null>(null);
   const [proOverride, setProOverride] = useState<number | null>(null);
@@ -167,17 +171,35 @@ function Onboarding() {
               </div>
               <div>
                 <Label className="text-sm">Age</Label>
-                <Input type="number" value={age} onChange={(e) => setAge(+e.target.value)} className="mt-1 h-11 rounded-xl" />
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  value={ageStr}
+                  onChange={(e) => setAgeStr(e.target.value.replace(/[^\d]/g, ""))}
+                  className="mt-1 h-11 rounded-xl"
+                />
               </div>
               <div>
                 <Label className="text-sm">Height</Label>
                 <div className="grid grid-cols-2 gap-3 mt-1">
                   <div className="relative">
-                    <Input type="number" value={heightFt} onChange={(e) => setHeightFt(+e.target.value)} className="h-11 rounded-xl pr-10" />
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      value={heightFtStr}
+                      onChange={(e) => setHeightFtStr(e.target.value.replace(/[^\d]/g, ""))}
+                      className="h-11 rounded-xl pr-10"
+                    />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">ft</span>
                   </div>
                   <div className="relative">
-                    <Input type="number" value={heightIn} onChange={(e) => setHeightIn(+e.target.value)} className="h-11 rounded-xl pr-10" />
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      value={heightInStr}
+                      onChange={(e) => setHeightInStr(e.target.value.replace(/[^\d]/g, ""))}
+                      className="h-11 rounded-xl pr-10"
+                    />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">in</span>
                   </div>
                 </div>
@@ -185,7 +207,13 @@ function Onboarding() {
               <div>
                 <Label className="text-sm">Weight</Label>
                 <div className="relative mt-1">
-                  <Input type="number" value={weightLb} onChange={(e) => setWeightLb(+e.target.value)} className="h-11 rounded-xl pr-12" />
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={weightLbStr}
+                    onChange={(e) => setWeightLbStr(e.target.value.replace(/[^\d.]/g, ""))}
+                    className="h-11 rounded-xl pr-12"
+                  />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">lb</span>
                 </div>
               </div>
@@ -208,11 +236,29 @@ function Onboarding() {
                 <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <div className="text-muted-foreground text-xs">Calorie target</div>
-                    <Input type="number" value={calorieTarget} onChange={(e) => setCalOverride(+e.target.value)} className="mt-1 h-10 rounded-xl" />
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      value={String(calorieTarget)}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/[^\d]/g, "");
+                        setCalOverride(v === "" ? null : Number(v));
+                      }}
+                      className="mt-1 h-10 rounded-xl"
+                    />
                   </div>
                   <div>
                     <div className="text-muted-foreground text-xs">Protein (g)</div>
-                    <Input type="number" value={proteinTarget} onChange={(e) => setProOverride(+e.target.value)} className="mt-1 h-10 rounded-xl" />
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      value={String(proteinTarget)}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/[^\d]/g, "");
+                        setProOverride(v === "" ? null : Number(v));
+                      }}
+                      className="mt-1 h-10 rounded-xl"
+                    />
                   </div>
                 </div>
               </div>
