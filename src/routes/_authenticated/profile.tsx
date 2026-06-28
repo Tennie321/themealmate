@@ -1,19 +1,33 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDashboard } from "@/lib/data.functions";
+import { getReminderSettings, saveReminderSettings } from "@/lib/reminders.functions";
+import { requestNotificationPermission } from "@/hooks/useMealReminders";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, LogOut, Settings, LineChart, Heart } from "lucide-react";
+import { Loader2, LogOut, Settings, LineChart, Heart, Bell } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
 });
 
 function ProfilePage() {
+  const qc = useQueryClient();
   const dash = useQuery({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
+  const reminders = useQuery({ queryKey: ["reminders"], queryFn: () => getReminderSettings() });
+  const save = useMutation({
+    mutationFn: (vars: { enabled?: boolean; times?: Record<string, string> }) =>
+      saveReminderSettings({ data: vars } as any),
+    onSuccess: () => { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["reminders"] }); },
+  });
   if (dash.isLoading) return <div className="p-10 grid place-items-center"><Loader2 className="animate-spin" /></div>;
   const goals: any = dash.data?.goals;
   const bio = goals?.biometrics ?? {};
+  const times = reminders.data?.times ?? { breakfast: "08:00", lunch: "12:30", dinner: "18:30", snack: "15:30", drink: "10:00" };
+  const enabled = reminders.data?.enabled ?? true;
 
   return (
     <div className="max-w-md mx-auto px-5 pt-8 space-y-5">
@@ -39,6 +53,40 @@ function ProfilePage() {
         <Row label="Height" value={bio.height_cm ? (() => { const totalIn = Math.round(bio.height_cm / 2.54); return `${Math.floor(totalIn / 12)}′ ${totalIn % 12}″`; })() : "—"} />
         <Row label="Weight" value={bio.weight_kg ? `${Math.round(bio.weight_kg * 2.2046226218)} lb` : "—"} />
         <Row label="Activity" value={bio.activity ?? "—"} />
+      </div>
+
+      <div className="bg-card border border-border rounded-3xl p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Bell className="w-4 h-4 text-primary" />
+            <div>
+              <div className="font-semibold text-sm">Smart reminders</div>
+              <div className="text-xs text-muted-foreground">Morning briefing + meal nudges</div>
+            </div>
+          </div>
+          <Switch
+            checked={enabled}
+            onCheckedChange={async (v) => {
+              if (v) await requestNotificationPermission();
+              save.mutate({ enabled: v });
+            }}
+          />
+        </div>
+        {enabled && (
+          <div className="space-y-2">
+            {(["breakfast", "lunch", "dinner", "snack", "drink"] as const).map((slot) => (
+              <div key={slot} className="flex items-center justify-between gap-3">
+                <span className="text-sm capitalize">{slot}</span>
+                <Input
+                  type="time"
+                  value={times[slot] ?? ""}
+                  onChange={(e) => save.mutate({ times: { ...times, [slot]: e.target.value } })}
+                  className="w-32 h-9"
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
