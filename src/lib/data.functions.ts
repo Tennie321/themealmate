@@ -115,7 +115,7 @@ export const getDashboard = createServerFn({ method: "GET" })
   .handler(async ({ context }: any) => {
     const userId = context.userId;
     const planDate = todayLocal();
-    const [{ data: goals }, { data: profile }, { data: plan }, { data: checkin }] = await Promise.all([
+    const [{ data: goals }, { data: profile }, { data: plan }, { data: checkin }, { data: userStore }, { data: stores }] = await Promise.all([
       context.supabase.from("user_goals").select("*").eq("user_id", userId).maybeSingle(),
       context.supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
       context.supabase
@@ -125,8 +125,10 @@ export const getDashboard = createServerFn({ method: "GET" })
         .eq("plan_date", planDate)
         .maybeSingle(),
       context.supabase.from("check_ins").select("*").eq("user_id", userId).eq("plan_date", planDate).maybeSingle(),
+      context.supabase.from("user_store").select("store_id, stores(*)").eq("user_id", userId).maybeSingle(),
+      context.supabase.from("stores").select("id, name, chain").order("name"),
     ]);
-    return { goals, profile, plan, checkin, planDate };
+    return { goals, profile, plan, checkin, planDate, currentStore: userStore?.stores ?? null, stores: stores ?? [] };
   });
 
 export const getShoppingList = createServerFn({ method: "GET" })
