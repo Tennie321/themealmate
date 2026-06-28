@@ -283,14 +283,24 @@ function Dashboard() {
             const meta = SECTION_META[sec];
             const Icon = meta.icon;
             const allConsumed = list.every((i) => i.consumed);
+            const secTotals = list.reduce((acc, it) => {
+              const ci = it.catalog_items ?? {};
+              const s = Number(it.servings ?? 1);
+              acc.cal += Number(ci.calories ?? 0) * s;
+              acc.pro += Number(ci.protein_g ?? 0) * s;
+              return acc;
+            }, { cal: 0, pro: 0 });
             return (
               <div key={sec} className="bg-card border border-border rounded-3xl overflow-hidden">
-                <div className="px-5 pt-4 pb-2 flex items-center justify-between gap-2">
+                <div className="px-5 pt-4 pb-1 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-secondary grid place-items-center text-primary">
                       <Icon className="w-4 h-4" />
                     </div>
-                    <h3 className="font-semibold">{meta.label}</h3>
+                    <div>
+                      <h3 className="font-semibold">{meta.label}</h3>
+                      <p className="text-[11px] text-muted-foreground">{Math.round(secTotals.cal)} cal · {Math.round(secTotals.pro)}g protein</p>
+                    </div>
                   </div>
                   <button
                     onClick={() => consumeSlot.mutate({ planId: plan.id, mealSlot: sec, consumed: !allConsumed })}
