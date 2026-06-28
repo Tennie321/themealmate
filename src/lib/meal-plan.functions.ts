@@ -299,7 +299,7 @@ ${catalogForPrompt
   )
   .join("\n")}`;
 
-    let parsed: { items: { catalog_item_id: string; meal_slot: string; servings: number; position: number }[] };
+    let parsed: { items: GeneratedPlanItem[] };
     try {
       const result: any = await (generateText as any)({
         model,
@@ -346,15 +346,20 @@ ${catalogForPrompt
           position: Number(it.position ?? 0),
         }))
         .filter((it: any) => it.catalog_item_id && it.meal_slot);
-      parsed = candidate;
+      const validSlots = new Set(["breakfast", "lunch", "dinner", "snack", "drink"]);
+      parsed = {
+        items: candidate.items.filter((it: any) => validSlots.has(it.meal_slot)),
+      };
     } catch (e: any) {
-      throw new Error(`Plan generation failed: ${e?.message ?? "unknown error"}`);
+      console.warn("AI plan generation returned unusable output; using catalog planner fallback", e?.message ?? e);
+      parsed = { items: buildReliablePlan(ranked.length >= 5 ? ranked : allowed, goals) };
     }
 
     // Validate ids exist in catalog
     const byId = new Map(catalog.map((c) => [c.id, c]));
-    const items = parsed.items.filter((i) => byId.has(i.catalog_item_id));
-    if (items.length === 0) throw new Error("Model returned no valid items.");
+    let items = parsed.items.filter((i) => byId.has(i.catalog_item_id));
+    if (items.length === 0) items = buildReliablePlan(ranked.length >= 5 ? ranked : allowed, goals).filter((i) => byId.has(i.catalog_item_id));
+    if (items.length === 0) throw new Error("No valid store items available for a meal plan.");
 
     let totalCal = 0;
     let totalProtein = 0;
