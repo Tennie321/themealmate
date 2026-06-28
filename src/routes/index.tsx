@@ -19,9 +19,16 @@ function Index() {
   return (
     <div className="min-h-screen bg-background">
       <header className="px-6 pt-8 pb-4 flex items-center justify-between max-w-md mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-2xl bg-hero-gradient grid place-items-center text-white font-bold">M</div>
-          <span className="font-display font-bold text-xl">MealMate</span>
+        <div className="flex items-center gap-2.5">
+          <div className="relative w-9 h-9 rounded-xl bg-hero-gradient grid place-items-center shadow-sm shadow-primary/20 ring-1 ring-primary/10">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3c3.5 2 5 5 5 8a5 5 0 1 1-10 0c0-3 1.5-6 5-8z" />
+              <path d="M12 11v9" />
+            </svg>
+          </div>
+          <span className="font-display font-semibold text-[19px] tracking-tight">
+            Meal<span className="text-primary">Mate</span>
+          </span>
         </div>
         <Link to="/auth" className="text-sm font-medium text-muted-foreground">Sign in</Link>
       </header>
