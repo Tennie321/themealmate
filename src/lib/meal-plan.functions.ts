@@ -358,7 +358,7 @@ ${catalogForPrompt
     // Validate ids exist in catalog
     const byId = new Map(catalog.map((c) => [c.id, c]));
     let items = parsed.items.filter((i) => byId.has(i.catalog_item_id));
-    if (items.length === 0) items = buildReliablePlan(ranked.length >= 5 ? ranked : allowed, goals).filter((i) => byId.has(i.catalog_item_id));
+    if (items.length < 5) items = buildReliablePlan(ranked.length >= 5 ? ranked : allowed, goals).filter((i) => byId.has(i.catalog_item_id));
     if (items.length === 0) throw new Error("No valid store items available for a meal plan.");
 
     let totalCal = 0;
