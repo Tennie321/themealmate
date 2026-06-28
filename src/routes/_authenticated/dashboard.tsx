@@ -3,10 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { getDashboard } from "@/lib/data.functions";
 import { getOnboardingStatus } from "@/lib/data.functions";
-import { generatePlan, swapItem, toggleFavorite } from "@/lib/meal-plan.functions";
+import { generatePlan, swapItem, toggleFavorite, toggleConsumed } from "@/lib/meal-plan.functions";
 import { MacroRing } from "@/components/MacroRing";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Coffee, Sun, Moon, Cookie, Droplets } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +55,29 @@ function Dashboard() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
   });
 
+  const consume = useMutation({
+    mutationFn: (vars: { planItemId: string; consumed: boolean }) =>
+      toggleConsumed({ data: vars } as any),
+    onMutate: async (vars) => {
+      await qc.cancelQueries({ queryKey: ["dashboard"] });
+      const prev = qc.getQueryData<any>(["dashboard"]);
+      if (prev?.plan?.plan_items) {
+        qc.setQueryData(["dashboard"], {
+          ...prev,
+          plan: {
+            ...prev.plan,
+            plan_items: prev.plan.plan_items.map((p: any) =>
+              p.id === vars.planItemId ? { ...p, consumed: vars.consumed } : p,
+            ),
+          },
+        });
+      }
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(["dashboard"], ctx.prev); },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+  });
+
   if (dash.isLoading || onb.isLoading) {
     return <div className="p-6 flex items-center justify-center h-[60vh]"><Loader2 className="animate-spin" /></div>;
   }
@@ -73,6 +98,23 @@ function Dashboard() {
     { cal: 0, pro: 0, cost: 0 },
   );
 
+  const eaten = items.reduce(
+    (acc, it) => {
+      if (!it.consumed) return acc;
+      const ci = it.catalog_items ?? {};
+      const s = Number(it.servings ?? 1);
+      acc.cal += Number(ci.calories ?? 0) * s;
+      acc.pro += Number(ci.protein_g ?? 0) * s;
+      return acc;
+    },
+    { cal: 0, pro: 0 },
+  );
+  const calTarget = goals?.calorie_target ?? 0;
+  const proTarget = goals?.protein_target ?? 0;
+  const calRemaining = Math.max(0, calTarget - eaten.cal);
+  const proRemaining = Math.max(0, proTarget - eaten.pro);
+  const calPct = calTarget > 0 ? Math.min(100, (eaten.cal / calTarget) * 100) : 0;
+
   const sections = ["breakfast", "lunch", "dinner", "snack", "drink"] as const;
 
   return (
@@ -92,9 +134,21 @@ function Dashboard() {
 
       <section className="mt-6 bg-card border border-border rounded-3xl p-5">
         <div className="flex justify-around items-center">
-          <MacroRing value={totals.cal} target={goals?.calorie_target ?? 0} label="cal" unit="" color="primary" />
-          <MacroRing value={totals.pro} target={goals?.protein_target ?? 0} label="protein" unit="g" color="accent" />
+          <MacroRing value={eaten.cal} target={calTarget} label="eaten" unit="" color="primary" />
+          <MacroRing value={eaten.pro} target={proTarget} label="protein" unit="g" color="accent" />
         </div>
+        {plan && (
+          <div className="mt-5">
+            <div className="flex justify-between text-xs mb-1.5">
+              <span className="font-semibold">{Math.round(eaten.cal)} eaten</span>
+              <span className="text-muted-foreground">{Math.round(calRemaining)} cal left · {Math.max(0, Math.round(proRemaining))}g protein left</span>
+            </div>
+            <Progress value={calPct} className="h-2" />
+            <div className="mt-1 text-[11px] text-muted-foreground">
+              Planned today: {Math.round(totals.cal)} cal · {Math.round(totals.pro)}g protein
+            </div>
+          </div>
+        )}
         <div className="mt-4 flex items-center justify-between text-sm">
           <div>
             <div className="text-muted-foreground text-xs">Spent today</div>
@@ -150,8 +204,14 @@ function Dashboard() {
                 <ul className="divide-y divide-border">
                   {list.map((it) => (
                     <li key={it.id} className="px-5 py-3 flex gap-3 items-start">
+                      <Checkbox
+                        checked={!!it.consumed}
+                        onCheckedChange={(c) => consume.mutate({ planItemId: it.id, consumed: !!c })}
+                        className="mt-1"
+                        aria-label={`Mark ${it.catalog_items?.name} as eaten`}
+                      />
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium leading-tight">{it.catalog_items?.name}</div>
+                        <div className={`font-medium leading-tight ${it.consumed ? "line-through text-muted-foreground" : ""}`}>{it.catalog_items?.name}</div>
                         <div className="text-xs text-muted-foreground mt-0.5">
                           {it.catalog_items?.brand ? `${it.catalog_items.brand} · ` : ""}{Math.round((it.catalog_items?.calories ?? 0) * Number(it.servings ?? 1))} cal · {Math.round(Number(it.catalog_items?.protein_g ?? 0) * Number(it.servings ?? 1))}g protein {Number(it.servings) !== 1 ? `· ×${it.servings}` : ""}
                         </div>
