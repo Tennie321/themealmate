@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getReminderSettings, markBriefingShown } from "@/lib/reminders.functions";
 import { useMealReminders, requestNotificationPermission } from "@/hooks/useMealReminders";
 import { MorningBriefing } from "@/components/MorningBriefing";
+import { FoodImage } from "@/components/FoodImage";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -274,6 +275,12 @@ function Dashboard() {
                         onCheckedChange={(c) => consume.mutate({ planItemId: it.id, consumed: !!c })}
                         className="mt-1"
                         aria-label={`Mark ${it.catalog_items?.name} as eaten`}
+                      />
+                      <FoodImage
+                        name={it.catalog_items?.name}
+                        category={it.catalog_items?.category}
+                        imageUrl={it.catalog_items?.image_url}
+                        size="md"
                       />
                       <div className="flex-1 min-w-0">
                         <div className={`font-medium leading-tight ${it.consumed ? "line-through text-muted-foreground" : ""}`}>{it.catalog_items?.name}</div>
