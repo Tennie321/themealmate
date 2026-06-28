@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getReminderSettings, markBriefingShown } from "@/lib/reminders.functions";
 import { useMealReminders, requestNotificationPermission } from "@/hooks/useMealReminders";
 import { MorningBriefing } from "@/components/MorningBriefing";
+import { FoodImage } from "@/components/FoodImage";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -275,6 +276,12 @@ function Dashboard() {
                         className="mt-1"
                         aria-label={`Mark ${it.catalog_items?.name} as eaten`}
                       />
+                      <FoodImage
+                        name={it.catalog_items?.name}
+                        category={it.catalog_items?.category}
+                        imageUrl={it.catalog_items?.image_url}
+                        size="md"
+                      />
                       <div className="flex-1 min-w-0">
                         <div className={`font-medium leading-tight ${it.consumed ? "line-through text-muted-foreground" : ""}`}>{it.catalog_items?.name}</div>
                         <div className="text-xs text-muted-foreground mt-0.5">
@@ -397,14 +404,17 @@ function SwapSheet({ target, onClose }: { target: any; onClose: () => void }) {
             <button
               key={alt.id}
               onClick={() => pick(alt.id)}
-              className="w-full text-left px-4 py-3 rounded-2xl border border-border hover:border-primary"
+              className="w-full text-left px-4 py-3 rounded-2xl border border-border hover:border-primary flex items-start gap-3"
             >
-              <div className="font-medium">{alt.name}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">
-                {alt.brand ?? ""} · {alt.calories} cal · {alt.protein_g}g protein · {fmt(alt.price_cents)}
-              </div>
-              <div className="text-[11px] text-muted-foreground mt-1">
-                {alt.deltaCal >= 0 ? `+${alt.deltaCal}` : alt.deltaCal} cal · {alt.deltaProtein >= 0 ? `+${alt.deltaProtein}` : alt.deltaProtein}g protein
+              <FoodImage name={alt.name} category={alt.category} imageUrl={alt.image_url} size="sm" />
+              <div className="flex-1 min-w-0">
+                <div className="font-medium">{alt.name}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {alt.brand ?? ""} · {alt.calories} cal · {alt.protein_g}g protein · {fmt(alt.price_cents)}
+                </div>
+                <div className="text-[11px] text-muted-foreground mt-1">
+                  {alt.deltaCal >= 0 ? `+${alt.deltaCal}` : alt.deltaCal} cal · {alt.deltaProtein >= 0 ? `+${alt.deltaProtein}` : alt.deltaProtein}g protein
+                </div>
               </div>
             </button>
           ))}

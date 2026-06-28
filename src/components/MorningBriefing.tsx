@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sun, Coffee, Sun as Lunch, Moon, Cookie, Droplets, Sparkles } from "lucide-react";
+import { FoodImage } from "@/components/FoodImage";
 
 const ICONS: Record<string, any> = {
   breakfast: Coffee,
@@ -89,7 +90,15 @@ export function MorningBriefing({
                   </div>
                   <ul className="text-xs text-muted-foreground mt-0.5">
                     {list.map((it) => (
-                      <li key={it.id} className="truncate">• {it.catalog_items?.name}</li>
+                      <li key={it.id} className="flex items-center gap-2 mt-1">
+                        <FoodImage
+                          name={it.catalog_items?.name}
+                          category={it.catalog_items?.category}
+                          imageUrl={it.catalog_items?.image_url}
+                          size="sm"
+                        />
+                        <span className="truncate">{it.catalog_items?.name}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>

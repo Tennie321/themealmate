@@ -6,6 +6,7 @@ import { toggleListItem, markOutOfStock, substituteListItem } from "@/lib/meal-p
 import { Loader2, Check, Package } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
+import { FoodImage } from "@/components/FoodImage";
 
 export const Route = createFileRoute("/_authenticated/shopping")({
   component: ShoppingPage,
@@ -86,6 +87,7 @@ function ShoppingPage() {
                     >
                       {it.checked && <Check className="w-3.5 h-3.5" />}
                     </button>
+                    <FoodImage name={ci?.name} category={ci?.category} imageUrl={ci?.image_url} size="md" />
                     <div className="flex-1 min-w-0">
                       <div className={`font-medium ${it.checked ? "line-through text-muted-foreground" : ""}`}>{ci?.name}</div>
                       <div className="text-xs text-muted-foreground">
@@ -108,9 +110,12 @@ function ShoppingPage() {
           <div className="mt-4 space-y-2">
             {loadingAlts && <div className="grid place-items-center py-10"><Loader2 className="animate-spin" /></div>}
             {alternates.map((alt) => (
-              <button key={alt.id} onClick={() => sub(alt.id)} className="w-full text-left px-4 py-3 rounded-2xl border border-border hover:border-primary">
-                <div className="font-medium">{alt.name}</div>
-                <div className="text-xs text-muted-foreground">{alt.brand ?? ""} · {alt.calories} cal · {alt.protein_g}g protein · {fmt(alt.price_cents)}</div>
+              <button key={alt.id} onClick={() => sub(alt.id)} className="w-full text-left px-4 py-3 rounded-2xl border border-border hover:border-primary flex items-start gap-3">
+                <FoodImage name={alt.name} category={alt.category} imageUrl={alt.image_url} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium">{alt.name}</div>
+                  <div className="text-xs text-muted-foreground">{alt.brand ?? ""} · {alt.calories} cal · {alt.protein_g}g protein · {fmt(alt.price_cents)}</div>
+                </div>
               </button>
             ))}
             {!loadingAlts && alternates.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No alternates.</p>}

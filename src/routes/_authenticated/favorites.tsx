@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getFavorites } from "@/lib/data.functions";
 import { toggleFavorite } from "@/lib/meal-plan.functions";
 import { Loader2, Heart } from "lucide-react";
+import { FoodImage } from "@/components/FoodImage";
 
 export const Route = createFileRoute("/_authenticated/favorites")({
   component: FavoritesPage,
@@ -37,6 +38,7 @@ function FavoritesPage() {
       <div className="mt-6 space-y-2">
         {items.map((it: any) => (
           <div key={it.id} className="bg-card border border-border rounded-2xl p-4 flex items-start gap-3">
+            <FoodImage name={it.name} category={it.category} imageUrl={it.image_url} size="md" />
             <div className="flex-1 min-w-0">
               <div className="font-medium">{it.name}</div>
               <div className="text-xs text-muted-foreground">{it.brand ?? ""} · {it.calories} cal · {it.protein_g}g protein · {fmt(it.price_cents)}</div>
