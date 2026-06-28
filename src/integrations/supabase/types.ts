@@ -358,6 +358,7 @@ export type Database = {
           diet_tags: string[]
           dislikes: string[]
           favorite_brands: string[]
+          health_preference: string
           single_serving_only: boolean
           taste_profile: Json
           updated_at: string
@@ -368,6 +369,7 @@ export type Database = {
           diet_tags?: string[]
           dislikes?: string[]
           favorite_brands?: string[]
+          health_preference?: string
           single_serving_only?: boolean
           taste_profile?: Json
           updated_at?: string
@@ -378,6 +380,7 @@ export type Database = {
           diet_tags?: string[]
           dislikes?: string[]
           favorite_brands?: string[]
+          health_preference?: string
           single_serving_only?: boolean
           taste_profile?: Json
           updated_at?: string
