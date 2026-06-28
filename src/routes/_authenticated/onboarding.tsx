@@ -18,6 +18,7 @@ import {
   getStores,
 } from "@/lib/data.functions";
 import { TasteQuestions } from "@/components/TasteQuestions";
+import { StoreLogo } from "@/components/StoreLogo";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: Onboarding,
@@ -276,10 +277,13 @@ function Onboarding() {
                 <button
                   key={s.id}
                   onClick={() => setStoreId(s.id)}
-                  className={`w-full text-left p-4 rounded-2xl border-2 ${storeId === s.id ? "border-primary bg-secondary" : "border-border bg-card"}`}
+                  className={`w-full text-left p-3 rounded-2xl border-2 flex items-center gap-3 ${storeId === s.id ? "border-primary bg-secondary" : "border-border bg-card"}`}
                 >
-                  <div className="font-semibold">{s.name}</div>
-                  {s.chain && <div className="text-xs text-muted-foreground">{s.chain}</div>}
+                  <StoreLogo website={s.website} chain={s.chain} name={s.name} size={44} />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold truncate">{s.name}</div>
+                    {s.chain && <div className="text-xs text-muted-foreground truncate">{s.chain}</div>}
+                  </div>
                 </button>
               ))}
             </div>
