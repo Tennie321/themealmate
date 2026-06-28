@@ -86,7 +86,7 @@ export const saveBudget = createServerFn({ method: "POST" })
 export const savePreferences = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { allergies: string[]; dislikes: string[]; diet_tags: string[]; favorite_brands?: string[]; single_serving_only?: boolean }) => input,
+    (input: { allergies: string[]; dislikes: string[]; diet_tags: string[]; favorite_brands?: string[]; single_serving_only?: boolean; health_preference?: "healthier" | "balanced" | "indulgent" }) => input,
   )
   .handler(async ({ data, context }: any) => {
     await context.supabase.from("preferences").upsert(
@@ -97,6 +97,7 @@ export const savePreferences = createServerFn({ method: "POST" })
         diet_tags: data.diet_tags,
         favorite_brands: data.favorite_brands ?? [],
         ...(typeof data.single_serving_only === "boolean" ? { single_serving_only: data.single_serving_only } : {}),
+        ...(data.health_preference ? { health_preference: data.health_preference } : {}),
       },
       { onConflict: "user_id" },
     );
@@ -112,6 +113,19 @@ export const setSingleServingOnly = createServerFn({ method: "POST" })
       .from("preferences")
       .upsert(
         { user_id: context.userId, single_serving_only: data.value },
+        { onConflict: "user_id" },
+      );
+    return { ok: true };
+  });
+
+export const setHealthPreference = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { value: "healthier" | "balanced" | "indulgent" }) => input)
+  .handler(async ({ data, context }: any) => {
+    await context.supabase
+      .from("preferences")
+      .upsert(
+        { user_id: context.userId, health_preference: data.value },
         { onConflict: "user_id" },
       );
     return { ok: true };

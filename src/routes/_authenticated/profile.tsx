@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getDashboard, setSingleServingOnly } from "@/lib/data.functions";
+import { getDashboard, setSingleServingOnly, setHealthPreference } from "@/lib/data.functions";
 import { getReminderSettings, saveReminderSettings } from "@/lib/reminders.functions";
 import { requestNotificationPermission } from "@/hooks/useMealReminders";
 import { Button } from "@/components/ui/button";
@@ -28,11 +28,17 @@ function ProfilePage() {
     mutationFn: (value: boolean) => setSingleServingOnly({ data: { value } } as any),
     onSuccess: () => { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["dashboard"] }); },
   });
+  const hpMut = useMutation({
+    mutationFn: (value: "healthier" | "balanced" | "indulgent") =>
+      setHealthPreference({ data: { value } } as any),
+    onSuccess: () => { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["dashboard"] }); },
+  });
   if (dash.isLoading) return <div className="p-10 grid place-items-center"><Loader2 className="animate-spin" /></div>;
   const goals: any = dash.data?.goals;
   const bio = goals?.biometrics ?? {};
   const prefs: any = (dash.data as any)?.preferences;
   const singleServing = prefs?.single_serving_only !== false;
+  const healthPref: "healthier" | "balanced" | "indulgent" = prefs?.health_preference ?? "balanced";
   const times = reminders.data?.times ?? { breakfast: "08:00", lunch: "12:30", dinner: "18:30", snack: "15:30", drink: "10:00" };
   const enabled = reminders.data?.enabled ?? true;
 
@@ -76,6 +82,28 @@ function ProfilePage() {
             checked={singleServing}
             onCheckedChange={(v) => ssMut.mutate(v)}
           />
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-3xl p-5">
+        <div className="font-semibold text-sm">Healthy vs less healthy</div>
+        <p className="text-xs text-muted-foreground mt-1">Bias what the AI picks for you.</p>
+        <div className="grid grid-cols-3 gap-2 mt-3">
+          {([
+            { id: "healthier", label: "Healthier", body: "Whole foods" },
+            { id: "balanced", label: "Balanced", body: "Mix" },
+            { id: "indulgent", label: "Less strict", body: "Tastier OK" },
+          ] as const).map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => hpMut.mutate(opt.id)}
+              className={`p-3 rounded-2xl border-2 text-left transition ${healthPref === opt.id ? "border-primary bg-secondary" : "border-border bg-card"}`}
+            >
+              <div className="font-semibold text-sm">{opt.label}</div>
+              <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{opt.body}</div>
+            </button>
+          ))}
         </div>
       </div>
 
