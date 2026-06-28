@@ -27,7 +27,24 @@ type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 function Onboarding() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>(0);
+  const [step, setStep] = useState<Step>(() => {
+    if (typeof window === "undefined") return 0;
+    const saved = Number(window.localStorage.getItem("mm_onboarding_step"));
+    return (Number.isFinite(saved) && saved >= 0 && saved <= 5 ? saved : 0) as Step;
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("mm_onboarding_step", String(step));
+    }
+  }, [step]);
+
+  const finish = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("mm_onboarding_step");
+    }
+    navigate({ to: "/dashboard" });
+  };
 
   // form state
   const [goal, setGoal] = useState<"cut" | "lean_bulk" | "maintain" | "custom">("maintain");
@@ -310,7 +327,14 @@ function Onboarding() {
             <h1 className="text-3xl font-bold">Your taste</h1>
             <p className="text-muted-foreground mt-2">A few quick picks so the AI plans food you'll actually eat.</p>
             <div className="mt-6">
-              <TasteQuestions ctaLabel="Finish & build my plan" onSaved={() => navigate({ to: "/dashboard" })} />
+              <TasteQuestions ctaLabel="Finish & build my plan" onSaved={finish} />
+              <button
+                type="button"
+                onClick={finish}
+                className="mt-4 w-full text-sm text-muted-foreground underline"
+              >
+                Skip for now
+              </button>
             </div>
           </div>
         )}
