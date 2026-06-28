@@ -617,6 +617,19 @@ export const toggleConsumed = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const setSlotConsumed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { planId: string; mealSlot: "breakfast" | "lunch" | "dinner" | "snack" | "drink"; consumed: boolean }) => input)
+  .handler(async ({ data, context }: any) => {
+    await context.supabase
+      .from("plan_items")
+      .update({ consumed: data.consumed })
+      .eq("plan_id", data.planId)
+      .eq("meal_slot", data.mealSlot)
+      .eq("user_id", context.userId);
+    return { ok: true };
+  });
+
 export const submitCheckin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { planId: string; caloriesActual: number; proteinActual: number; notes?: string }) => input)

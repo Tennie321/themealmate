@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { getDashboard } from "@/lib/data.functions";
 import { getOnboardingStatus } from "@/lib/data.functions";
-import { generatePlan, swapItem, toggleFavorite, toggleConsumed } from "@/lib/meal-plan.functions";
+import { generatePlan, swapItem, toggleFavorite, toggleConsumed, setSlotConsumed } from "@/lib/meal-plan.functions";
 import { MacroRing } from "@/components/MacroRing";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -102,6 +102,29 @@ function Dashboard() {
             ...prev.plan,
             plan_items: prev.plan.plan_items.map((p: any) =>
               p.id === vars.planItemId ? { ...p, consumed: vars.consumed } : p,
+            ),
+          },
+        });
+      }
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(["dashboard"], ctx.prev); },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+  });
+
+  const consumeSlot = useMutation({
+    mutationFn: (vars: { planId: string; mealSlot: string; consumed: boolean }) =>
+      setSlotConsumed({ data: vars } as any),
+    onMutate: async (vars) => {
+      await qc.cancelQueries({ queryKey: ["dashboard"] });
+      const prev = qc.getQueryData<any>(["dashboard"]);
+      if (prev?.plan?.plan_items) {
+        qc.setQueryData(["dashboard"], {
+          ...prev,
+          plan: {
+            ...prev.plan,
+            plan_items: prev.plan.plan_items.map((p: any) =>
+              p.meal_slot === vars.mealSlot ? { ...p, consumed: vars.consumed } : p,
             ),
           },
         });
@@ -259,13 +282,23 @@ function Dashboard() {
             if (list.length === 0) return null;
             const meta = SECTION_META[sec];
             const Icon = meta.icon;
+            const allConsumed = list.every((i) => i.consumed);
             return (
               <div key={sec} className="bg-card border border-border rounded-3xl overflow-hidden">
-                <div className="px-5 pt-4 pb-2 flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-secondary grid place-items-center text-primary">
-                    <Icon className="w-4 h-4" />
+                <div className="px-5 pt-4 pb-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-secondary grid place-items-center text-primary">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <h3 className="font-semibold">{meta.label}</h3>
                   </div>
-                  <h3 className="font-semibold">{meta.label}</h3>
+                  <button
+                    onClick={() => consumeSlot.mutate({ planId: plan.id, mealSlot: sec, consumed: !allConsumed })}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${allConsumed ? "bg-primary text-primary-foreground border-primary" : "border-border text-primary hover:bg-secondary"}`}
+                    aria-label={allConsumed ? `Mark all ${meta.label} as not eaten` : `Mark all ${meta.label} as eaten`}
+                  >
+                    {allConsumed ? (<span className="inline-flex items-center gap-1"><Check className="w-3 h-3" /> All eaten</span>) : "Ate it all"}
+                  </button>
                 </div>
                 <ul className="divide-y divide-border">
                   {list.map((it) => (
