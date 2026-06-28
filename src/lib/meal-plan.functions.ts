@@ -162,13 +162,17 @@ ${catalogForPrompt
 
     let parsed: { items: { catalog_item_id: string; meal_slot: string; servings: number; position: number }[] };
     try {
-      const result = await generateText({
+      const result: any = await (generateText as any)({
         model,
         system: systemPrompt,
         prompt: userPrompt,
         experimental_output: Output.object({ schema: PlanSchema }),
       });
-      parsed = (result as any).experimental_output;
+      parsed = result.experimental_output ?? result.output;
+      if (!parsed) {
+        // Fallback: try to parse text as JSON
+        parsed = JSON.parse(result.text);
+      }
     } catch (e: any) {
       throw new Error(`Plan generation failed: ${e?.message ?? "unknown error"}`);
     }
