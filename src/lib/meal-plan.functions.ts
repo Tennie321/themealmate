@@ -146,17 +146,17 @@ RULES:
 Return JSON matching the schema. Do NOT invent ids — only use ids from catalog.`;
 
     const userPrompt = `Goal: ${goals.goal_type}
-Calorie target: ${goals.calorie_target} kcal
+Calorie target: ${goals.calorie_target} cal
 Protein target: ${goals.protein_target} g
 Daily budget: $${(goals.daily_budget_cents / 100).toFixed(2)}
 Allergies (hard): ${(prefs?.allergies ?? []).join(", ") || "none"}
 Diet tags: ${(prefs?.diet_tags ?? []).join(", ") || "none"}
 
-Catalog (id, name, brand, category, kcal/serving, protein g, carbs g, fat g, cents, serving, fav):
+Catalog (id, name, brand, category, cal/serving, protein g, carbs g, fat g, cents, serving, fav):
 ${catalogForPrompt
   .map(
     (c) =>
-      `${c.id} | ${c.name}${c.brand ? " (" + c.brand + ")" : ""} | ${c.category} | ${c.kcal}kcal P${c.p} C${c.c} F${c.f} | ${c.cents}¢ | ${c.serving}${c.fav ? " | FAV" : ""}`,
+      `${c.id} | ${c.name}${c.brand ? " (" + c.brand + ")" : ""} | ${c.category} | ${c.kcal}cal P${c.p} C${c.c} F${c.f} | ${c.cents}¢ | ${c.serving}${c.fav ? " | FAV" : ""}`,
   )
   .join("\n")}`;
 
