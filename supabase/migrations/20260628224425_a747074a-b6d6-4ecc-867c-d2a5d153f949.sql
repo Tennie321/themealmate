@@ -1,0 +1,1 @@
+ALTER TABLE public.preferences ADD COLUMN IF NOT EXISTS taste_profile jsonb NOT NULL DEFAULT '[]'::jsonb;

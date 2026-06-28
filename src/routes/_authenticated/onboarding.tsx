@@ -17,12 +17,13 @@ import {
   savePreferences,
   getStores,
 } from "@/lib/data.functions";
+import { TasteQuestions } from "@/components/TasteQuestions";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: Onboarding,
 });
 
-type Step = 0 | 1 | 2 | 3 | 4;
+type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 function Onboarding() {
   const navigate = useNavigate();
@@ -80,7 +81,7 @@ function Onboarding() {
         setStep(4);
       } else if (step === 4) {
         await savePrefsM.mutateAsync({ allergies, dislikes, diet_tags: dietTags, single_serving_only: singleServingOnly });
-        navigate({ to: "/dashboard" });
+        setStep(5);
       }
     } catch (e: any) {
       toast.error(e.message ?? "Couldn't save");
@@ -96,7 +97,7 @@ function Onboarding() {
           <button onClick={() => setStep((s) => (s - 1) as Step)} className="text-muted-foreground"><ArrowLeft className="w-5 h-5" /></button>
         ) : <div className="w-5" />}
         <div className="flex gap-1.5">
-          {[0,1,2,3,4].map((i) => (
+          {[0,1,2,3,4,5].map((i) => (
             <div key={i} className={`h-1.5 rounded-full transition-all ${i === step ? "w-6 bg-primary" : i < step ? "w-3 bg-primary/50" : "w-3 bg-border"}`} />
           ))}
         </div>
@@ -282,15 +283,27 @@ function Onboarding() {
             </div>
           </div>
         )}
+
+        {step === 5 && (
+          <div>
+            <h1 className="text-3xl font-bold">Your taste</h1>
+            <p className="text-muted-foreground mt-2">A few quick picks so the AI plans food you'll actually eat.</p>
+            <div className="mt-6">
+              <TasteQuestions ctaLabel="Finish & build my plan" onSaved={() => navigate({ to: "/dashboard" })} />
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="fixed bottom-0 inset-x-0 px-5 pb-6 pt-3 bg-gradient-to-t from-background via-background to-transparent">
-        <div className="max-w-md mx-auto">
-          <Button onClick={next} disabled={busy} className="w-full h-14 rounded-2xl bg-hero-gradient text-white text-base">
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : step === 4 ? "Finish & build my plan" : "Continue"}
-          </Button>
+      {step !== 5 && (
+        <div className="fixed bottom-0 inset-x-0 px-5 pb-6 pt-3 bg-gradient-to-t from-background via-background to-transparent">
+          <div className="max-w-md mx-auto">
+            <Button onClick={next} disabled={busy} className="w-full h-14 rounded-2xl bg-hero-gradient text-white text-base">
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

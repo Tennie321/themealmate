@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, LogOut, Settings, LineChart, Heart, Bell } from "lucide-react";
 import { toast } from "sonner";
+import { TasteQuestions } from "@/components/TasteQuestions";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
@@ -76,6 +77,18 @@ function ProfilePage() {
             onCheckedChange={(v) => ssMut.mutate(v)}
           />
         </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-3xl p-5">
+        <div className="mb-3">
+          <div className="font-semibold text-sm">Taste profile</div>
+          <p className="text-xs text-muted-foreground mt-1">The AI uses these answers when picking your meals.</p>
+        </div>
+        <TasteQuestions
+          initial={Array.isArray(prefs?.taste_profile) ? prefs.taste_profile : []}
+          ctaLabel="Save taste profile"
+          onSaved={() => qc.invalidateQueries({ queryKey: ["dashboard"] })}
+        />
       </div>
 
       <div className="bg-card border border-border rounded-3xl p-5 space-y-4">

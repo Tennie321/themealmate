@@ -293,6 +293,9 @@ Protein target: ${goals.protein_target} g
 Daily budget: $${(goals.daily_budget_cents / 100).toFixed(2)}
 Allergies (hard): ${(prefs?.allergies ?? []).join(", ") || "none"}
 Diet tags: ${(prefs?.diet_tags ?? []).join(", ") || "none"}
+${Array.isArray(prefs?.taste_profile) && prefs.taste_profile.length
+  ? `Taste profile (use these to bias picks toward what the user actually likes):\n${prefs.taste_profile.map((t: any) => `- ${t.question} → ${t.answer}`).join("\n")}\n`
+  : ""}
 
 Catalog (id, name, brand, category, cal/serving, protein g, carbs g, fat g, cents, serving, fav):
 ${catalogForPrompt
