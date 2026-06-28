@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Check, ShoppingBasket, Sparkles } from "lucide-react";
+import { Check, ShoppingBasket, Sparkles, Tag, Target } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,8 +39,12 @@ function Index() {
             Eat this,<br />
             <span className="text-hero-gradient">get there.</span>
           </h1>
-          <p className="mt-5 text-lg text-muted-foreground leading-relaxed">
-            An AI meal planner that tells you exactly what to grab from your grocery store to hit your calorie and protein goals. Every item has a label. Zero guessing.
+          <p className="mt-5 text-lg text-foreground/80 leading-relaxed">
+            Other apps make you <span className="line-through text-muted-foreground">count</span> calories.<br />
+            We make you <span className="font-semibold text-foreground">hit</span> them.
+          </p>
+          <p className="mt-4 text-base text-muted-foreground leading-relaxed">
+            An AI meal planner that tells you exactly what to grab from your grocery store. Every item has a label — the label IS the calorie count.
           </p>
           <Link to="/auth" className="mt-7 block">
             <Button className="w-full h-14 text-base rounded-2xl bg-hero-gradient text-white hover:opacity-95 shadow-lg shadow-primary/25">
@@ -49,9 +53,22 @@ function Index() {
           </Link>
         </section>
 
+        <section className="bg-card border border-border rounded-3xl p-5 mb-4">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-primary font-semibold">
+            <Target className="w-3.5 h-3.5" /> Dead accurate
+          </div>
+          <p className="mt-2 text-sm text-foreground leading-relaxed">
+            MyFitnessPal users misjudge portions by <span className="font-bold">20–30%</span>. Eyeballing a "chicken breast" isn't tracking — it's guessing.
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            With MealMate, every meal is a packaged item with a nutrition label. No weighing. No estimating. What the label says is what it is.
+          </p>
+        </section>
+
         <section className="space-y-4 mt-4">
           {[
-            { icon: Sparkles, title: "AI plans, real food", body: "We pick from packaged items at your store with labels you can read." },
+            { icon: Tag, title: "The label IS the count", body: "No weighing scales, no guesswork. Every item is prepackaged with a nutrition label." },
+            { icon: Sparkles, title: "AI plans, real food", body: "We pick items from your store that hit your macros and your budget." },
             { icon: ShoppingBasket, title: "Shopping list by aisle", body: "Grouped by aisle with prices. Swap anything out of stock in one tap." },
             { icon: Check, title: "Accountability that sticks", body: "End-of-day check-in: you said X, here's what happened." },
           ].map((f) => (
