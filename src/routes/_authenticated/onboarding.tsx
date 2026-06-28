@@ -184,7 +184,7 @@ function Onboarding() {
               </div>
               <div className="bg-card border border-border rounded-2xl p-4">
                 <div className="text-xs text-muted-foreground uppercase tracking-wider">Estimated TDEE</div>
-                <div className="text-3xl font-bold mt-1">{tdee} <span className="text-base font-normal text-muted-foreground">kcal/day</span></div>
+                <div className="text-3xl font-bold mt-1">{tdee} <span className="text-base font-normal text-muted-foreground">cal/day</span></div>
                 <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <div className="text-muted-foreground text-xs">Calorie target</div>

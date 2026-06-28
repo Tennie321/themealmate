@@ -110,7 +110,7 @@ function ShoppingPage() {
             {alternates.map((alt) => (
               <button key={alt.id} onClick={() => sub(alt.id)} className="w-full text-left px-4 py-3 rounded-2xl border border-border hover:border-primary">
                 <div className="font-medium">{alt.name}</div>
-                <div className="text-xs text-muted-foreground">{alt.brand ?? ""} · {alt.calories} kcal · {alt.protein_g}g protein · {fmt(alt.price_cents)}</div>
+                <div className="text-xs text-muted-foreground">{alt.brand ?? ""} · {alt.calories} cal · {alt.protein_g}g protein · {fmt(alt.price_cents)}</div>
               </button>
             ))}
             {!loadingAlts && alternates.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No alternates.</p>}
