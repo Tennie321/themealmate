@@ -202,9 +202,13 @@ function Dashboard() {
         className="mt-4 w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-card border border-border"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-secondary grid place-items-center text-primary shrink-0">
-            <StoreIcon className="w-4 h-4" />
-          </div>
+          {currentStore ? (
+            <StoreLogo website={currentStore.website} chain={currentStore.chain} name={currentStore.name} size={36} />
+          ) : (
+            <div className="w-9 h-9 rounded-xl bg-secondary grid place-items-center text-primary shrink-0">
+              <StoreIcon className="w-4 h-4" />
+            </div>
+          )}
           <div className="text-left min-w-0">
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Shopping at</div>
             <div className="font-semibold truncate">{currentStore?.name ?? "Pick a store"}</div>
@@ -382,10 +386,14 @@ function Dashboard() {
                     await pickStore.mutateAsync(s.id);
                     generate.mutate({ storeId: s.id });
                   }}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border ${active ? "border-primary bg-secondary" : "border-border"}`}
+                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl border ${active ? "border-primary bg-secondary" : "border-border"}`}
                 >
-                  <span className="font-medium text-left">{s.name}</span>
-                  {active && <Check className="w-4 h-4 text-primary" />}
+                  <StoreLogo website={s.website} chain={s.chain} name={s.name} size={40} />
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="font-medium truncate">{s.name}</div>
+                    {s.chain && <div className="text-xs text-muted-foreground truncate">{s.chain}</div>}
+                  </div>
+                  {active && <Check className="w-4 h-4 text-primary shrink-0" />}
                 </button>
               );
             })}
