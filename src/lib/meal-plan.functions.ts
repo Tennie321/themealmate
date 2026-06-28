@@ -20,6 +20,7 @@ type Catalog = {
   diet_tags: string[];
   allergens: string[];
   in_stock: boolean;
+  is_single_serving?: boolean;
 };
 
 type MealSlot = "breakfast" | "lunch" | "dinner" | "snack" | "drink";
@@ -213,6 +214,7 @@ export const generatePlan = createServerFn({ method: "POST" })
     const allergies = new Set((prefs?.allergies ?? []).map((s: string) => s.toLowerCase()));
     const dislikes = new Set((prefs?.dislikes ?? []).map((s: string) => s.toLowerCase()));
     const dietTags = new Set((prefs?.diet_tags ?? []).map((s: string) => s.toLowerCase()));
+    const singleOnly = prefs?.single_serving_only !== false; // default true
     let allowed = catalog.filter((c) => {
       const itemAllergens = c.allergens ?? [];
       const itemDiets = c.diet_tags ?? [];
@@ -220,6 +222,7 @@ export const generatePlan = createServerFn({ method: "POST" })
       if (dislikes.has((c.name ?? "").toLowerCase())) return false;
       if (dietTags.has("vegetarian") && !itemDiets.includes("vegetarian") && !itemDiets.includes("vegan")) return false;
       if (dietTags.has("vegan") && !itemDiets.includes("vegan")) return false;
+      if (singleOnly && c.is_single_serving === false) return false;
       return true;
     });
     if (allowed.length < 8) allowed = catalog; // fallback
@@ -273,7 +276,7 @@ RULES:
 - Always include: 1 breakfast, 1 lunch, 1 dinner, 1-2 snacks, and 2-3 drinks (water should appear once; add coffee/tea/protein shake as fits).
 - Use the "category" field to slot items appropriately. Drinks go in meal_slot "drink".
 - Prefer items marked fav=true and avoid repeating the same item twice unless it's a drink.
-- Servings are decimal (e.g. 1, 1.5, 2). Adjust servings to hit macros precisely.
+- ${singleOnly ? "Servings MUST always be exactly 1. Every item is one prepackaged single serving — never split or multiply. To hit macros, add more items, do not change servings." : "Servings are decimal (e.g. 1, 1.5, 2). Adjust servings to hit macros precisely."}
 - Return positions as 0..N per meal_slot for stable ordering.
 
 Return ONLY a JSON object with this EXACT shape — no prose, no markdown fences, no extra fields:
