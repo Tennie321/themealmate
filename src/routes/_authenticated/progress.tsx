@@ -36,7 +36,7 @@ function Progress() {
   const startLb = d.start_weight_kg != null ? kgToLb(d.start_weight_kg) : null;
   const toGo = d.to_go_lbs != null ? Math.round(d.to_go_lbs) : null;
 
-  const chartData = d.weights.map((w) => ({
+  const chartData = d.weights.map((w: any) => ({
     date: w.logged_on.slice(5),
     lb: Math.round(kgToLb(w.weight_kg) * 10) / 10,
   }));
@@ -116,7 +116,7 @@ function Progress() {
 
         {d.weights.length > 0 && (
           <ul className="mt-4 divide-y divide-border max-h-48 overflow-y-auto">
-            {[...d.weights].reverse().map((w) => (
+            {[...d.weights].reverse().map((w: any) => (
               <li key={w.id} className="py-2 flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{w.logged_on}</span>
                 <span className="font-medium">{kgToLb(w.weight_kg).toFixed(1)} lb</span>
@@ -153,7 +153,7 @@ function Progress() {
         {d.week.series.length > 0 && (
           <div className="mt-4 h-28">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={d.week.series.map((s) => ({ date: s.date.slice(5), adh: Math.round(s.adherence) }))}>
+              <BarChart data={d.week.series.map((s: any) => ({ date: s.date.slice(5), adh: Math.round(s.adherence) }))}>
                 <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                 <YAxis hide domain={[0, 100]} />
                 <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
@@ -172,7 +172,7 @@ function Progress() {
       <section className="mt-5 bg-card border border-border rounded-3xl p-5">
         <h2 className="font-bold flex items-center gap-2"><Trophy className="w-4 h-4 text-primary" /> Badges</h2>
         <div className="mt-3 grid grid-cols-3 gap-3">
-          {d.badges.map((b) => (
+          {d.badges.map((b: any) => (
             <div
               key={b.key}
               className={`rounded-2xl p-3 text-center border ${b.earned ? "border-primary bg-secondary" : "border-border opacity-50"}`}
