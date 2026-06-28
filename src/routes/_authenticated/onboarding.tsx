@@ -262,6 +262,24 @@ function Onboarding() {
                 ))}
               </div>
             </div>
+            <div className="mt-6 bg-card border border-border rounded-2xl p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <div className="font-semibold text-sm">Single-serving only</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Only plan items that come prepackaged as one serving — no weighing, no counting servings. Turn off if you're fine buying bulk items (like a tub of oats or a pound of chicken) and counting servings yourself.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSingleServingOnly(!singleServingOnly)}
+                  className={`mt-1 inline-flex h-6 w-11 items-center rounded-full transition ${singleServingOnly ? "bg-primary" : "bg-muted"}`}
+                  aria-pressed={singleServingOnly}
+                >
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${singleServingOnly ? "translate-x-5" : "translate-x-1"}`} />
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
