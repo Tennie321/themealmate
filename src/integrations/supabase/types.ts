@@ -552,6 +552,30 @@ export type Database = {
           },
         ]
       }
+      user_badges: {
+        Row: {
+          badge_key: string
+          earned_at: string
+          id: string
+          meta: Json
+          user_id: string
+        }
+        Insert: {
+          badge_key: string
+          earned_at?: string
+          id?: string
+          meta?: Json
+          user_id: string
+        }
+        Update: {
+          badge_key?: string
+          earned_at?: string
+          id?: string
+          meta?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_goals: {
         Row: {
           biometrics: Json
@@ -559,6 +583,8 @@ export type Database = {
           daily_budget_cents: number
           goal_type: Database["public"]["Enums"]["goal_type"]
           protein_target: number
+          start_weight_kg: number | null
+          target_weight_kg: number | null
           tdee: number | null
           updated_at: string
           user_id: string
@@ -569,6 +595,8 @@ export type Database = {
           daily_budget_cents?: number
           goal_type?: Database["public"]["Enums"]["goal_type"]
           protein_target?: number
+          start_weight_kg?: number | null
+          target_weight_kg?: number | null
           tdee?: number | null
           updated_at?: string
           user_id: string
@@ -579,6 +607,8 @@ export type Database = {
           daily_budget_cents?: number
           goal_type?: Database["public"]["Enums"]["goal_type"]
           protein_target?: number
+          start_weight_kg?: number | null
+          target_weight_kg?: number | null
           tdee?: number | null
           updated_at?: string
           user_id?: string
@@ -610,6 +640,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      weight_logs: {
+        Row: {
+          created_at: string
+          id: string
+          logged_on: string
+          note: string | null
+          user_id: string
+          weight_kg: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logged_on?: string
+          note?: string | null
+          user_id: string
+          weight_kg: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logged_on?: string
+          note?: string | null
+          user_id?: string
+          weight_kg?: number
+        }
+        Relationships: []
       }
     }
     Views: {
