@@ -419,6 +419,8 @@ export const toggleFavorite = createServerFn({ method: "POST" })
   });
 
 export const submitCheckin = createServerFn({ method: "POST" })
+  // placeholder anchor
+  .middleware([requireSupabaseAuth])
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { planId: string; caloriesActual: number; proteinActual: number; notes?: string }) => input)
   .handler(async ({ data, context }: any) => {
