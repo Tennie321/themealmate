@@ -39,7 +39,7 @@ function Dashboard() {
   }, [onb.data, navigate]);
 
   const generate = useMutation({
-    mutationFn: () => generatePlan({ data: {} } as any),
+    mutationFn: () => generatePlan({ data: { regenerate: true } } as any),
     onSuccess: () => {
       toast.success("Plan ready");
       qc.invalidateQueries({ queryKey: ["dashboard"] });
@@ -49,7 +49,7 @@ function Dashboard() {
   });
 
   const fav = useMutation({
-    mutationFn: (item_id: string) => toggleFavorite({ data: { item_id } } as any),
+    mutationFn: (catalogItemId: string) => toggleFavorite({ data: { catalogItemId, favorite: true } } as any),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
   });
 
@@ -57,15 +57,17 @@ function Dashboard() {
     return <div className="p-6 flex items-center justify-center h-[60vh]"><Loader2 className="animate-spin" /></div>;
   }
 
-  const goals = dash.data?.goals;
-  const plan = dash.data?.plan;
+  const goals: any = dash.data?.goals;
+  const plan: any = dash.data?.plan;
   const items: any[] = plan?.plan_items ?? [];
 
-  const totals = items.filter((i) => !i.consumed_at || i.consumed_at).reduce(
+  const totals = items.reduce(
     (acc, it) => {
-      acc.cal += (it.calories ?? 0) * (it.servings ?? 1);
-      acc.pro += (it.protein_g ?? 0) * (it.servings ?? 1);
-      acc.cost += (it.cost_cents ?? 0);
+      const ci = it.catalog_items ?? {};
+      const s = Number(it.servings ?? 1);
+      acc.cal += Number(ci.calories ?? 0) * s;
+      acc.pro += Number(ci.protein_g ?? 0) * s;
+      acc.cost += Number(ci.price_cents ?? 0) * s;
       return acc;
     },
     { cal: 0, pro: 0, cost: 0 },
@@ -133,7 +135,7 @@ function Dashboard() {
           </div>
 
           {sections.map((sec) => {
-            const list = items.filter((i) => i.section === sec);
+            const list = items.filter((i) => i.meal_slot === sec).sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
             if (list.length === 0) return null;
             const meta = SECTION_META[sec];
             const Icon = meta.icon;
@@ -149,11 +151,11 @@ function Dashboard() {
                   {list.map((it) => (
                     <li key={it.id} className="px-5 py-3 flex gap-3 items-start">
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium leading-tight">{it.name}</div>
+                        <div className="font-medium leading-tight">{it.catalog_items?.name}</div>
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          {it.brand ? `${it.brand} · ` : ""}{Math.round((it.calories ?? 0) * (it.servings ?? 1))} kcal · {Math.round((it.protein_g ?? 0) * (it.servings ?? 1))}g protein {it.servings && it.servings !== 1 ? `· ×${it.servings}` : ""}
+                          {it.catalog_items?.brand ? `${it.catalog_items.brand} · ` : ""}{Math.round((it.catalog_items?.calories ?? 0) * Number(it.servings ?? 1))} kcal · {Math.round(Number(it.catalog_items?.protein_g ?? 0) * Number(it.servings ?? 1))}g protein {Number(it.servings) !== 1 ? `· ×${it.servings}` : ""}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-0.5">{fmt(it.cost_cents ?? 0)}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{fmt(Number(it.catalog_items?.price_cents ?? 0) * Number(it.servings ?? 1))}</div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <button onClick={() => it.catalog_item_id && fav.mutate(it.catalog_item_id)} className="text-muted-foreground hover:text-destructive">
@@ -193,40 +195,54 @@ function Dashboard() {
 
 function SwapSheet({ target, onClose }: { target: any; onClose: () => void }) {
   const qc = useQueryClient();
-  const [reason, setReason] = useState("");
-  const swap = useMutation({
-    mutationFn: () => swapItem({ data: { plan_item_id: target.id, reason } } as any),
-    onSuccess: () => {
+  const [alternates, setAlternates] = useState<any[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!target) { setAlternates(null); return; }
+    setLoading(true);
+    swapItem({ data: { planItemId: target.id } } as any)
+      .then((r: any) => setAlternates(r.alternates ?? []))
+      .catch((e: any) => toast.error(e.message ?? "Couldn't load options"))
+      .finally(() => setLoading(false));
+  }, [target]);
+
+  async function pick(id: string) {
+    try {
+      await swapItem({ data: { planItemId: target.id, replacementId: id } } as any);
       toast.success("Swapped");
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["shopping"] });
       onClose();
-    },
-    onError: (e: any) => toast.error(e.message ?? "Couldn't swap"),
-  });
+    } catch (e: any) { toast.error(e.message ?? "Couldn't swap"); }
+  }
+
   return (
     <Sheet open={!!target} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-3xl">
+      <SheetContent side="bottom" className="rounded-t-3xl max-h-[80vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Swap {target?.name}</SheetTitle>
+          <SheetTitle>Swap {target?.catalog_items?.name}</SheetTitle>
         </SheetHeader>
-        <div className="space-y-3 mt-4">
-          {["Don't like it", "Don't have time", "Want something lighter", "Want more protein", "Out of stock"].map((r) => (
+        <div className="space-y-2 mt-4">
+          {loading && <div className="grid place-items-center py-10"><Loader2 className="animate-spin" /></div>}
+          {alternates?.map((alt) => (
             <button
-              key={r}
-              onClick={() => setReason(r)}
-              className={`w-full text-left px-4 py-3 rounded-2xl border ${reason === r ? "border-primary bg-secondary" : "border-border"}`}
+              key={alt.id}
+              onClick={() => pick(alt.id)}
+              className="w-full text-left px-4 py-3 rounded-2xl border border-border hover:border-primary"
             >
-              {r}
+              <div className="font-medium">{alt.name}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {alt.brand ?? ""} · {alt.calories} kcal · {alt.protein_g}g protein · {fmt(alt.price_cents)}
+              </div>
+              <div className="text-[11px] text-muted-foreground mt-1">
+                {alt.deltaCal >= 0 ? `+${alt.deltaCal}` : alt.deltaCal} kcal · {alt.deltaProtein >= 0 ? `+${alt.deltaProtein}` : alt.deltaProtein}g protein
+              </div>
             </button>
           ))}
-          <Button
-            onClick={() => swap.mutate()}
-            disabled={swap.isPending}
-            className="w-full h-12 rounded-2xl bg-hero-gradient text-white"
-          >
-            {swap.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Find me something else"}
-          </Button>
+          {alternates && alternates.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-6">No alternates available.</p>
+          )}
         </div>
       </SheetContent>
     </Sheet>
