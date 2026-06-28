@@ -215,6 +215,8 @@ export const generatePlan = createServerFn({ method: "POST" })
     const dislikes = new Set((prefs?.dislikes ?? []).map((s: string) => s.toLowerCase()));
     const dietTags = new Set((prefs?.diet_tags ?? []).map((s: string) => s.toLowerCase()));
     const singleOnly = prefs?.single_serving_only !== false; // default true
+    const healthPref: "healthier" | "balanced" | "indulgent" =
+      (prefs?.health_preference as any) ?? "balanced";
     let allowed = catalog.filter((c) => {
       const itemAllergens = c.allergens ?? [];
       const itemDiets = c.diet_tags ?? [];
@@ -277,6 +279,13 @@ RULES:
 - Use the "category" field to slot items appropriately. Drinks go in meal_slot "drink".
 - Prefer items marked fav=true and avoid repeating the same item twice unless it's a drink.
 - ${singleOnly ? "Servings MUST always be exactly 1. Every item is one prepackaged single serving — never split or multiply. To hit macros, add more items, do not change servings." : "Servings are decimal (e.g. 1, 1.5, 2). Adjust servings to hit macros precisely."}
+- HEALTH BIAS: ${
+      healthPref === "healthier"
+        ? "Strongly prefer whole foods, lean proteins, fruit, veg, plain Greek yogurt, oats, eggs, nuts, and minimally-processed items. Avoid candy, chips, sugary drinks, sweetened cereals, and ultra-processed snacks. Cap added sugar across the day."
+        : healthPref === "indulgent"
+          ? "It's OK to include tastier, more indulgent picks (flavored bars, sweet yogurts, chips, cookies, sweetened drinks) as long as calorie and protein targets are still hit."
+          : "Balanced mix: mostly whole-food, lean choices, with room for a tasty bar/snack/treat per day."
+    }
 - Return positions as 0..N per meal_slot for stable ordering.
 
 COHERENCE RULES (very important — meals must actually sound and taste good together):
