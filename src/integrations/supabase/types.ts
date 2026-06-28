@@ -14,7 +14,506 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      catalog_items: {
+        Row: {
+          aisle: string
+          allergens: string[]
+          brand: string | null
+          calories: number
+          carbs_g: number
+          category: string
+          created_at: string
+          diet_tags: string[]
+          fat_g: number
+          id: string
+          image_url: string | null
+          in_stock: boolean
+          last_seen_at: string
+          name: string
+          price_cents: number
+          protein_g: number
+          serving_label: string
+          source_url: string | null
+          store_chain: string
+          tags: string[]
+        }
+        Insert: {
+          aisle?: string
+          allergens?: string[]
+          brand?: string | null
+          calories: number
+          carbs_g?: number
+          category: string
+          created_at?: string
+          diet_tags?: string[]
+          fat_g?: number
+          id?: string
+          image_url?: string | null
+          in_stock?: boolean
+          last_seen_at?: string
+          name: string
+          price_cents?: number
+          protein_g?: number
+          serving_label?: string
+          source_url?: string | null
+          store_chain: string
+          tags?: string[]
+        }
+        Update: {
+          aisle?: string
+          allergens?: string[]
+          brand?: string | null
+          calories?: number
+          carbs_g?: number
+          category?: string
+          created_at?: string
+          diet_tags?: string[]
+          fat_g?: number
+          id?: string
+          image_url?: string | null
+          in_stock?: boolean
+          last_seen_at?: string
+          name?: string
+          price_cents?: number
+          protein_g?: number
+          serving_label?: string
+          source_url?: string | null
+          store_chain?: string
+          tags?: string[]
+        }
+        Relationships: []
+      }
+      check_ins: {
+        Row: {
+          adherence_pct: number
+          calories_actual: number
+          calories_target: number
+          created_at: string
+          id: string
+          notes: string | null
+          plan_date: string
+          plan_id: string | null
+          protein_actual: number
+          protein_target: number
+          reflection: string | null
+          user_id: string
+        }
+        Insert: {
+          adherence_pct?: number
+          calories_actual?: number
+          calories_target?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_date: string
+          plan_id?: string | null
+          protein_actual?: number
+          protein_target?: number
+          reflection?: string | null
+          user_id: string
+        }
+        Update: {
+          adherence_pct?: number
+          calories_actual?: number
+          calories_target?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_date?: string
+          plan_id?: string | null
+          protein_actual?: number
+          protein_target?: number
+          reflection?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "check_ins_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorites: {
+        Row: {
+          catalog_item_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          catalog_item_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          catalog_item_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meal_plans: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          plan_date: string
+          status: Database["public"]["Enums"]["plan_status"]
+          total_calories: number
+          total_cost_cents: number
+          total_protein: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_date: string
+          status?: Database["public"]["Enums"]["plan_status"]
+          total_calories?: number
+          total_cost_cents?: number
+          total_protein?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_date?: string
+          status?: Database["public"]["Enums"]["plan_status"]
+          total_calories?: number
+          total_cost_cents?: number
+          total_protein?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      plan_items: {
+        Row: {
+          catalog_item_id: string
+          created_at: string
+          id: string
+          is_locked: boolean
+          meal_slot: Database["public"]["Enums"]["meal_slot"]
+          plan_id: string
+          position: number
+          servings: number
+          user_id: string
+        }
+        Insert: {
+          catalog_item_id: string
+          created_at?: string
+          id?: string
+          is_locked?: boolean
+          meal_slot: Database["public"]["Enums"]["meal_slot"]
+          plan_id: string
+          position?: number
+          servings?: number
+          user_id: string
+        }
+        Update: {
+          catalog_item_id?: string
+          created_at?: string
+          id?: string
+          is_locked?: boolean
+          meal_slot?: Database["public"]["Enums"]["meal_slot"]
+          plan_id?: string
+          position?: number
+          servings?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_items_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      preferences: {
+        Row: {
+          allergies: string[]
+          diet_tags: string[]
+          dislikes: string[]
+          favorite_brands: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allergies?: string[]
+          diet_tags?: string[]
+          dislikes?: string[]
+          favorite_brands?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allergies?: string[]
+          diet_tags?: string[]
+          dislikes?: string[]
+          favorite_brands?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          onboarded: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          onboarded?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          onboarded?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shopping_list_items: {
+        Row: {
+          catalog_item_id: string
+          checked: boolean
+          created_at: string
+          id: string
+          list_id: string
+          qty: number
+          substituted_with_id: string | null
+          user_id: string
+        }
+        Insert: {
+          catalog_item_id: string
+          checked?: boolean
+          created_at?: string
+          id?: string
+          list_id: string
+          qty?: number
+          substituted_with_id?: string | null
+          user_id: string
+        }
+        Update: {
+          catalog_item_id?: string
+          checked?: boolean
+          created_at?: string
+          id?: string
+          list_id?: string
+          qty?: number
+          substituted_with_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_list_items_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "shopping_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_substituted_with_id_fkey"
+            columns: ["substituted_with_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopping_lists: {
+        Row: {
+          created_at: string
+          id: string
+          plan_id: string
+          status: Database["public"]["Enums"]["shopping_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plan_id: string
+          status?: Database["public"]["Enums"]["shopping_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plan_id?: string
+          status?: Database["public"]["Enums"]["shopping_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_lists_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: true
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stores: {
+        Row: {
+          chain: string
+          city: string | null
+          created_at: string
+          id: string
+          name: string
+          state: string | null
+          website: string | null
+        }
+        Insert: {
+          chain: string
+          city?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          state?: string | null
+          website?: string | null
+        }
+        Update: {
+          chain?: string
+          city?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          state?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      taste_signals: {
+        Row: {
+          catalog_item_id: string
+          created_at: string
+          id: string
+          signal: Database["public"]["Enums"]["taste_signal"]
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          catalog_item_id: string
+          created_at?: string
+          id?: string
+          signal: Database["public"]["Enums"]["taste_signal"]
+          user_id: string
+          weight?: number
+        }
+        Update: {
+          catalog_item_id?: string
+          created_at?: string
+          id?: string
+          signal?: Database["public"]["Enums"]["taste_signal"]
+          user_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taste_signals_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_goals: {
+        Row: {
+          biometrics: Json
+          calorie_target: number
+          daily_budget_cents: number
+          goal_type: Database["public"]["Enums"]["goal_type"]
+          protein_target: number
+          tdee: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          biometrics?: Json
+          calorie_target?: number
+          daily_budget_cents?: number
+          goal_type?: Database["public"]["Enums"]["goal_type"]
+          protein_target?: number
+          tdee?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          biometrics?: Json
+          calorie_target?: number
+          daily_budget_cents?: number
+          goal_type?: Database["public"]["Enums"]["goal_type"]
+          protein_target?: number
+          tdee?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_store: {
+        Row: {
+          store_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          store_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          store_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_store_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +522,11 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      goal_type: "cut" | "lean_bulk" | "maintain" | "custom"
+      meal_slot: "breakfast" | "lunch" | "dinner" | "snack" | "drink"
+      plan_status: "active" | "completed" | "archived"
+      shopping_status: "open" | "completed"
+      taste_signal: "liked" | "disliked" | "swapped_out" | "eaten" | "favorited"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +653,12 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      goal_type: ["cut", "lean_bulk", "maintain", "custom"],
+      meal_slot: ["breakfast", "lunch", "dinner", "snack", "drink"],
+      plan_status: ["active", "completed", "archived"],
+      shopping_status: ["open", "completed"],
+      taste_signal: ["liked", "disliked", "swapped_out", "eaten", "favorited"],
+    },
   },
 } as const
