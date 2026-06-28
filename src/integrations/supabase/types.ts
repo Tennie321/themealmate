@@ -255,6 +255,100 @@ export type Database = {
           },
         ]
       }
+      post_comments: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_likes: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          body: string | null
+          comment_count: number
+          created_at: string
+          id: string
+          image_url: string | null
+          kind: Database["public"]["Enums"]["post_kind"]
+          like_count: number
+          meta: Json
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          comment_count?: number
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          kind?: Database["public"]["Enums"]["post_kind"]
+          like_count?: number
+          meta?: Json
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          comment_count?: number
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          kind?: Database["public"]["Enums"]["post_kind"]
+          like_count?: number
+          meta?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       preferences: {
         Row: {
           allergies: string[]
@@ -528,6 +622,7 @@ export type Database = {
       goal_type: "cut" | "lean_bulk" | "maintain" | "custom"
       meal_slot: "breakfast" | "lunch" | "dinner" | "snack" | "drink"
       plan_status: "active" | "completed" | "archived"
+      post_kind: "progress" | "update" | "meal" | "share"
       shopping_status: "open" | "completed"
       taste_signal: "liked" | "disliked" | "swapped_out" | "eaten" | "favorited"
     }
@@ -660,6 +755,7 @@ export const Constants = {
       goal_type: ["cut", "lean_bulk", "maintain", "custom"],
       meal_slot: ["breakfast", "lunch", "dinner", "snack", "drink"],
       plan_status: ["active", "completed", "archived"],
+      post_kind: ["progress", "update", "meal", "share"],
       shopping_status: ["open", "completed"],
       taste_signal: ["liked", "disliked", "swapped_out", "eaten", "favorited"],
     },

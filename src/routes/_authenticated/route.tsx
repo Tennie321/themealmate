@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, Link, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, ShoppingBasket, Heart, User, CheckCircle2 } from "lucide-react";
+import { Home, ShoppingBasket, User, CheckCircle2, Users } from "lucide-react";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -36,8 +36,8 @@ function BottomNav({ path }: { path: string }) {
   const items = [
     { to: "/dashboard", label: "Today", icon: Home },
     { to: "/shopping", label: "List", icon: ShoppingBasket },
+    { to: "/feed", label: "Feed", icon: Users },
     { to: "/checkin", label: "Check-in", icon: CheckCircle2 },
-    { to: "/favorites", label: "Saved", icon: Heart },
     { to: "/profile", label: "Me", icon: User },
   ] as const;
   return (

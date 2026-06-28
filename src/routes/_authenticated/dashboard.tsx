@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Coffee, Sun, Moon, Cookie, Droplets } from "lucide-react";
+import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Coffee, Sun, Moon, Cookie, Droplets, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -158,6 +158,14 @@ function Dashboard() {
             Shopping list <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
+        {plan && (
+          <Link
+            to="/share"
+            className="mt-4 flex items-center justify-center gap-2 w-full h-11 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm"
+          >
+            <Share2 className="w-4 h-4" /> Share my day
+          </Link>
+        )}
       </section>
 
       {!plan && (
