@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Check, ShoppingBasket, Sparkles, Tag, Target, CheckSquare } from "lucide-react";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -16,6 +18,16 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) navigate({ to: "/dashboard" });
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (session) navigate({ to: "/dashboard" });
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [navigate]);
   return (
     <div className="min-h-screen bg-background">
       <header className="px-6 pt-8 pb-4 flex items-center justify-between max-w-md mx-auto">
