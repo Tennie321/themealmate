@@ -36,8 +36,8 @@ function ProfilePage() {
       <div className="bg-card border border-border rounded-3xl p-5 space-y-3">
         <Row label="Sex" value={bio.sex ?? "—"} />
         <Row label="Age" value={bio.age ?? "—"} />
-        <Row label="Height" value={bio.height_cm ? `${bio.height_cm} cm` : "—"} />
-        <Row label="Weight" value={bio.weight_kg ? `${bio.weight_kg} kg` : "—"} />
+        <Row label="Height" value={bio.height_cm ? (() => { const totalIn = Math.round(bio.height_cm / 2.54); return `${Math.floor(totalIn / 12)}′ ${totalIn % 12}″`; })() : "—"} />
+        <Row label="Weight" value={bio.weight_kg ? `${Math.round(bio.weight_kg * 2.2046226218)} lb` : "—"} />
         <Row label="Activity" value={bio.activity ?? "—"} />
       </div>
 

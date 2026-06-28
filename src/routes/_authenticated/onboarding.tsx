@@ -32,8 +32,9 @@ function Onboarding() {
   const [goal, setGoal] = useState<"cut" | "lean_bulk" | "maintain" | "custom">("maintain");
   const [sex, setSex] = useState<"male" | "female">("male");
   const [age, setAge] = useState(28);
-  const [heightCm, setHeightCm] = useState(178);
-  const [weightKg, setWeightKg] = useState(80);
+  const [heightFt, setHeightFt] = useState(5);
+  const [heightIn, setHeightIn] = useState(10);
+  const [weightLb, setWeightLb] = useState(176);
   const [activity, setActivity] = useState<Activity>("moderate");
   const [calOverride, setCalOverride] = useState<number | null>(null);
   const [proOverride, setProOverride] = useState<number | null>(null);
@@ -45,6 +46,8 @@ function Onboarding() {
 
   const stores = useQuery({ queryKey: ["stores"], queryFn: () => getStores() });
 
+  const heightCm = Math.round((heightFt * 12 + heightIn) * 2.54);
+  const weightKg = +(weightLb / 2.2046226218).toFixed(1);
   const tdee = calcTDEE({ sex, age, height_cm: heightCm, weight_kg: weightKg, activity });
   const adj = goalAdjustments(goal, tdee, weightKg);
   const calorieTarget = calOverride ?? adj.calorie_target;
@@ -142,10 +145,29 @@ function Onboarding() {
                   ))}
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div><Label className="text-sm">Age</Label><Input type="number" value={age} onChange={(e) => setAge(+e.target.value)} className="mt-1 h-11 rounded-xl" /></div>
-                <div><Label className="text-sm">Height (cm)</Label><Input type="number" value={heightCm} onChange={(e) => setHeightCm(+e.target.value)} className="mt-1 h-11 rounded-xl" /></div>
-                <div><Label className="text-sm">Weight (kg)</Label><Input type="number" value={weightKg} onChange={(e) => setWeightKg(+e.target.value)} className="mt-1 h-11 rounded-xl" /></div>
+              <div>
+                <Label className="text-sm">Age</Label>
+                <Input type="number" value={age} onChange={(e) => setAge(+e.target.value)} className="mt-1 h-11 rounded-xl" />
+              </div>
+              <div>
+                <Label className="text-sm">Height</Label>
+                <div className="grid grid-cols-2 gap-3 mt-1">
+                  <div className="relative">
+                    <Input type="number" value={heightFt} onChange={(e) => setHeightFt(+e.target.value)} className="h-11 rounded-xl pr-10" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">ft</span>
+                  </div>
+                  <div className="relative">
+                    <Input type="number" value={heightIn} onChange={(e) => setHeightIn(+e.target.value)} className="h-11 rounded-xl pr-10" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">in</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm">Weight</Label>
+                <div className="relative mt-1">
+                  <Input type="number" value={weightLb} onChange={(e) => setWeightLb(+e.target.value)} className="h-11 rounded-xl pr-12" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">lb</span>
+                </div>
               </div>
               <div>
                 <Label className="text-sm">Activity</Label>
