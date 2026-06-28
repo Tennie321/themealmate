@@ -43,6 +43,7 @@ function Onboarding() {
   const [allergies, setAllergies] = useState<string[]>([]);
   const [dislikes, setDislikes] = useState<string[]>([]);
   const [dietTags, setDietTags] = useState<string[]>([]);
+  const [singleServingOnly, setSingleServingOnly] = useState(true);
 
   const stores = useQuery({ queryKey: ["stores"], queryFn: () => getStores() });
 
@@ -78,7 +79,7 @@ function Onboarding() {
         await saveBudgetM.mutateAsync({ daily_budget_cents: Math.round(budget * 100) });
         setStep(4);
       } else if (step === 4) {
-        await savePrefsM.mutateAsync({ allergies, dislikes, diet_tags: dietTags });
+        await savePrefsM.mutateAsync({ allergies, dislikes, diet_tags: dietTags, single_serving_only: singleServingOnly });
         navigate({ to: "/dashboard" });
       }
     } catch (e: any) {
