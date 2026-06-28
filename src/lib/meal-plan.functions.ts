@@ -279,6 +279,15 @@ RULES:
 - ${singleOnly ? "Servings MUST always be exactly 1. Every item is one prepackaged single serving — never split or multiply. To hit macros, add more items, do not change servings." : "Servings are decimal (e.g. 1, 1.5, 2). Adjust servings to hit macros precisely."}
 - Return positions as 0..N per meal_slot for stable ordering.
 
+COHERENCE RULES (very important — meals must actually sound and taste good together):
+- Each meal slot (breakfast/lunch/dinner) should read like a real meal a person would sit down and eat, not a random pile of packaged snacks. Build it around ONE clear protein anchor + a complementary carb/produce side that flavor-wise belongs with it (e.g. chicken + rice + veg; turkey + tortilla + fruit; salmon + quinoa; eggs + oatmeal + berries; Greek yogurt + granola + fruit).
+- Foods in the same meal must be flavor-congruent. Do NOT combine clashing items (e.g. tuna + chocolate protein bar, jerky + yogurt, cottage cheese + salsa-flavored chips). Sweet stays with sweet, savory with savory.
+- Do NOT fill meals with protein bars / shakes / jerky to hit macros. Bars and shakes are SNACK or DRINK only (max 1 bar per day total). Lunch and dinner must be food-based (a real protein + side), never "bar + bar + shake".
+- If the user's taste profile or favorites point to one specific protein bar brand, use ONLY that bar (don't mix Quest + Built + RXBAR in one day). Same rule for shakes — pick one brand the user prefers and stick with it.
+- Snacks should feel intentional: one bar OR one yogurt OR one piece of fruit + nuts — not three bars stacked.
+- Even when single-serving is on, treat each slot as a composed mini-meal: anchor protein + 1 supporting item that pairs with it, not just two unrelated packages.
+- Prefer variety across the day: don't repeat the same protein source at lunch and dinner; don't stack two yogurts; don't pick two bars.
+
 Return ONLY a JSON object with this EXACT shape — no prose, no markdown fences, no extra fields:
 {
   "items": [
