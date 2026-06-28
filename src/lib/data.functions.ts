@@ -86,7 +86,7 @@ export const saveBudget = createServerFn({ method: "POST" })
 export const savePreferences = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { allergies: string[]; dislikes: string[]; diet_tags: string[]; favorite_brands?: string[] }) => input,
+    (input: { allergies: string[]; dislikes: string[]; diet_tags: string[]; favorite_brands?: string[]; single_serving_only?: boolean }) => input,
   )
   .handler(async ({ data, context }: any) => {
     await context.supabase.from("preferences").upsert(
@@ -96,10 +96,24 @@ export const savePreferences = createServerFn({ method: "POST" })
         dislikes: data.dislikes,
         diet_tags: data.diet_tags,
         favorite_brands: data.favorite_brands ?? [],
+        ...(typeof data.single_serving_only === "boolean" ? { single_serving_only: data.single_serving_only } : {}),
       },
       { onConflict: "user_id" },
     );
     await context.supabase.from("profiles").update({ onboarded: true }).eq("id", context.userId);
+    return { ok: true };
+  });
+
+export const setSingleServingOnly = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { value: boolean }) => input)
+  .handler(async ({ data, context }: any) => {
+    await context.supabase
+      .from("preferences")
+      .upsert(
+        { user_id: context.userId, single_serving_only: data.value },
+        { onConflict: "user_id" },
+      );
     return { ok: true };
   });
 
@@ -115,7 +129,7 @@ export const getDashboard = createServerFn({ method: "GET" })
   .handler(async ({ context }: any) => {
     const userId = context.userId;
     const planDate = todayLocal();
-    const [{ data: goals }, { data: profile }, { data: plan }, { data: checkin }, { data: userStore }, { data: stores }] = await Promise.all([
+    const [{ data: goals }, { data: profile }, { data: plan }, { data: checkin }, { data: userStore }, { data: stores }, { data: prefs }] = await Promise.all([
       context.supabase.from("user_goals").select("*").eq("user_id", userId).maybeSingle(),
       context.supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
       context.supabase
@@ -127,8 +141,9 @@ export const getDashboard = createServerFn({ method: "GET" })
       context.supabase.from("check_ins").select("*").eq("user_id", userId).eq("plan_date", planDate).maybeSingle(),
       context.supabase.from("user_store").select("store_id, stores(*)").eq("user_id", userId).maybeSingle(),
       context.supabase.from("stores").select("id, name, chain").order("name"),
+      context.supabase.from("preferences").select("*").eq("user_id", userId).maybeSingle(),
     ]);
-    return { goals, profile, plan, checkin, planDate, currentStore: userStore?.stores ?? null, stores: stores ?? [] };
+    return { goals, profile, plan, checkin, planDate, currentStore: userStore?.stores ?? null, stores: stores ?? [], preferences: prefs ?? null };
   });
 
 export const getShoppingList = createServerFn({ method: "GET" })
