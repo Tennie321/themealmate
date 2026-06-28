@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Check, ShoppingBasket, Sparkles, Tag, Target } from "lucide-react";
+import { Check, ShoppingBasket, Sparkles, Tag, Target, CheckSquare } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -63,6 +63,28 @@ function Index() {
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             With MealMate, every meal is a packaged item with a nutrition label. No weighing. No estimating. What the label says is what it is.
           </p>
+        </section>
+
+        <section className="bg-primary text-primary-foreground rounded-3xl p-6 mb-4">
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] font-bold opacity-90">
+            <CheckSquare className="w-3.5 h-3.5" /> How it works
+          </div>
+          <h2 className="mt-3 text-2xl font-bold leading-tight">
+            Eat it. <span className="opacity-80">→</span> Check it. <span className="opacity-80">→</span> Know where you stand.
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed opacity-90">
+            Your plan is a live checklist. Tap a meal when you eat it — calories eaten, calories left, protein hit, protein left all update instantly.
+          </p>
+          <ul className="mt-4 space-y-2 text-sm">
+            {["No separate logging", "No math", "No weighing", "Just check"].map((t) => (
+              <li key={t} className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-md bg-primary-foreground/15 grid place-items-center">
+                  <Check className="w-3.5 h-3.5" />
+                </div>
+                <span className="font-medium">{t}</span>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section className="space-y-4 mt-4">
