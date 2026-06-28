@@ -43,6 +43,7 @@ function Onboarding() {
   const [allergies, setAllergies] = useState<string[]>([]);
   const [dislikes, setDislikes] = useState<string[]>([]);
   const [dietTags, setDietTags] = useState<string[]>([]);
+  const [singleServingOnly, setSingleServingOnly] = useState(true);
 
   const stores = useQuery({ queryKey: ["stores"], queryFn: () => getStores() });
 
@@ -78,7 +79,7 @@ function Onboarding() {
         await saveBudgetM.mutateAsync({ daily_budget_cents: Math.round(budget * 100) });
         setStep(4);
       } else if (step === 4) {
-        await savePrefsM.mutateAsync({ allergies, dislikes, diet_tags: dietTags });
+        await savePrefsM.mutateAsync({ allergies, dislikes, diet_tags: dietTags, single_serving_only: singleServingOnly });
         navigate({ to: "/dashboard" });
       }
     } catch (e: any) {
@@ -259,6 +260,24 @@ function Onboarding() {
                 {["high_protein","vegetarian","pescatarian","low_carb","mediterranean"].map((a) => (
                   <Chip key={a} label={a.replace("_"," ")} active={dietTags.includes(a)} onClick={() => setDietTags(toggle(dietTags, a))} />
                 ))}
+              </div>
+            </div>
+            <div className="mt-6 bg-card border border-border rounded-2xl p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <div className="font-semibold text-sm">Single-serving only</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Only plan items that come prepackaged as one serving — no weighing, no counting servings. Turn off if you're fine buying bulk items (like a tub of oats or a pound of chicken) and counting servings yourself.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSingleServingOnly(!singleServingOnly)}
+                  className={`mt-1 inline-flex h-6 w-11 items-center rounded-full transition ${singleServingOnly ? "bg-primary" : "bg-muted"}`}
+                  aria-pressed={singleServingOnly}
+                >
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${singleServingOnly ? "translate-x-5" : "translate-x-1"}`} />
+                </button>
               </div>
             </div>
           </div>

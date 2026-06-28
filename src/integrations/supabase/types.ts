@@ -28,6 +28,7 @@ export type Database = {
           id: string
           image_url: string | null
           in_stock: boolean
+          is_single_serving: boolean
           last_seen_at: string
           name: string
           price_cents: number
@@ -50,6 +51,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           in_stock?: boolean
+          is_single_serving?: boolean
           last_seen_at?: string
           name: string
           price_cents?: number
@@ -72,6 +74,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           in_stock?: boolean
+          is_single_serving?: boolean
           last_seen_at?: string
           name?: string
           price_cents?: number
@@ -355,6 +358,7 @@ export type Database = {
           diet_tags: string[]
           dislikes: string[]
           favorite_brands: string[]
+          single_serving_only: boolean
           updated_at: string
           user_id: string
         }
@@ -363,6 +367,7 @@ export type Database = {
           diet_tags?: string[]
           dislikes?: string[]
           favorite_brands?: string[]
+          single_serving_only?: boolean
           updated_at?: string
           user_id: string
         }
@@ -371,6 +376,7 @@ export type Database = {
           diet_tags?: string[]
           dislikes?: string[]
           favorite_brands?: string[]
+          single_serving_only?: boolean
           updated_at?: string
           user_id?: string
         }

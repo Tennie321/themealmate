@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getDashboard } from "@/lib/data.functions";
+import { getDashboard, setSingleServingOnly } from "@/lib/data.functions";
 import { getReminderSettings, saveReminderSettings } from "@/lib/reminders.functions";
 import { requestNotificationPermission } from "@/hooks/useMealReminders";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,15 @@ function ProfilePage() {
       saveReminderSettings({ data: vars } as any),
     onSuccess: () => { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["reminders"] }); },
   });
+  const ssMut = useMutation({
+    mutationFn: (value: boolean) => setSingleServingOnly({ data: { value } } as any),
+    onSuccess: () => { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["dashboard"] }); },
+  });
   if (dash.isLoading) return <div className="p-10 grid place-items-center"><Loader2 className="animate-spin" /></div>;
   const goals: any = dash.data?.goals;
   const bio = goals?.biometrics ?? {};
+  const prefs: any = (dash.data as any)?.preferences;
+  const singleServing = prefs?.single_serving_only !== false;
   const times = reminders.data?.times ?? { breakfast: "08:00", lunch: "12:30", dinner: "18:30", snack: "15:30", drink: "10:00" };
   const enabled = reminders.data?.enabled ?? true;
 
@@ -53,6 +59,23 @@ function ProfilePage() {
         <Row label="Height" value={bio.height_cm ? (() => { const totalIn = Math.round(bio.height_cm / 2.54); return `${Math.floor(totalIn / 12)}′ ${totalIn % 12}″`; })() : "—"} />
         <Row label="Weight" value={bio.weight_kg ? `${Math.round(bio.weight_kg * 2.2046226218)} lb` : "—"} />
         <Row label="Activity" value={bio.activity ?? "—"} />
+      </div>
+
+      <div className="bg-card border border-border rounded-3xl p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1">
+            <div className="font-semibold text-sm">Single-serving only</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {singleServing
+                ? "On — every planned item is one prepackaged serving. No weighing, no counting."
+                : "Off — bulk items are allowed and you'll count servings yourself."}
+            </p>
+          </div>
+          <Switch
+            checked={singleServing}
+            onCheckedChange={(v) => ssMut.mutate(v)}
+          />
+        </div>
       </div>
 
       <div className="bg-card border border-border rounded-3xl p-5 space-y-4">
