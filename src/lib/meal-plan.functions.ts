@@ -90,10 +90,12 @@ export const generatePlan = createServerFn({ method: "POST" })
     const dislikes = new Set((prefs?.dislikes ?? []).map((s: string) => s.toLowerCase()));
     const dietTags = new Set((prefs?.diet_tags ?? []).map((s: string) => s.toLowerCase()));
     let allowed = catalog.filter((c) => {
-      if (c.allergens.some((a) => allergies.has(a.toLowerCase()))) return false;
-      if (dislikes.has(c.name.toLowerCase())) return false;
-      if (dietTags.has("vegetarian") && !c.diet_tags.includes("vegetarian") && !c.diet_tags.includes("vegan")) return false;
-      if (dietTags.has("vegan") && !c.diet_tags.includes("vegan")) return false;
+      const itemAllergens = c.allergens ?? [];
+      const itemDiets = c.diet_tags ?? [];
+      if (itemAllergens.some((a) => allergies.has((a ?? "").toLowerCase()))) return false;
+      if (dislikes.has((c.name ?? "").toLowerCase())) return false;
+      if (dietTags.has("vegetarian") && !itemDiets.includes("vegetarian") && !itemDiets.includes("vegan")) return false;
+      if (dietTags.has("vegan") && !itemDiets.includes("vegan")) return false;
       return true;
     });
     if (allowed.length < 8) allowed = catalog; // fallback
@@ -175,11 +177,21 @@ ${catalogForPrompt
         prompt: userPrompt,
         experimental_output: Output.object({ schema: PlanSchema }),
       });
-      parsed = result.experimental_output ?? result.output;
-      if (!parsed) {
-        // Fallback: try to parse text as JSON
-        parsed = JSON.parse(result.text);
+      const candidate =
+        result?.experimental_output ??
+        result?.output ??
+        (() => {
+          const text: string = result?.text ?? "";
+          // Strip ```json fences and extract first {...} block
+          const cleaned = text.replace(/```json|```/gi, "").trim();
+          const match = cleaned.match(/\{[\s\S]*\}/);
+          const jsonStr = match ? match[0] : cleaned;
+          try { return JSON.parse(jsonStr); } catch { return null; }
+        })();
+      if (!candidate || !Array.isArray(candidate.items)) {
+        throw new Error("Model did not return any meal items.");
       }
+      parsed = candidate;
     } catch (e: any) {
       throw new Error(`Plan generation failed: ${e?.message ?? "unknown error"}`);
     }
