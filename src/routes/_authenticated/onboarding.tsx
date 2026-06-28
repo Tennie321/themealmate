@@ -80,7 +80,7 @@ function Onboarding() {
         setStep(4);
       } else if (step === 4) {
         await savePrefsM.mutateAsync({ allergies, dislikes, diet_tags: dietTags, single_serving_only: singleServingOnly });
-        navigate({ to: "/dashboard" });
+        setStep(5);
       }
     } catch (e: any) {
       toast.error(e.message ?? "Couldn't save");
