@@ -282,6 +282,26 @@ function Onboarding() {
                 </button>
               </div>
             </div>
+            <div className="mt-5">
+              <Label className="text-sm">How healthy should the plan lean?</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {([
+                  { id: "healthier", label: "Healthier", body: "Whole foods, less sugar" },
+                  { id: "balanced", label: "Balanced", body: "Mix of both" },
+                  { id: "indulgent", label: "Less strict", body: "Tastier picks OK" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setHealthPref(opt.id)}
+                    className={`p-3 rounded-2xl border-2 text-left transition ${healthPref === opt.id ? "border-primary bg-secondary" : "border-border bg-card"}`}
+                  >
+                    <div className="font-semibold text-sm">{opt.label}</div>
+                    <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{opt.body}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
