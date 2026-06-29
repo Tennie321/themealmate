@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getDashboard, setSingleServingOnly, setHealthPreference } from "@/lib/data.functions";
+import { getDashboard, setSingleServingOnly, setHealthPreference, setPlanMode } from "@/lib/data.functions";
 import { getReminderSettings, saveReminderSettings } from "@/lib/reminders.functions";
 import { requestNotificationPermission } from "@/hooks/useMealReminders";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, LogOut, Settings, LineChart, Heart, Bell, Sparkles, MessageCircle, ChefHat } from "lucide-react";
 import { toast } from "sonner";
 import { TasteQuestions } from "@/components/TasteQuestions";
+import { TasteInsights } from "@/components/TasteInsights";
 import { ProfileSkeleton } from "@/components/skeletons";
 import { InviteFriends } from "@/components/InviteFriends";
 
@@ -35,12 +36,17 @@ function ProfilePage() {
       setHealthPreference({ data: { value } } as any),
     onSuccess: () => { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["dashboard"] }); },
   });
+  const pmMut = useMutation({
+    mutationFn: (value: "surprise" | "comfort") => setPlanMode({ data: { value } } as any),
+    onSuccess: () => { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["dashboard"] }); },
+  });
   if (dash.isLoading) return <ProfileSkeleton />;
   const goals: any = dash.data?.goals;
   const bio = goals?.biometrics ?? {};
   const prefs: any = (dash.data as any)?.preferences;
   const singleServing = prefs?.single_serving_only !== false;
   const healthPref: "healthier" | "balanced" | "indulgent" = prefs?.health_preference ?? "balanced";
+  const planMode: "surprise" | "comfort" = prefs?.plan_mode ?? "surprise";
   const times = reminders.data?.times ?? { breakfast: "08:00", lunch: "12:30", dinner: "18:30", snack: "15:30" };
   const enabled = reminders.data?.enabled ?? true;
 
@@ -107,6 +113,35 @@ function ProfilePage() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-3xl p-5">
+        <div className="font-semibold text-sm">Plan mode</div>
+        <p className="text-xs text-muted-foreground mt-1">How adventurous should your daily plan be?</p>
+        <div className="grid grid-cols-2 gap-2 mt-3">
+          {([
+            { id: "surprise", label: "Surprise me", body: "New foods you'll likely enjoy" },
+            { id: "comfort", label: "Stick with what works", body: "Lean on your favorites" },
+          ] as const).map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => pmMut.mutate(opt.id)}
+              className={`p-3 rounded-2xl border-2 text-left transition ${planMode === opt.id ? "border-primary bg-secondary" : "border-border bg-card"}`}
+            >
+              <div className="font-semibold text-sm">{opt.label}</div>
+              <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{opt.body}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-3xl p-5">
+        <div className="mb-3">
+          <div className="font-semibold text-sm">What we've learned about you</div>
+          <p className="text-xs text-muted-foreground mt-1">Auto-updated from your favorites, swaps, and check-ins.</p>
+        </div>
+        <TasteInsights />
       </div>
 
       <div className="bg-card border border-border rounded-3xl p-5">
