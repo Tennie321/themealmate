@@ -96,12 +96,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "An AI meal planner that tells you exactly what to eat from your grocery store to hit your calorie and protein goals." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8db0b154-f214-443f-a079-d9f477c9e1d2/id-preview-c21bd46e--e5083802-363b-4e08-b0f4-d7d06d7f7082.lovable.app-1782679674115.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8db0b154-f214-443f-a079-d9f477c9e1d2/id-preview-c21bd46e--e5083802-363b-4e08-b0f4-d7d06d7f7082.lovable.app-1782679674115.png" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "MealMate" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "apple-touch-icon", sizes: "120x120", href: "/apple-touch-icon-120.png" },
     ],
   }),
   shellComponent: RootShell,

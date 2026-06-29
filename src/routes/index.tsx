@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Check, ShoppingBasket, Sparkles, Tag, Target, CheckSquare } from "lucide-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AddToHomeScreen } from "@/components/AddToHomeScreen";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -122,6 +123,7 @@ function Index() {
           Premier Protein, Fairlife, Oikos, RXBAR, and 60+ packaged staples already in our catalog.
         </p>
       </main>
+      <AddToHomeScreen />
     </div>
   );
 }
