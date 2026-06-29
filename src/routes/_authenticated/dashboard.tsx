@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { getDashboard } from "@/lib/data.functions";
 import { getOnboardingStatus } from "@/lib/data.functions";
 import { generatePlan, swapItem, toggleFavorite, toggleConsumed, setSlotConsumed } from "@/lib/meal-plan.functions";
+import { submitPlanFeedback } from "@/lib/taste.functions";
 import { MacroRing } from "@/components/MacroRing";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Sun, Moon, Cookie, Share2, Store as StoreIcon, Check } from "lucide-react";
@@ -43,6 +45,9 @@ function Dashboard() {
   const reminders = useQuery({ queryKey: ["reminders"], queryFn: () => getReminderSettings() });
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [storePickerOpen, setStorePickerOpen] = useState(false);
+  const [newPlanOpen, setNewPlanOpen] = useState(false);
+  const [feedbackReasons, setFeedbackReasons] = useState<string[]>([]);
+  const [feedbackNote, setFeedbackNote] = useState("");
 
   useEffect(() => {
     if (onb.data && !onb.data.onboarded) navigate({ to: "/onboarding" });
@@ -67,6 +72,26 @@ function Dashboard() {
       generatePlan({ data: { regenerate: true, storeId: vars?.storeId } } as any),
     onSuccess: () => {
       toast.success("Plan ready");
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["shopping"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Couldn't build plan"),
+  });
+
+  const makeNewPlan = useMutation({
+    mutationFn: async () => {
+      if (feedbackReasons.length || feedbackNote.trim()) {
+        await submitPlanFeedback({
+          data: { reasons: feedbackReasons, note: feedbackNote.trim() || undefined },
+        } as any);
+      }
+      return generatePlan({ data: { regenerate: true } } as any);
+    },
+    onSuccess: () => {
+      toast.success("New plan ready — tuned to your feedback");
+      setNewPlanOpen(false);
+      setFeedbackReasons([]);
+      setFeedbackNote("");
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["shopping"] });
     },
