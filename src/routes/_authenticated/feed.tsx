@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Heart, MessageCircle, Loader2, Trash2, ImagePlus, Send, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { FeedSkeleton } from "@/components/skeletons";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   component: Feed,
@@ -74,9 +75,7 @@ function Feed() {
         </button>
       </div>
 
-      {feed.isLoading && (
-        <div className="grid place-items-center py-12"><Loader2 className="animate-spin" /></div>
-      )}
+      {feed.isLoading && <div className="mt-4"><FeedSkeleton /></div>}
 
       <div className="mt-4 space-y-4">
         {feed.data?.posts.map((p: any) => (
