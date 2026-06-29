@@ -579,7 +579,24 @@ ${catalogForPrompt
       );
     }
 
-    return { planId, totalCal: Math.round(totalCal), totalProtein: Math.round(totalProtein), totalCost: Math.round(totalCost) };
+    // Track generation count for the free-tier daily quota.
+    await supabase
+      .from("profiles")
+      .update({
+        plans_generated_on: today,
+        plans_generated_count: usedToday + 1,
+      })
+      .eq("id", userId);
+
+    return {
+      planId,
+      totalCal: Math.round(totalCal),
+      totalProtein: Math.round(totalProtein),
+      totalCost: Math.round(totalCost),
+      tier,
+      generations_used: usedToday + 1,
+      generations_limit: tier === "free" ? FREE_DAILY_LIMIT : null,
+    };
   });
 
 export const swapItem = createServerFn({ method: "POST" })
