@@ -20,7 +20,7 @@ function ShareDay() {
   const cardRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState<"download" | "share" | "post" | null>(null);
   const premium = usePremiumCheck();
-  const canExport = premium.has("share_export");
+  const canExport = premium.has("share_card_export");
   const canPost = premium.has("community_posting");
 
   if (dash.isLoading) {
@@ -69,7 +69,7 @@ function ShareDay() {
   }
 
   async function downloadPng() {
-    if (!canExport) { premium.showUpsell("share_export"); return; }
+    if (!canExport) { premium.showUpsell("share_card_export"); return; }
     try {
       setBusy("download");
       const blob = await renderPng();
@@ -85,7 +85,7 @@ function ShareDay() {
   }
 
   async function nativeShare() {
-    if (!canExport) { premium.showUpsell("share_export"); return; }
+    if (!canExport) { premium.showUpsell("share_card_export"); return; }
     try {
       setBusy("share");
       const blob = await renderPng();
