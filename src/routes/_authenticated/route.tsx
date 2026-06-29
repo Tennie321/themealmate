@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useRouterState } from "@tansta
 import { supabase } from "@/integrations/supabase/client";
 import { Home, ShoppingBasket, User, CheckCircle2, Users } from "lucide-react";
 import { useEffect } from "react";
+import { PremiumProvider } from "@/hooks/usePremiumCheck";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -25,10 +26,12 @@ function AuthedLayout() {
   const hideNav = path.startsWith("/onboarding");
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <Outlet />
-      {!hideNav && <BottomNav path={path} />}
-    </div>
+    <PremiumProvider>
+      <div className="min-h-screen bg-background pb-20">
+        <Outlet />
+        {!hideNav && <BottomNav path={path} />}
+      </div>
+    </PremiumProvider>
   );
 }
 
