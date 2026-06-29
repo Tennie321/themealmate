@@ -80,3 +80,38 @@ export const saveTasteProfile = createServerFn({ method: "POST" })
       );
     return { ok: true };
   });
+
+export const submitPlanFeedback = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { reasons: string[]; note?: string }) => input)
+  .handler(async ({ data, context }: any) => {
+    const reasons = (data.reasons ?? []).filter((r) => typeof r === "string" && r.trim().length);
+    const note = (data.note ?? "").trim();
+    if (reasons.length === 0 && !note) return { ok: true };
+
+    const { data: prefs } = await context.supabase
+      .from("preferences")
+      .select("taste_profile")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    const existing = Array.isArray(prefs?.taste_profile) ? prefs!.taste_profile : [];
+
+    const answerText = [reasons.join("; "), note].filter(Boolean).join(" — ");
+    const entry = {
+      id: `feedback_${Date.now()}`,
+      question: "What was wrong with the previous meal plan? (avoid this next time)",
+      answer: answerText,
+    };
+    // Keep at most the 8 most recent feedback entries plus all non-feedback taste answers
+    const nonFeedback = existing.filter((e: any) => !String(e?.id ?? "").startsWith("feedback_"));
+    const feedback = existing.filter((e: any) => String(e?.id ?? "").startsWith("feedback_"));
+    const trimmedFeedback = [...feedback, entry].slice(-8);
+
+    await context.supabase
+      .from("preferences")
+      .upsert(
+        { user_id: context.userId, taste_profile: [...nonFeedback, ...trimmedFeedback] },
+        { onConflict: "user_id" },
+      );
+    return { ok: true };
+  });
