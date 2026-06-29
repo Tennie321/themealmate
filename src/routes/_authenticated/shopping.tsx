@@ -7,6 +7,7 @@ import { Loader2, Check, Package } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { FoodImage } from "@/components/FoodImage";
+import { ShoppingSkeleton } from "@/components/skeletons";
 
 export const Route = createFileRoute("/_authenticated/shopping")({
   component: ShoppingPage,
@@ -44,7 +45,7 @@ function ShoppingPage() {
     } catch (e: any) { toast.error(e.message ?? "Failed"); }
   }
 
-  if (list.isLoading) return <div className="p-10 grid place-items-center"><Loader2 className="animate-spin" /></div>;
+  if (list.isLoading) return <ShoppingSkeleton />;
 
   const items = list.data?.items ?? [];
   const grouped: Record<string, any[]> = {};
