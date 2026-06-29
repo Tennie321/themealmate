@@ -463,7 +463,11 @@ function Dashboard() {
                     </div>
                     <div>
                       <h3 className="font-semibold">{meta.label}</h3>
-                      <p className="text-[11px] text-muted-foreground">{Math.round(secTotals.cal)} cal · {Math.round(secTotals.pro)}g protein</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {Math.round(secTotals.cal)}{mealTargets[sec].cal > 0 ? ` / ${mealTargets[sec].cal}` : ""} cal
+                        {" · "}
+                        {Math.round(secTotals.pro)}{mealTargets[sec].pro > 0 ? ` / ${mealTargets[sec].pro}` : ""}g protein
+                      </p>
                     </div>
                   </div>
                   <button
