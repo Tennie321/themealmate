@@ -772,24 +772,16 @@ export type Database = {
       }
     }
     Views: {
-      public_profiles: {
-        Row: {
-          display_name: string | null
-          id: string | null
-        }
-        Insert: {
-          display_name?: string | null
-          id?: string | null
-        }
-        Update: {
-          display_name?: string | null
-          id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_public_profiles: {
+        Args: { _ids: string[] }
+        Returns: {
+          display_name: string
+          id: string
+        }[]
+      }
     }
     Enums: {
       goal_type: "cut" | "lean_bulk" | "maintain" | "custom"
