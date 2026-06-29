@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getReminderSettings, markBriefingShown } from "@/lib/reminders.functions";
 import { useMealReminders, requestNotificationPermission } from "@/hooks/useMealReminders";
 import { MorningBriefing } from "@/components/MorningBriefing";
+import { WeeklyDigestModal } from "@/components/WeeklyDigest";
 import { FoodImage } from "@/components/FoodImage";
 import { StoreLogo } from "@/components/StoreLogo";
 import { DashboardSkeleton } from "@/components/skeletons";
@@ -648,6 +649,7 @@ function Dashboard() {
         spentCents={totals.cost}
         times={reminders.data?.times ?? {}}
       />
+      <WeeklyDigestModal />
     </div>
   );
 }
