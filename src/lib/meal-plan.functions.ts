@@ -613,10 +613,15 @@ ${catalogForPrompt
       });
     }
 
-    // Enforce single-serving when the user requires it: clamp every item to exactly 1 serving.
-    if (singleOnly) {
-      items = items.map((i) => ({ ...i, servings: 1 }));
-    }
+    // ZERO-THINKING: every item must be a whole-number count of pre-portioned units.
+    // No half-cups, no 1.5 bars. Eggs allow up to 3, everything else clamps to 1 by default.
+    items = items.map((i) => {
+      const c = byId.get(i.catalog_item_id);
+      const isEgg = /\begg\b/i.test(c?.name ?? "");
+      const max = isEgg ? 3 : 1;
+      const n = Math.max(1, Math.min(max, Math.round(i.servings || 1)));
+      return { ...i, servings: n };
+    });
 
     let totalCal = 0;
     let totalProtein = 0;
