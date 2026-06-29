@@ -12,9 +12,10 @@ export const listPosts = createServerFn({ method: "GET" })
     if (error) throw error;
     const userIds = Array.from(new Set((posts ?? []).map((p: any) => p.user_id)));
     const postIds = (posts ?? []).map((p: any) => p.id);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [{ data: profiles }, { data: likes }] = await Promise.all([
       userIds.length
-        ? context.supabase.rpc("get_public_profiles", { _ids: userIds })
+        ? supabaseAdmin.rpc("get_public_profiles", { _ids: userIds })
         : Promise.resolve({ data: [] }),
       postIds.length
         ? context.supabase.from("post_likes").select("post_id").eq("user_id", context.userId).in("post_id", postIds)
@@ -117,8 +118,9 @@ export const listComments = createServerFn({ method: "GET" })
       .eq("post_id", data.post_id)
       .order("created_at", { ascending: true });
     const userIds = Array.from(new Set((comments ?? []).map((c: any) => c.user_id)));
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profiles } = userIds.length
-      ? await context.supabase.rpc("get_public_profiles", { _ids: userIds })
+      ? await supabaseAdmin.rpc("get_public_profiles", { _ids: userIds })
       : { data: [] };
     const map = new Map((profiles ?? []).map((p: any) => [p.id, p]));
     return {
