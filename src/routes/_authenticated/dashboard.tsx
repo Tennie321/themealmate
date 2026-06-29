@@ -394,6 +394,75 @@ function Dashboard() {
 
       <SwapSheet target={swapTarget} onClose={() => setSwapTarget(null)} />
 
+      <Sheet open={newPlanOpen} onOpenChange={(o) => { setNewPlanOpen(o); if (!o) { setFeedbackReasons([]); setFeedbackNote(""); } }}>
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>What was off about this plan?</SheetTitle>
+          </SheetHeader>
+          <p className="text-xs text-muted-foreground mt-1">
+            Pick anything that didn't work — the AI will remember and adjust your next plan.
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {[
+              "Too many protein bars",
+              "Too many shakes",
+              "Repetitive / boring",
+              "Doesn't taste good together",
+              "Too expensive",
+              "Not filling enough",
+              "Too much food",
+              "Not enough protein",
+              "Items I don't like",
+              "Not healthy enough",
+              "Too healthy / bland",
+              "Hard to find at my store",
+            ].map((r) => {
+              const active = feedbackReasons.includes(r);
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() =>
+                    setFeedbackReasons((prev) => (prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]))
+                  }
+                  className={`text-left text-sm px-3 py-3 rounded-2xl border transition ${active ? "border-primary bg-secondary text-primary font-medium" : "border-border"}`}
+                >
+                  {active && <Check className="inline w-3.5 h-3.5 mr-1.5 -mt-0.5" />}
+                  {r}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-4">
+            <label className="text-xs font-medium text-muted-foreground">Anything else? (optional)</label>
+            <Textarea
+              value={feedbackNote}
+              onChange={(e) => setFeedbackNote(e.target.value)}
+              placeholder="e.g. I really don't like cottage cheese, prefer more savory breakfasts…"
+              className="mt-1 rounded-2xl"
+              rows={3}
+            />
+          </div>
+          <div className="mt-5 flex gap-2 pb-4">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-2xl h-12"
+              onClick={() => { setFeedbackReasons([]); setFeedbackNote(""); makeNewPlan.mutate(); }}
+              disabled={makeNewPlan.isPending}
+            >
+              Skip & rebuild
+            </Button>
+            <Button
+              className="flex-1 rounded-2xl h-12 font-semibold"
+              onClick={() => makeNewPlan.mutate()}
+              disabled={makeNewPlan.isPending}
+            >
+              {makeNewPlan.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Make new plan"}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <Sheet open={storePickerOpen} onOpenChange={setStorePickerOpen}>
         <SheetContent side="bottom" className="rounded-t-3xl max-h-[80vh] overflow-y-auto">
           <SheetHeader>
