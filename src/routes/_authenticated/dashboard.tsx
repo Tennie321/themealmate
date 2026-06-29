@@ -287,6 +287,23 @@ function Dashboard() {
 
   const sections = ["breakfast", "lunch", "dinner", "snack"] as const;
 
+  // Per-meal targets: read from goals.meal_targets if set, else even split.
+  const mealTargets: Record<typeof sections[number], { cal: number; pro: number }> = (() => {
+    const raw = (goals?.meal_targets ?? {}) as Record<string, { cal?: number; protein?: number }>;
+    const anySet = sections.some((s) => Number(raw?.[s]?.cal) > 0 || Number(raw?.[s]?.protein) > 0);
+    if (anySet) {
+      return sections.reduce((acc, s) => {
+        acc[s] = { cal: Number(raw?.[s]?.cal ?? 0), pro: Number(raw?.[s]?.protein ?? 0) };
+        return acc;
+      }, {} as Record<typeof sections[number], { cal: number; pro: number }>);
+    }
+    const split = { breakfast: 0.25, lunch: 0.3, dinner: 0.35, snack: 0.1 };
+    return sections.reduce((acc, s) => {
+      acc[s] = { cal: Math.round(calTarget * split[s]), pro: Math.round(proTarget * split[s]) };
+      return acc;
+    }, {} as Record<typeof sections[number], { cal: number; pro: number }>);
+  })();
+
   useMealReminders({
     enabled: !!reminders.data?.enabled && !!plan,
     items,
