@@ -397,6 +397,8 @@ export type Database = {
           onboarded: boolean
           reminder_times: Json
           reminders_enabled: boolean
+          streak_freeze_count: number
+          streak_freeze_reset_date: string | null
           updated_at: string
         }
         Insert: {
@@ -407,6 +409,8 @@ export type Database = {
           onboarded?: boolean
           reminder_times?: Json
           reminders_enabled?: boolean
+          streak_freeze_count?: number
+          streak_freeze_reset_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -417,6 +421,8 @@ export type Database = {
           onboarded?: boolean
           reminder_times?: Json
           reminders_enabled?: boolean
+          streak_freeze_count?: number
+          streak_freeze_reset_date?: string | null
           updated_at?: string
         }
         Relationships: []
