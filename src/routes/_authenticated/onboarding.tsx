@@ -283,6 +283,84 @@ function Onboarding() {
                   </div>
                 </div>
               </div>
+
+              <div className="bg-card border border-border rounded-2xl p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="font-semibold text-sm">Advanced: per-meal targets</div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Split your daily calories and protein across breakfast, lunch, dinner, and snacks. Leave off for an even split.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !perMealOn;
+                      setPerMealOn(next);
+                      if (next) setMealTargets(defaultSplit(calorieTarget, proteinTarget));
+                    }}
+                    className={`mt-1 inline-flex h-6 w-11 items-center rounded-full transition ${perMealOn ? "bg-primary" : "bg-muted"}`}
+                    aria-pressed={perMealOn}
+                  >
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${perMealOn ? "translate-x-5" : "translate-x-1"}`} />
+                  </button>
+                </div>
+                {perMealOn && (
+                  <div className="mt-4 space-y-2">
+                    <div className="grid grid-cols-[1fr_auto_auto] gap-2 items-center text-[10px] uppercase tracking-wider text-muted-foreground px-1">
+                      <span>Meal</span>
+                      <span className="w-20 text-center">Cal</span>
+                      <span className="w-20 text-center">Protein (g)</span>
+                    </div>
+                    {SLOTS.map((slot) => (
+                      <div key={slot} className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
+                        <span className="text-sm font-medium capitalize">{slot}</span>
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          value={mealTargets[slot].cal}
+                          onChange={(e) => {
+                            const v = e.target.value.replace(/[^\d]/g, "");
+                            setMealTargets((m) => ({ ...m, [slot]: { ...m[slot], cal: v } }));
+                          }}
+                          className="h-10 w-20 rounded-xl text-center"
+                        />
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          value={mealTargets[slot].protein}
+                          onChange={(e) => {
+                            const v = e.target.value.replace(/[^\d]/g, "");
+                            setMealTargets((m) => ({ ...m, [slot]: { ...m[slot], protein: v } }));
+                          }}
+                          className="h-10 w-20 rounded-xl text-center"
+                        />
+                      </div>
+                    ))}
+                    {(() => {
+                      const totals = SLOTS.reduce(
+                        (acc, s) => ({
+                          cal: acc.cal + (Number(mealTargets[s].cal) || 0),
+                          pro: acc.pro + (Number(mealTargets[s].protein) || 0),
+                        }),
+                        { cal: 0, pro: 0 },
+                      );
+                      const calOff = totals.cal - calorieTarget;
+                      const proOff = totals.pro - proteinTarget;
+                      return (
+                        <p className="text-[11px] text-muted-foreground pt-1">
+                          Total {totals.cal} cal / {totals.pro}g protein
+                          {(Math.abs(calOff) > 25 || Math.abs(proOff) > 5) && (
+                            <span className="text-amber-600">
+                              {" "}· off by {calOff > 0 ? "+" : ""}{calOff} cal, {proOff > 0 ? "+" : ""}{proOff}g
+                            </span>
+                          )}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
