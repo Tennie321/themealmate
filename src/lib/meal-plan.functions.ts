@@ -363,6 +363,7 @@ RULES:
 - Always include: 1 breakfast, 1 lunch, 1 dinner, and 1-2 snacks. Do NOT include drinks — the plan covers food only.
 - Use the "category" field to slot items appropriately. Skip items in the "drink" category entirely.
 - Prefer items marked fav=true and avoid repeating the same item twice.
+- DAILY UNIQUENESS: The catalog below has already been filtered to remove anything the user ate in the last 7 days (except their favorites). Build a plan that feels fresh vs. recent days — vary the protein anchors, brands, and meal styles.
 - ${singleOnly
       ? "GRAB-AND-GO MODE: Every item must be a ready-to-eat single package the user can buy at the store, open, and eat in full as one serving — no cooking, no portioning, no measuring. The calorie/protein numbers shown are for eating the WHOLE package. Servings MUST always be exactly 1. Never split, multiply, or assume the user will only eat part of it. To hit macros, ADD another grab-and-go item — never adjust servings. Forbid raw/bulk ingredients (raw chicken breast, ground beef, dry rice, tortilla packs, tubs of yogurt, jars of nut butter, blocks of tofu). Use prepackaged single units: protein shakes, single-serve Greek yogurt cups, string cheese, hard-boiled egg packs, jerky sticks, protein bars, microwave rice cups, microwave egg bites, fruit, single-serve hummus + pretzel cups, ready-to-eat salad bowls, frozen single-serve meals, deli single sandwiches."
       : "Servings are decimal (e.g. 1, 1.5, 2). Adjust servings to hit macros precisely."}
