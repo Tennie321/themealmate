@@ -163,17 +163,26 @@ function buildReliablePlan(catalog: Catalog[], goals: any): GeneratedPlanItem[] 
   return plan.map((item, index) => ({ ...item, position: plan.filter((p, idx) => p.meal_slot === item.meal_slot && idx < index).length }));
 }
 
-async function loadCatalogForUser(supabase: any, userId: string): Promise<Catalog[]> {
+async function loadCatalogForUser(
+  supabase: any,
+  userId: string,
+): Promise<{ catalog: Catalog[]; storeName: string | null; storeChain: string | null }> {
   const { data: us } = await supabase.from("user_store").select("store_id").eq("user_id", userId).maybeSingle();
   let chain: string | null = null;
+  let storeName: string | null = null;
   if (us?.store_id) {
-    const { data: store } = await supabase.from("stores").select("chain").eq("id", us.store_id).maybeSingle();
+    const { data: store } = await supabase
+      .from("stores")
+      .select("chain,name")
+      .eq("id", us.store_id)
+      .maybeSingle();
     chain = store?.chain ?? null;
+    storeName = store?.name ?? null;
   }
   let query = supabase.from("catalog_items").select("*").eq("in_stock", true);
   if (chain) query = query.eq("store_chain", chain);
   const { data } = await query;
-  return (data as Catalog[]) ?? [];
+  return { catalog: (data as Catalog[]) ?? [], storeName, storeChain: chain };
 }
 
 export const generatePlan = createServerFn({ method: "POST" })
