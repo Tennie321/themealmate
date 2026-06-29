@@ -426,10 +426,14 @@ ${catalogForPrompt
           .map((it) => it.meal_slot),
       );
       const usedIds = new Set(capped.map((i) => i.catalog_item_id));
+      const anchorPool = singleOnly ? allowed : catalog;
       for (const slot of ["lunch", "dinner"] as const) {
         if (slotsWithRealProtein.has(slot)) continue;
-        const anchor = catalog.find(
-          (c) => !usedIds.has(c.id) && isRealFoodProtein(c, `${c.name} ${c.brand ?? ""}`),
+        const anchor = anchorPool.find(
+          (c) =>
+            !usedIds.has(c.id) &&
+            (!singleOnly || c.is_single_serving !== false) &&
+            isRealFoodProtein(c, `${c.name} ${c.brand ?? ""}`),
         );
         if (anchor) {
           capped.push({ catalog_item_id: anchor.id, meal_slot: slot, servings: 1, position: 0 });
