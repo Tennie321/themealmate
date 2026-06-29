@@ -39,27 +39,27 @@ export const saveBiometrics = createServerFn({ method: "POST" })
       tdee: number;
       calorie_target: number;
       protein_target: number;
+      meal_targets?: Record<string, { cal: number; protein: number }> | null;
     }) => input,
   )
   .handler(async ({ data, context }: any) => {
+    const upsert: any = {
+      user_id: context.userId,
+      biometrics: {
+        sex: data.sex,
+        age: data.age,
+        height_cm: data.height_cm,
+        weight_kg: data.weight_kg,
+        activity: data.activity,
+      },
+      tdee: data.tdee,
+      calorie_target: data.calorie_target,
+      protein_target: data.protein_target,
+    };
+    if (data.meal_targets) upsert.meal_targets = data.meal_targets;
     await context.supabase
       .from("user_goals")
-      .upsert(
-        {
-          user_id: context.userId,
-          biometrics: {
-            sex: data.sex,
-            age: data.age,
-            height_cm: data.height_cm,
-            weight_kg: data.weight_kg,
-            activity: data.activity,
-          },
-          tdee: data.tdee,
-          calorie_target: data.calorie_target,
-          protein_target: data.protein_target,
-        },
-        { onConflict: "user_id" },
-      );
+      .upsert(upsert, { onConflict: "user_id" });
     return { ok: true };
   });
 
