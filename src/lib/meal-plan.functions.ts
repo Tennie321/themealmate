@@ -276,7 +276,9 @@ RULES:
 - Always include: 1 breakfast, 1 lunch, 1 dinner, and 1-2 snacks. Do NOT include drinks — the plan covers food only.
 - Use the "category" field to slot items appropriately. Skip items in the "drink" category entirely.
 - Prefer items marked fav=true and avoid repeating the same item twice.
-- ${singleOnly ? "Servings MUST always be exactly 1. Every item is one prepackaged single serving — never split or multiply. To hit macros, add more items, do not change servings." : "Servings are decimal (e.g. 1, 1.5, 2). Adjust servings to hit macros precisely."}
+- ${singleOnly
+      ? "GRAB-AND-GO MODE: Every item must be a ready-to-eat single package the user can buy at the store, open, and eat in full as one serving — no cooking, no portioning, no measuring. The calorie/protein numbers shown are for eating the WHOLE package. Servings MUST always be exactly 1. Never split, multiply, or assume the user will only eat part of it. To hit macros, ADD another grab-and-go item — never adjust servings. Forbid raw/bulk ingredients (raw chicken breast, ground beef, dry rice, tortilla packs, tubs of yogurt, jars of nut butter, blocks of tofu). Use prepackaged single units: protein shakes, single-serve Greek yogurt cups, string cheese, hard-boiled egg packs, jerky sticks, protein bars, microwave rice cups, microwave egg bites, fruit, single-serve hummus + pretzel cups, ready-to-eat salad bowls, frozen single-serve meals, deli single sandwiches."
+      : "Servings are decimal (e.g. 1, 1.5, 2). Adjust servings to hit macros precisely."}
 - HEALTH BIAS: ${
       healthPref === "healthier"
         ? "Strongly prefer whole foods, lean proteins, fruit, veg, plain Greek yogurt, oats, eggs, nuts, and minimally-processed items. Avoid candy, chips, sugary drinks, sweetened cereals, and ultra-processed snacks. Cap added sugar across the day."
@@ -292,7 +294,7 @@ COHERENCE RULES (very important — meals must actually sound and taste good tog
 - Do NOT fill meals with protein bars / shakes / jerky to hit macros. Bars and shakes are SNACK or DRINK only (max 1 bar per day total). Lunch and dinner must be food-based (a real protein + side), never "bar + bar + shake".
 - If the user's taste profile or favorites point to one specific protein bar brand, use ONLY that bar (don't mix Quest + Built + RXBAR in one day). Same rule for shakes — pick one brand the user prefers and stick with it.
 - Snacks should feel intentional: one bar OR one yogurt OR one piece of fruit + nuts — not three bars stacked.
-- Even when single-serving is on, treat each slot as a composed mini-meal: anchor protein + 1 supporting item that pairs with it, not just two unrelated packages.
+- Even when single-serving is on, treat each slot as a composed mini-meal: anchor protein + 1 supporting item that pairs with it, not just two unrelated packages. The pairing must still make sense as something you'd eat together (e.g. egg bites + fruit cup; ready-made chicken bowl + apple; turkey-and-cheese wrap + Greek yogurt). No clashing combos.
 - Prefer variety across the day: don't repeat the same protein source at lunch and dinner; don't stack two yogurts; don't pick two bars.
 
 Return ONLY a JSON object with this EXACT shape — no prose, no markdown fences, no extra fields:
