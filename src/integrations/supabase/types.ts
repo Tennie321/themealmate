@@ -261,6 +261,36 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          id: string
+          kind: string
+          read: boolean
+          sent_at: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          id?: string
+          kind: string
+          read?: boolean
+          sent_at?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          id?: string
+          kind?: string
+          read?: boolean
+          sent_at?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plan_items: {
         Row: {
           catalog_item_id: string
