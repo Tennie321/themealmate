@@ -24,6 +24,7 @@ import { FoodImage } from "@/components/FoodImage";
 import { StoreLogo } from "@/components/StoreLogo";
 import { DashboardSkeleton } from "@/components/skeletons";
 import { usePremiumCheck } from "@/hooks/usePremiumCheck";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -318,12 +319,15 @@ function Dashboard() {
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Today</p>
           <h1 className="text-2xl font-bold">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</h1>
         </div>
-        <button
-          onClick={async () => { await supabase.auth.signOut(); }}
-          className="text-xs text-muted-foreground"
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationsBell />
+          <button
+            onClick={async () => { await supabase.auth.signOut(); }}
+            className="text-xs text-muted-foreground px-2"
+          >
+            Sign out
+          </button>
+        </div>
       </header>
 
       <button
