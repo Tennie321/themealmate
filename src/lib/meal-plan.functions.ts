@@ -193,6 +193,29 @@ export const generatePlan = createServerFn({ method: "POST" })
     const userId = context.userId;
     const planDate = data.date ?? todayLocal();
 
+    // ---- Freemium gate: enforce daily plan-generation limit for free tier ----
+    const today = todayLocal();
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("plan_tier, plan_expires_at, plans_generated_on, plans_generated_count")
+      .eq("id", userId)
+      .maybeSingle();
+    const tier =
+      prof?.plan_tier && prof.plan_tier !== "free"
+        ? !prof?.plan_expires_at || new Date(prof.plan_expires_at).getTime() > Date.now()
+          ? prof.plan_tier
+          : "free"
+        : "free";
+    const usedToday = prof?.plans_generated_on === today ? prof?.plans_generated_count ?? 0 : 0;
+    const FREE_DAILY_LIMIT = 3;
+    if (tier === "free" && usedToday >= FREE_DAILY_LIMIT) {
+      const err: any = new Error(
+        `You've used all ${FREE_DAILY_LIMIT} free plan generations for today. Upgrade to Pro for unlimited plans.`,
+      );
+      err.code = "FREE_LIMIT_REACHED";
+      throw err;
+    }
+
     // If user picked a store for today, persist it first so loadCatalogForUser sees it
     if (data.storeId) {
       await supabase
@@ -213,6 +236,11 @@ export const generatePlan = createServerFn({ method: "POST" })
     ]);
 
     if (!goals) throw new Error("Please complete onboarding first.");
+    // Free tier doesn't get personalization — neutralize taste profile + signals.
+    if (tier === "free" && prefs) {
+      (prefs as any).taste_profile = [];
+    }
+    const effectiveSignals = tier === "free" ? [] : signals;
     const { catalog, storeName, storeChain } = await loadCatalogForUser(supabase, userId);
     if (catalog.length === 0) throw new Error("No catalog items available for your store yet.");
 
