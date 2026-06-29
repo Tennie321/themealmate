@@ -821,7 +821,7 @@ export const migrateFavoritesToStore = createServerFn({ method: "POST" })
             Math.abs(Number(p.protein_g ?? 0) - Number(src.protein_g ?? 0)) * 5 +
             (p.brand && src.brand && p.brand === src.brand ? -50 : 0),
         }))
-        .sort((a, b) => a.score - b.score);
+        .sort((a: any, b: any) => a.score - b.score);
       const best = scored[0].p;
       used.add(best.id);
 
