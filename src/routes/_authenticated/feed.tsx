@@ -115,8 +115,19 @@ function Feed() {
           </article>
         ))}
         {feed.data && feed.data.posts.length === 0 && (
-          <div className="text-center py-12 text-sm text-muted-foreground">
-            No posts yet — be the first to share.
+          <div className="flex flex-col items-center text-center py-12 px-6">
+            <div className="w-14 h-14 rounded-full bg-secondary grid place-items-center mb-3">
+              <Sparkles className="w-7 h-7 text-primary" />
+            </div>
+            <h3 className="font-bold">No posts yet</h3>
+            <p className="text-sm text-muted-foreground mt-1 mb-4 max-w-xs">
+              Share what you ate today and inspire someone else's plan.
+            </p>
+            <Button asChild>
+              <Link to="/share">
+                <ImagePlus className="w-4 h-4 mr-1.5" /> Share your day
+              </Link>
+            </Button>
           </div>
         )}
       </div>
