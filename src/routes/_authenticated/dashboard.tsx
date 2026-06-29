@@ -350,13 +350,39 @@ function Dashboard() {
           <Sparkles className="w-6 h-6 mb-2" />
           <h2 className="text-xl font-bold">No plan yet for today</h2>
           <p className="text-white/85 text-sm mt-1">We'll pick real packaged items from {currentStore?.name ?? "your store"} that hit your macros and budget.</p>
-          <Button
-            onClick={() => generate.mutate(undefined)}
-            disabled={generate.isPending}
-            className="mt-4 bg-white text-primary hover:bg-white/90 rounded-2xl w-full h-12 font-semibold"
-          >
-            {generate.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Build today's plan"}
-          </Button>
+          {genState === "generating" ? (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl bg-white/15 text-white font-semibold">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">{genMsg ?? "Building your plan…"}</span>
+              </div>
+              <button
+                onClick={cancelGenerate}
+                className="w-full h-10 rounded-2xl bg-white/10 text-white text-sm font-medium hover:bg-white/20"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : genState === "error" ? (
+            <div className="mt-4 space-y-2">
+              <div className="text-sm text-white/95 bg-white/10 rounded-2xl px-3 py-2">
+                {genError ?? "Something went wrong building your plan."}
+              </div>
+              <Button
+                onClick={() => startGenerate()}
+                className="bg-white text-primary hover:bg-white/90 rounded-2xl w-full h-12 font-semibold"
+              >
+                Try again
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={() => startGenerate()}
+              className="mt-4 bg-white text-primary hover:bg-white/90 rounded-2xl w-full h-12 font-semibold"
+            >
+              Build today's plan
+            </Button>
+          )}
         </div>
       )}
 
