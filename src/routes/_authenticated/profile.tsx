@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, LogOut, Settings, LineChart, Heart, Bell, Sparkles, MessageCircle } from "lucide-react";
+import { Loader2, LogOut, Settings, LineChart, Heart, Bell, Sparkles, MessageCircle, ChefHat } from "lucide-react";
 import { toast } from "sonner";
 import { TasteQuestions } from "@/components/TasteQuestions";
 import { ProfileSkeleton } from "@/components/skeletons";
@@ -166,6 +166,12 @@ function ProfilePage() {
       <Link to="/coach">
         <Button variant="outline" className="w-full h-12 rounded-2xl">
           <MessageCircle className="w-4 h-4 mr-2" /> AI Coach
+        </Button>
+      </Link>
+
+      <Link to="/restaurant">
+        <Button variant="outline" className="w-full h-12 rounded-2xl">
+          <ChefHat className="w-4 h-4 mr-2" /> Restaurant Mode
         </Button>
       </Link>
 
