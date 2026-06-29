@@ -717,6 +717,7 @@ export type Database = {
           calorie_target: number
           daily_budget_cents: number
           goal_type: Database["public"]["Enums"]["goal_type"]
+          meal_targets: Json | null
           protein_target: number
           start_weight_kg: number | null
           target_weight_kg: number | null
@@ -729,6 +730,7 @@ export type Database = {
           calorie_target?: number
           daily_budget_cents?: number
           goal_type?: Database["public"]["Enums"]["goal_type"]
+          meal_targets?: Json | null
           protein_target?: number
           start_weight_kg?: number | null
           target_weight_kg?: number | null
@@ -741,6 +743,7 @@ export type Database = {
           calorie_target?: number
           daily_budget_cents?: number
           goal_type?: Database["public"]["Enums"]["goal_type"]
+          meal_targets?: Json | null
           protein_target?: number
           start_weight_kg?: number | null
           target_weight_kg?: number | null
