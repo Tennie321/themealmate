@@ -298,11 +298,11 @@ function Dashboard() {
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-lg">Your meals</h2>
             <button
-              onClick={() => generate.mutate(undefined)}
-              disabled={generate.isPending}
-              className="text-xs text-muted-foreground flex items-center gap-1"
+              onClick={() => setNewPlanOpen(true)}
+              disabled={generate.isPending || makeNewPlan.isPending}
+              className="text-xs font-semibold text-primary flex items-center gap-1"
             >
-              {generate.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />} Regenerate
+              {(generate.isPending || makeNewPlan.isPending) ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />} Make new plan
             </button>
           </div>
 
