@@ -39,7 +39,7 @@ function ProfilePage() {
   const prefs: any = (dash.data as any)?.preferences;
   const singleServing = prefs?.single_serving_only !== false;
   const healthPref: "healthier" | "balanced" | "indulgent" = prefs?.health_preference ?? "balanced";
-  const times = reminders.data?.times ?? { breakfast: "08:00", lunch: "12:30", dinner: "18:30", snack: "15:30", drink: "10:00" };
+  const times = reminders.data?.times ?? { breakfast: "08:00", lunch: "12:30", dinner: "18:30", snack: "15:30" };
   const enabled = reminders.data?.enabled ?? true;
 
   return (
@@ -138,7 +138,7 @@ function ProfilePage() {
         </div>
         {enabled && (
           <div className="space-y-2">
-            {(["breakfast", "lunch", "dinner", "snack", "drink"] as const).map((slot) => (
+            {(["breakfast", "lunch", "dinner", "snack"] as const).map((slot) => (
               <div key={slot} className="flex items-center justify-between gap-3">
                 <span className="text-sm capitalize">{slot}</span>
                 <Input
