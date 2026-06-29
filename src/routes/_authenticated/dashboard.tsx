@@ -548,9 +548,23 @@ function Dashboard() {
                       />
                       <div className="flex-1 min-w-0">
                         <div className={`font-medium leading-tight ${it.consumed ? "line-through text-muted-foreground" : ""}`}>{it.catalog_items?.name}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          {it.catalog_items?.brand ? `${it.catalog_items.brand} · ` : ""}{Math.round((it.catalog_items?.calories ?? 0) * Number(it.servings ?? 1))} cal · {Math.round(Number(it.catalog_items?.protein_g ?? 0) * Number(it.servings ?? 1))}g protein {Number(it.servings) !== 1 ? `· ×${it.servings}` : ""}
+                        <div className="text-[11px] font-semibold text-primary mt-0.5">
+                          {(() => {
+                            const n = Math.max(1, Math.round(Number(it.servings ?? 1)));
+                            const isEgg = /\begg\b/i.test(it.catalog_items?.name ?? "");
+                            if (isEgg && n > 1) return `Just grab ${n} eggs`;
+                            return n > 1 ? `Just grab ${n}` : `Just grab 1`;
+                          })()}
                         </div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {it.catalog_items?.brand ? `${it.catalog_items.brand} · ` : ""}{Math.round((it.catalog_items?.calories ?? 0) * Number(it.servings ?? 1))} cal · {Math.round(Number(it.catalog_items?.protein_g ?? 0) * Number(it.servings ?? 1))}g protein
+                        </div>
+                        {it.catalog_items?.requires_cooking && it.catalog_items?.cooking_method && (
+                          <div className="text-[11px] text-muted-foreground mt-0.5">
+                            {it.catalog_items.cooking_method === "microwave" ? "🔥 Microwave" : it.catalog_items.cooking_method === "toaster" ? "🍞 Toaster" : `🔥 ${it.catalog_items.cooking_method}`}
+                            {it.catalog_items.cooking_time_minutes ? ` · ${it.catalog_items.cooking_time_minutes} min` : ""}
+                          </div>
+                        )}
                         <div className="text-xs text-muted-foreground mt-0.5">{fmt(Number(it.catalog_items?.price_cents ?? 0) * Number(it.servings ?? 1))}</div>
                         {it.catalog_item_id && (
                           <div className="flex items-center gap-1 mt-2">
