@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { getDashboard } from "@/lib/data.functions";
 import { getOnboardingStatus } from "@/lib/data.functions";
 import { generatePlan, swapItem, toggleFavorite, toggleConsumed, setSlotConsumed } from "@/lib/meal-plan.functions";
+import { submitPlanFeedback } from "@/lib/taste.functions";
 import { MacroRing } from "@/components/MacroRing";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Sun, Moon, Cookie, Share2, Store as StoreIcon, Check } from "lucide-react";
@@ -43,6 +45,9 @@ function Dashboard() {
   const reminders = useQuery({ queryKey: ["reminders"], queryFn: () => getReminderSettings() });
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [storePickerOpen, setStorePickerOpen] = useState(false);
+  const [newPlanOpen, setNewPlanOpen] = useState(false);
+  const [feedbackReasons, setFeedbackReasons] = useState<string[]>([]);
+  const [feedbackNote, setFeedbackNote] = useState("");
 
   useEffect(() => {
     if (onb.data && !onb.data.onboarded) navigate({ to: "/onboarding" });
@@ -67,6 +72,26 @@ function Dashboard() {
       generatePlan({ data: { regenerate: true, storeId: vars?.storeId } } as any),
     onSuccess: () => {
       toast.success("Plan ready");
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["shopping"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Couldn't build plan"),
+  });
+
+  const makeNewPlan = useMutation({
+    mutationFn: async () => {
+      if (feedbackReasons.length || feedbackNote.trim()) {
+        await submitPlanFeedback({
+          data: { reasons: feedbackReasons, note: feedbackNote.trim() || undefined },
+        } as any);
+      }
+      return generatePlan({ data: { regenerate: true } } as any);
+    },
+    onSuccess: () => {
+      toast.success("New plan ready — tuned to your feedback");
+      setNewPlanOpen(false);
+      setFeedbackReasons([]);
+      setFeedbackNote("");
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["shopping"] });
     },
@@ -273,11 +298,11 @@ function Dashboard() {
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-lg">Your meals</h2>
             <button
-              onClick={() => generate.mutate(undefined)}
-              disabled={generate.isPending}
-              className="text-xs text-muted-foreground flex items-center gap-1"
+              onClick={() => setNewPlanOpen(true)}
+              disabled={generate.isPending || makeNewPlan.isPending}
+              className="text-xs font-semibold text-primary flex items-center gap-1"
             >
-              {generate.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />} Regenerate
+              {(generate.isPending || makeNewPlan.isPending) ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />} Make new plan
             </button>
           </div>
 
@@ -368,6 +393,75 @@ function Dashboard() {
       )}
 
       <SwapSheet target={swapTarget} onClose={() => setSwapTarget(null)} />
+
+      <Sheet open={newPlanOpen} onOpenChange={(o) => { setNewPlanOpen(o); if (!o) { setFeedbackReasons([]); setFeedbackNote(""); } }}>
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>What was off about this plan?</SheetTitle>
+          </SheetHeader>
+          <p className="text-xs text-muted-foreground mt-1">
+            Pick anything that didn't work — the AI will remember and adjust your next plan.
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {[
+              "Too many protein bars",
+              "Too many shakes",
+              "Repetitive / boring",
+              "Doesn't taste good together",
+              "Too expensive",
+              "Not filling enough",
+              "Too much food",
+              "Not enough protein",
+              "Items I don't like",
+              "Not healthy enough",
+              "Too healthy / bland",
+              "Hard to find at my store",
+            ].map((r) => {
+              const active = feedbackReasons.includes(r);
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() =>
+                    setFeedbackReasons((prev) => (prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]))
+                  }
+                  className={`text-left text-sm px-3 py-3 rounded-2xl border transition ${active ? "border-primary bg-secondary text-primary font-medium" : "border-border"}`}
+                >
+                  {active && <Check className="inline w-3.5 h-3.5 mr-1.5 -mt-0.5" />}
+                  {r}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-4">
+            <label className="text-xs font-medium text-muted-foreground">Anything else? (optional)</label>
+            <Textarea
+              value={feedbackNote}
+              onChange={(e) => setFeedbackNote(e.target.value)}
+              placeholder="e.g. I really don't like cottage cheese, prefer more savory breakfasts…"
+              className="mt-1 rounded-2xl"
+              rows={3}
+            />
+          </div>
+          <div className="mt-5 flex gap-2 pb-4">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-2xl h-12"
+              onClick={() => { setFeedbackReasons([]); setFeedbackNote(""); makeNewPlan.mutate(); }}
+              disabled={makeNewPlan.isPending}
+            >
+              Skip & rebuild
+            </Button>
+            <Button
+              className="flex-1 rounded-2xl h-12 font-semibold"
+              onClick={() => makeNewPlan.mutate()}
+              disabled={makeNewPlan.isPending}
+            >
+              {makeNewPlan.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Make new plan"}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Sheet open={storePickerOpen} onOpenChange={setStorePickerOpen}>
         <SheetContent side="bottom" className="rounded-t-3xl max-h-[80vh] overflow-y-auto">
