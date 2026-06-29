@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine, BarChart, Bar } from "recharts";
 import { Loader2, Plus, Target, Trash2, Trophy, Flame, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { ProgressSkeleton } from "@/components/skeletons";
 
 export const Route = createFileRoute("/_authenticated/progress")({
   component: Progress,
@@ -28,7 +29,7 @@ function Progress() {
     if (newly.length) toast.success(`🏆 New badge unlocked!`);
   }, [q.data?.newly_earned]);
 
-  if (q.isLoading) return <div className="grid place-items-center h-[60vh]"><Loader2 className="animate-spin" /></div>;
+  if (q.isLoading) return <ProgressSkeleton />;
 
   const d = q.data!;
   const latestLb = d.latest_weight_kg != null ? kgToLb(d.latest_weight_kg) : null;
