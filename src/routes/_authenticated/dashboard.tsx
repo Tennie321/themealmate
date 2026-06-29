@@ -571,7 +571,7 @@ function Dashboard() {
                   disabled={pickStore.isPending || generate.isPending}
                   onClick={async () => {
                     await pickStore.mutateAsync(s.id);
-                    generate.mutate({ storeId: s.id });
+                    startGenerate({ storeId: s.id });
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl border ${active ? "border-primary bg-secondary" : "border-border"}`}
                 >
