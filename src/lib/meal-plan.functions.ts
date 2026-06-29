@@ -213,7 +213,7 @@ export const generatePlan = createServerFn({ method: "POST" })
     ]);
 
     if (!goals) throw new Error("Please complete onboarding first.");
-    const catalog = await loadCatalogForUser(supabase, userId);
+    const { catalog, storeName, storeChain } = await loadCatalogForUser(supabase, userId);
     if (catalog.length === 0) throw new Error("No catalog items available for your store yet.");
 
     // Hard-filter for allergies
