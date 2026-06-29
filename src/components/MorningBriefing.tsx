@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sun, Coffee, Sun as Lunch, Moon, Cookie, Droplets, Sparkles } from "lucide-react";
+import { Sun, Coffee, Sun as Lunch, Moon, Cookie, Sparkles } from "lucide-react";
 import { FoodImage } from "@/components/FoodImage";
 
 const ICONS: Record<string, any> = {
@@ -8,14 +8,12 @@ const ICONS: Record<string, any> = {
   lunch: Lunch,
   dinner: Moon,
   snack: Cookie,
-  drink: Droplets,
 };
 const LABELS: Record<string, string> = {
   breakfast: "Breakfast",
   lunch: "Lunch",
   dinner: "Dinner",
   snack: "Snacks",
-  drink: "Drinks",
 };
 
 export function MorningBriefing({
@@ -37,7 +35,7 @@ export function MorningBriefing({
   spentCents: number;
   times: Record<string, string>;
 }) {
-  const sections = ["breakfast", "lunch", "dinner", "snack", "drink"] as const;
+  const sections = ["breakfast", "lunch", "dinner", "snack"] as const;
   const totals = items.reduce(
     (acc, it) => {
       const ci = it.catalog_items ?? {};
