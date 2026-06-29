@@ -565,7 +565,7 @@ export const swapItem = createServerFn({ method: "POST" })
     if (!data.replacementId) {
       // Return suggestions: same meal_slot, similar calories ±30%, in stock
       const orig = item.catalog_items;
-      const catalog = await loadCatalogForUser(supabase, userId);
+      const { catalog } = await loadCatalogForUser(supabase, userId);
       const alternates = catalog
         .filter((c) => c.id !== orig.id && c.category !== "drink")
         .map((c) => ({
@@ -636,7 +636,7 @@ export const markOutOfStock = createServerFn({ method: "POST" })
   });
 
 async function fetchSwapAlternates(supabase: any, userId: string, orig: any) {
-  const catalog = await loadCatalogForUser(supabase, userId);
+  const { catalog } = await loadCatalogForUser(supabase, userId);
   return catalog
     .filter((c) => c.id !== orig.id && c.category === orig.category)
     .map((c) => ({
