@@ -85,7 +85,7 @@ export const submitPlanFeedback = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { reasons: string[]; note?: string }) => input)
   .handler(async ({ data, context }: any) => {
-    const reasons = (data.reasons ?? []).filter((r) => typeof r === "string" && r.trim().length);
+    const reasons = (data.reasons ?? []).filter((r: string) => typeof r === "string" && r.trim().length);
     const note = (data.note ?? "").trim();
     if (reasons.length === 0 && !note) return { ok: true };
 
