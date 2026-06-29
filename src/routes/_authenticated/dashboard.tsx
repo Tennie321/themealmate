@@ -228,7 +228,8 @@ function Dashboard() {
   });
 
   if (dash.isLoading || onb.isLoading) {
-    return <div className="p-6 flex items-center justify-center h-[60vh]"><Loader2 className="animate-spin" /></div>;
+    const { DashboardSkeleton } = require("@/components/skeletons");
+    return <DashboardSkeleton />;
   }
 
   const goals: any = dash.data?.goals;
