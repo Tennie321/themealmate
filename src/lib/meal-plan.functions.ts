@@ -187,7 +187,7 @@ async function loadCatalogForUser(
 
 export const generatePlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { date?: string; regenerate?: boolean; storeId?: string }) => input ?? {})
+  .inputValidator((input: { date?: string; regenerate?: boolean; storeId?: string; fallbackOnly?: boolean }) => input ?? {})
   .handler(async ({ data, context }: any) => {
     const supabase = context.supabase;
     const userId = context.userId;
@@ -337,7 +337,9 @@ ${catalogForPrompt
   .join("\n")}`;
 
     let parsed: { items: GeneratedPlanItem[] };
-    try {
+    if (data.fallbackOnly) {
+      parsed = { items: buildReliablePlan(ranked.length >= 5 ? ranked : allowed, goals) };
+    } else try {
       const result: any = await (generateText as any)({
         model,
         system: systemPrompt,
