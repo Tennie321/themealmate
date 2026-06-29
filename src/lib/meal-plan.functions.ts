@@ -21,6 +21,15 @@ type Catalog = {
   allergens: string[];
   in_stock: boolean;
   is_single_serving?: boolean;
+  is_natural_single_serve?: boolean;
+  is_pre_portioned?: boolean;
+  zero_thinking_eligible?: boolean;
+  requires_cooking?: boolean;
+  cooking_method?: string | null;
+  cooking_time_minutes?: number | null;
+  servings_per_package?: number;
+  macro_confidence?: string;
+  how_to_eat?: string | null;
 };
 
 type MealSlot = "breakfast" | "lunch" | "dinner" | "snack";
@@ -263,6 +272,15 @@ export const generatePlan = createServerFn({ method: "POST" })
       const itemAllergens = c.allergens ?? [];
       const itemDiets = c.diet_tags ?? [];
       if (c.category === "drink") return false;
+      // ZERO-THINKING: only single-serve / natural single / pre-portioned items.
+      // Bulk raw foods (raw chicken, bulk rice, tubs, jars, oils) are filtered out.
+      if (c.zero_thinking_eligible === false) return false;
+      const zt =
+        c.is_single_serving === true ||
+        c.is_natural_single_serve === true ||
+        c.is_pre_portioned === true ||
+        c.zero_thinking_eligible === true;
+      if (!zt) return false;
       if (itemAllergens.some((a) => allergies.has((a ?? "").toLowerCase()))) return false;
       if (dislikes.has((c.name ?? "").toLowerCase())) return false;
       if (dietTags.has("vegetarian") && !itemDiets.includes("vegetarian") && !itemDiets.includes("vegan")) return false;
@@ -418,6 +436,12 @@ RULES:
           : "Balanced mix: mostly whole-food, lean choices, with room for a tasty bar/snack/treat per day."
     }
 - Return positions as 0..N per meal_slot for stable ordering.
+
+ZERO-THINKING PHILOSOPHY (non-negotiable):
+- The user NEVER weighs, measures, or guesses anything. Every item in this catalog is pre-portioned (label = exact) or a natural single-serve item (1 banana, 1 apple, 1 egg).
+- Every "servings" value MUST be an integer. Default to 1. Eggs may go up to 3. No 1.5, no 0.5, no half-cups, no "split the package".
+- To hit macros, ADD another single-serve item — never inflate servings.
+- The catalog has already been filtered to exclude bulk/raw foods (no raw chicken, no bulk rice, no jars/tubs). Only use what's there.
 
 COHERENCE RULES (very important — meals must actually sound and taste good together):
 - Each meal slot (breakfast/lunch/dinner) should read like a real meal a person would sit down and eat, not a random pile of packaged snacks. Build it around ONE clear protein anchor + a complementary carb/produce side that flavor-wise belongs with it (e.g. chicken + rice + veg; turkey + tortilla + fruit; salmon + quinoa; eggs + oatmeal + berries; Greek yogurt + granola + fruit).
@@ -595,10 +619,15 @@ ${catalogForPrompt
       });
     }
 
-    // Enforce single-serving when the user requires it: clamp every item to exactly 1 serving.
-    if (singleOnly) {
-      items = items.map((i) => ({ ...i, servings: 1 }));
-    }
+    // ZERO-THINKING: every item must be a whole-number count of pre-portioned units.
+    // No half-cups, no 1.5 bars. Eggs allow up to 3, everything else clamps to 1 by default.
+    items = items.map((i) => {
+      const c = byId.get(i.catalog_item_id);
+      const isEgg = /\begg\b/i.test(c?.name ?? "");
+      const max = isEgg ? 3 : 1;
+      const n = Math.max(1, Math.min(max, Math.round(i.servings || 1)));
+      return { ...i, servings: n };
+    });
 
     let totalCal = 0;
     let totalProtein = 0;

@@ -22,21 +22,30 @@ export type Database = {
           calories: number
           carbs_g: number
           category: string
+          cooking_method: string | null
+          cooking_time_minutes: number | null
           created_at: string
           diet_tags: string[]
           fat_g: number
+          how_to_eat: string | null
           id: string
           image_url: string | null
           in_stock: boolean
+          is_natural_single_serve: boolean
+          is_pre_portioned: boolean
           is_single_serving: boolean
           last_seen_at: string
+          macro_confidence: string
           name: string
           price_cents: number
           protein_g: number
+          requires_cooking: boolean
           serving_label: string
+          servings_per_package: number
           source_url: string | null
           store_chain: string
           tags: string[]
+          zero_thinking_eligible: boolean
         }
         Insert: {
           aisle?: string
@@ -45,21 +54,30 @@ export type Database = {
           calories: number
           carbs_g?: number
           category: string
+          cooking_method?: string | null
+          cooking_time_minutes?: number | null
           created_at?: string
           diet_tags?: string[]
           fat_g?: number
+          how_to_eat?: string | null
           id?: string
           image_url?: string | null
           in_stock?: boolean
+          is_natural_single_serve?: boolean
+          is_pre_portioned?: boolean
           is_single_serving?: boolean
           last_seen_at?: string
+          macro_confidence?: string
           name: string
           price_cents?: number
           protein_g?: number
+          requires_cooking?: boolean
           serving_label?: string
+          servings_per_package?: number
           source_url?: string | null
           store_chain: string
           tags?: string[]
+          zero_thinking_eligible?: boolean
         }
         Update: {
           aisle?: string
@@ -68,21 +86,30 @@ export type Database = {
           calories?: number
           carbs_g?: number
           category?: string
+          cooking_method?: string | null
+          cooking_time_minutes?: number | null
           created_at?: string
           diet_tags?: string[]
           fat_g?: number
+          how_to_eat?: string | null
           id?: string
           image_url?: string | null
           in_stock?: boolean
+          is_natural_single_serve?: boolean
+          is_pre_portioned?: boolean
           is_single_serving?: boolean
           last_seen_at?: string
+          macro_confidence?: string
           name?: string
           price_cents?: number
           protein_g?: number
+          requires_cooking?: boolean
           serving_label?: string
+          servings_per_package?: number
           source_url?: string | null
           store_chain?: string
           tags?: string[]
+          zero_thinking_eligible?: boolean
         }
         Relationships: []
       }
