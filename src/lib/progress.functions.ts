@@ -227,7 +227,7 @@ export const getProgress = createServerFn({ method: "GET" })
       checkin_streak: checkinStreak,
       streak_freeze_count: freezeCount,
       streak_freeze_available: freezeCount > 0,
-      weights: (weights ?? []).map((w: any) => ({ id: w.id, logged_on: w.logged_on, weight_kg: Number(w.weight_kg) })),
+      weights: trimmedWeights.map((w: any) => ({ id: w.id, logged_on: w.logged_on, weight_kg: Number(w.weight_kg) })),
       tier: isFree ? "free" : profile?.plan_tier,
       weights_truncated: isFree && (weights?.length ?? 0) > trimmedWeights.length,
       week: {
