@@ -789,7 +789,34 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_my_profile: {
+        Args: never
+        Returns: {
+          created_at: string
+          display_name: string | null
+          id: string
+          is_premium: boolean
+          last_briefing_date: string | null
+          onboarded: boolean
+          plan_expires_at: string | null
+          plan_tier: string
+          plans_generated_count: number
+          plans_generated_on: string | null
+          premium_expires_at: string | null
+          reminder_times: Json
+          reminders_enabled: boolean
+          streak_freeze_count: number
+          streak_freeze_reset_date: string | null
+          streak_freeze_used_on: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       goal_type: "cut" | "lean_bulk" | "maintain" | "custom"
