@@ -217,6 +217,7 @@ export const generatePlan = createServerFn({ method: "POST" })
     let allowed = catalog.filter((c) => {
       const itemAllergens = c.allergens ?? [];
       const itemDiets = c.diet_tags ?? [];
+      if (c.category === "drink") return false;
       if (itemAllergens.some((a) => allergies.has((a ?? "").toLowerCase()))) return false;
       if (dislikes.has((c.name ?? "").toLowerCase())) return false;
       if (dietTags.has("vegetarian") && !itemDiets.includes("vegetarian") && !itemDiets.includes("vegan")) return false;
