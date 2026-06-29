@@ -16,7 +16,7 @@ export const getReminderSettings = createServerFn({ method: "GET" })
       .maybeSingle();
     return {
       enabled: data?.reminders_enabled ?? true,
-      times: data?.reminder_times ?? { breakfast: "08:00", lunch: "12:30", dinner: "18:30", snack: "15:30", drink: "10:00" },
+      times: data?.reminder_times ?? { breakfast: "08:00", lunch: "12:30", dinner: "18:30", snack: "15:30" },
       briefingShownToday: data?.last_briefing_date === todayLocal(),
     };
   });
