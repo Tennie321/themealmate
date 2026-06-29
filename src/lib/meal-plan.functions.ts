@@ -866,6 +866,31 @@ export const toggleConsumed = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Quick per-item reaction (❤️ loved / 😐 fine / 👎 not for me).
+// Logs into taste_signals so future plans favor or avoid this item.
+export const reactToItem = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { catalogItemId: string; reaction: "loved" | "fine" | "nope" }) => input)
+  .handler(async ({ data, context }: any) => {
+    const supabase = context.supabase;
+    const signal =
+      data.reaction === "loved" ? "liked" : data.reaction === "nope" ? "disliked" : "eaten";
+    await supabase.from("taste_signals").insert({
+      user_id: context.userId,
+      catalog_item_id: data.catalogItemId,
+      signal,
+    });
+    if (data.reaction === "loved") {
+      await supabase
+        .from("favorites")
+        .upsert(
+          { user_id: context.userId, catalog_item_id: data.catalogItemId },
+          { onConflict: "user_id,catalog_item_id" },
+        );
+    }
+    return { ok: true };
+  });
+
 // When the user switches stores, favorites pointing to items not sold at the
 // new chain are auto-substituted with the closest macro match (same category)
 // at the new store. Returns the list of swaps so the UI can surface a toast

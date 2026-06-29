@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { getDashboard } from "@/lib/data.functions";
 import { getOnboardingStatus } from "@/lib/data.functions";
-import { generatePlan, swapItem, toggleFavorite, toggleConsumed, setSlotConsumed, migrateFavoritesToStore } from "@/lib/meal-plan.functions";
+import { generatePlan, swapItem, toggleFavorite, toggleConsumed, setSlotConsumed, migrateFavoritesToStore, reactToItem } from "@/lib/meal-plan.functions";
 import { submitPlanFeedback } from "@/lib/taste.functions";
 import { markReferralConverted } from "@/lib/referrals.functions";
 import { MacroRing } from "@/components/MacroRing";
@@ -218,6 +218,20 @@ function Dashboard() {
   const fav = useMutation({
     mutationFn: (catalogItemId: string) => toggleFavorite({ data: { catalogItemId, favorite: true } } as any),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+  });
+
+  const react = useMutation({
+    mutationFn: (vars: { catalogItemId: string; reaction: "loved" | "fine" | "nope"; name?: string }) =>
+      reactToItem({ data: { catalogItemId: vars.catalogItemId, reaction: vars.reaction } } as any),
+    onSuccess: (_d, vars) => {
+      const msg =
+        vars.reaction === "loved"
+          ? `Got it — more like ${vars.name ?? "this"} 💚`
+          : vars.reaction === "nope"
+            ? `Won't show ${vars.name ?? "this"} again`
+            : "Noted 👍";
+      toast.success(msg);
+    },
   });
 
   const consume = useMutation({
@@ -538,6 +552,34 @@ function Dashboard() {
                           {it.catalog_items?.brand ? `${it.catalog_items.brand} · ` : ""}{Math.round((it.catalog_items?.calories ?? 0) * Number(it.servings ?? 1))} cal · {Math.round(Number(it.catalog_items?.protein_g ?? 0) * Number(it.servings ?? 1))}g protein {Number(it.servings) !== 1 ? `· ×${it.servings}` : ""}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5">{fmt(Number(it.catalog_items?.price_cents ?? 0) * Number(it.servings ?? 1))}</div>
+                        {it.catalog_item_id && (
+                          <div className="flex items-center gap-1 mt-2">
+                            <button
+                              type="button"
+                              onClick={() => react.mutate({ catalogItemId: it.catalog_item_id, reaction: "loved", name: it.catalog_items?.name })}
+                              className="text-sm px-2 py-1 rounded-xl border border-border hover:bg-secondary active:scale-95 transition"
+                              aria-label="Loved it"
+                            >
+                              ❤️
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => react.mutate({ catalogItemId: it.catalog_item_id, reaction: "fine", name: it.catalog_items?.name })}
+                              className="text-sm px-2 py-1 rounded-xl border border-border hover:bg-secondary active:scale-95 transition"
+                              aria-label="It was fine"
+                            >
+                              😐
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => react.mutate({ catalogItemId: it.catalog_item_id, reaction: "nope", name: it.catalog_items?.name })}
+                              className="text-sm px-2 py-1 rounded-xl border border-border hover:bg-secondary active:scale-95 transition"
+                              aria-label="Not for me"
+                            >
+                              👎
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <button onClick={() => it.catalog_item_id && fav.mutate(it.catalog_item_id)} className="text-muted-foreground hover:text-destructive">
