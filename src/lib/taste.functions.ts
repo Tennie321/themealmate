@@ -115,3 +115,100 @@ export const submitPlanFeedback = createServerFn({ method: "POST" })
       );
     return { ok: true };
   });
+
+const CUISINE_KEYWORDS: Record<string, string[]> = {
+  Mexican: ["taco", "burrito", "salsa", "guacamole", "queso", "tortilla", "chipotle", "fajita", "enchilada", "carnitas", "elote"],
+  Asian: ["teriyaki", "soy", "ramen", "sushi", "kimchi", "miso", "thai", "korean", "japanese", "sesame", "dumpling", "edamame", "stir fry"],
+  Italian: ["pasta", "marinara", "alfredo", "pizza", "parm", "lasagna", "italian", "pesto", "ravioli", "spaghetti"],
+  Mediterranean: ["hummus", "tzatziki", "greek", "feta", "olive", "tabouli", "falafel", "pita", "mediterranean"],
+  American: ["burger", "bbq", "ranch", "buffalo", "mac and cheese", "hot dog", "cheddar", "country"],
+  Indian: ["tikka", "masala", "curry", "naan", "tandoori", "biryani", "paneer", "indian"],
+  "Middle Eastern": ["shawarma", "kebab", "tabbouleh", "baba"],
+};
+
+function detectCuisine(text: string): string | null {
+  const t = text.toLowerCase();
+  for (const [name, words] of Object.entries(CUISINE_KEYWORDS)) {
+    if (words.some((w) => t.includes(w))) return name;
+  }
+  return null;
+}
+
+export const getTasteInsights = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }: any) => {
+    const [{ data: signals }, { data: favs }, { data: recentPlans }] = await Promise.all([
+      context.supabase
+        .from("taste_signals")
+        .select("catalog_item_id, signal, created_at, catalog_items(name, brand, category)")
+        .eq("user_id", context.userId)
+        .order("created_at", { ascending: false })
+        .limit(300),
+      context.supabase
+        .from("favorites")
+        .select("catalog_item_id, catalog_items(name, brand, category)")
+        .eq("user_id", context.userId)
+        .limit(100),
+      context.supabase
+        .from("meal_plans")
+        .select("plan_date, plan_items(meal_slot, catalog_items(name, brand, category))")
+        .eq("user_id", context.userId)
+        .order("plan_date", { ascending: false })
+        .limit(14),
+    ]);
+
+    const loveCount: Record<string, { item: any; n: number }> = {};
+    const avoidCount: Record<string, { item: any; n: number }> = {};
+    const cuisine: Record<string, number> = {};
+    const slotProtein: Record<string, Record<string, number>> = { breakfast: {}, lunch: {}, dinner: {}, snack: {} };
+
+    for (const f of favs ?? []) {
+      const ci = (f as any).catalog_items;
+      if (!ci) continue;
+      const key = `${ci.brand ?? ""} ${ci.name}`.trim();
+      loveCount[key] = { item: ci, n: (loveCount[key]?.n ?? 0) + 3 };
+      const cz = detectCuisine(`${ci.name} ${ci.brand ?? ""}`);
+      if (cz) cuisine[cz] = (cuisine[cz] ?? 0) + 2;
+    }
+    for (const s of signals ?? []) {
+      const ci = (s as any).catalog_items;
+      if (!ci) continue;
+      const key = `${ci.brand ?? ""} ${ci.name}`.trim();
+      const positive = ["liked", "eaten", "swapped_in", "favorited"].includes((s as any).signal);
+      const negative = ["disliked", "swapped_out", "skipped"].includes((s as any).signal);
+      if (positive) loveCount[key] = { item: ci, n: (loveCount[key]?.n ?? 0) + 1 };
+      if (negative) avoidCount[key] = { item: ci, n: (avoidCount[key]?.n ?? 0) + 1 };
+      const cz = detectCuisine(`${ci.name} ${ci.brand ?? ""}`);
+      if (cz) cuisine[cz] = (cuisine[cz] ?? 0) + (positive ? 1 : negative ? -1 : 0);
+    }
+    for (const p of recentPlans ?? []) {
+      for (const pi of (p as any).plan_items ?? []) {
+        const ci = pi.catalog_items;
+        if (!ci) continue;
+        if (ci.category === "protein" || /chicken|turkey|tuna|salmon|beef|pork|tofu|egg|shrimp|jerky/i.test(ci.name)) {
+          const tag = (ci.name.match(/chicken|turkey|tuna|salmon|beef|pork|tofu|egg|shrimp|jerky/i) ?? ["other"])[0].toLowerCase();
+          slotProtein[pi.meal_slot] = slotProtein[pi.meal_slot] ?? {};
+          slotProtein[pi.meal_slot][tag] = (slotProtein[pi.meal_slot][tag] ?? 0) + 1;
+        }
+      }
+    }
+
+    const top = (rec: Record<string, { item: any; n: number }>, k: number) =>
+      Object.values(rec)
+        .sort((a, b) => b.n - a.n)
+        .slice(0, k)
+        .map((x) => ({ name: x.item.name, brand: x.item.brand, category: x.item.category, n: x.n }));
+
+    const cuisineRanking = Object.entries(cuisine)
+      .filter(([, v]) => v > 0)
+      .sort(([, a], [, b]) => b - a)
+      .map(([name, score]) => ({ name, score }));
+
+    return {
+      loves: top(loveCount, 8),
+      avoids: top(avoidCount, 6),
+      cuisineRanking,
+      slotProtein,
+      totalSignals: (signals ?? []).length,
+    };
+  });
