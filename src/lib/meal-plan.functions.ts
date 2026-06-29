@@ -223,7 +223,8 @@ export const generatePlan = createServerFn({ method: "POST" })
         .upsert({ user_id: userId, store_id: data.storeId }, { onConflict: "user_id" });
     }
 
-    const [{ data: goals }, { data: prefs }, { data: favs }, { data: signals }] = await Promise.all([
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const [{ data: goals }, { data: prefs }, { data: favs }, { data: signals }, { data: recentPlans }] = await Promise.all([
       supabase.from("user_goals").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("preferences").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("favorites").select("catalog_item_id").eq("user_id", userId),
@@ -233,6 +234,12 @@ export const generatePlan = createServerFn({ method: "POST" })
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(100),
+      supabase
+        .from("meal_plans")
+        .select("id, plan_date, plan_items(catalog_item_id, catalog_items(category))")
+        .eq("user_id", userId)
+        .gte("plan_date", sevenDaysAgo)
+        .neq("plan_date", today),
     ]);
 
     if (!goals) throw new Error("Please complete onboarding first.");
@@ -266,11 +273,48 @@ export const generatePlan = createServerFn({ method: "POST" })
 
     const favIds = new Set((favs ?? []).map((f: any) => f.catalog_item_id));
     const likedIds = new Set(
-      (signals ?? []).filter((s: any) => s.signal === "liked" || s.signal === "eaten").map((s: any) => s.catalog_item_id),
+      (signals ?? [])
+        .filter((s: any) => s.signal === "liked" || s.signal === "eaten" || s.signal === "swapped_in" || s.signal === "favorited")
+        .map((s: any) => s.catalog_item_id),
     );
     const dislikedIds = new Set(
-      (signals ?? []).filter((s: any) => s.signal === "disliked").map((s: any) => s.catalog_item_id),
+      (signals ?? [])
+        .filter((s: any) => s.signal === "disliked" || s.signal === "swapped_out" || s.signal === "skipped")
+        .map((s: any) => s.catalog_item_id),
     );
+
+    // Last-7-days uniqueness: never repeat a non-favorited item from the past week.
+    const recentItemIds = new Set<string>();
+    const recentCategoryHits: Record<string, number> = {};
+    for (const p of recentPlans ?? []) {
+      for (const pi of (p as any).plan_items ?? []) {
+        if (pi.catalog_item_id) recentItemIds.add(pi.catalog_item_id);
+        const cat = pi.catalog_items?.category;
+        if (cat) recentCategoryHits[cat] = (recentCategoryHits[cat] ?? 0) + 1;
+      }
+    }
+    // Drop disliked + recent (kept if explicitly favorited).
+    const beforeFilter = allowed.length;
+    allowed = allowed.filter((c) => {
+      if (dislikedIds.has(c.id)) return false;
+      if (recentItemIds.has(c.id) && !favIds.has(c.id)) return false;
+      return true;
+    });
+    // If we filtered too aggressively, relax the recent-only rule before failing.
+    if (allowed.length < 8) {
+      allowed = catalog.filter((c) => !dislikedIds.has(c.id));
+    }
+    if (allowed.length < 8) allowed = catalog;
+    void beforeFilter;
+
+    // Category preference learned from likes/favs/eats.
+    const likedCategoryWeight: Record<string, number> = {};
+    for (const s of signals ?? []) {
+      const cat = catalog.find((c) => c.id === (s as any).catalog_item_id)?.category;
+      if (!cat) continue;
+      const delta = (s as any).signal === "disliked" || (s as any).signal === "swapped_out" ? -1 : 1;
+      likedCategoryWeight[cat] = (likedCategoryWeight[cat] ?? 0) + delta;
+    }
 
     // Trim catalog to ~80 items, prioritizing favs / liked / variety per category
     const ranked = allowed
@@ -280,6 +324,9 @@ export const generatePlan = createServerFn({ method: "POST" })
           (favIds.has(c.id) ? 5 : 0) +
           (likedIds.has(c.id) ? 2 : 0) +
           (dislikedIds.has(c.id) ? -10 : 0) +
+          (likedCategoryWeight[c.category] ?? 0) * 0.4 +
+          // Slight penalty for categories the user already ate a lot of this week
+          (recentCategoryHits[c.category] ?? 0) * -0.15 +
           Math.random() * 0.5,
       }))
       .sort((a, b) => b.score - a.score)
