@@ -163,17 +163,26 @@ function buildReliablePlan(catalog: Catalog[], goals: any): GeneratedPlanItem[] 
   return plan.map((item, index) => ({ ...item, position: plan.filter((p, idx) => p.meal_slot === item.meal_slot && idx < index).length }));
 }
 
-async function loadCatalogForUser(supabase: any, userId: string): Promise<Catalog[]> {
+async function loadCatalogForUser(
+  supabase: any,
+  userId: string,
+): Promise<{ catalog: Catalog[]; storeName: string | null; storeChain: string | null }> {
   const { data: us } = await supabase.from("user_store").select("store_id").eq("user_id", userId).maybeSingle();
   let chain: string | null = null;
+  let storeName: string | null = null;
   if (us?.store_id) {
-    const { data: store } = await supabase.from("stores").select("chain").eq("id", us.store_id).maybeSingle();
+    const { data: store } = await supabase
+      .from("stores")
+      .select("chain,name")
+      .eq("id", us.store_id)
+      .maybeSingle();
     chain = store?.chain ?? null;
+    storeName = store?.name ?? null;
   }
   let query = supabase.from("catalog_items").select("*").eq("in_stock", true);
   if (chain) query = query.eq("store_chain", chain);
   const { data } = await query;
-  return (data as Catalog[]) ?? [];
+  return { catalog: (data as Catalog[]) ?? [], storeName, storeChain: chain };
 }
 
 export const generatePlan = createServerFn({ method: "POST" })
@@ -204,7 +213,7 @@ export const generatePlan = createServerFn({ method: "POST" })
     ]);
 
     if (!goals) throw new Error("Please complete onboarding first.");
-    const catalog = await loadCatalogForUser(supabase, userId);
+    const { catalog, storeName, storeChain } = await loadCatalogForUser(supabase, userId);
     if (catalog.length === 0) throw new Error("No catalog items available for your store yet.");
 
     // Hard-filter for allergies
@@ -268,9 +277,12 @@ export const generatePlan = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(apiKey);
     const model = gateway("google/gemini-3-flash-preview");
 
-    const systemPrompt = `You are MealMate, a packaged-food meal planner. Build ONE day of meals using ONLY items from the provided catalog by id.
+    const storeLabel = storeName ?? (storeChain ? storeChain.replace(/_/g, " ") : "the selected grocery store");
+    const systemPrompt = `You are MealMate, a packaged-food meal planner. The user is shopping today at ${storeLabel}. Build ONE day of meals using ONLY items from the provided catalog by id — every catalog row below is an item actually stocked at ${storeLabel}, so the resulting plan must read like a realistic ${storeLabel} grocery run.
 
 RULES:
+- STORE FIT: Only use ids from the catalog provided. Do NOT invent or assume items from other chains (no Trader Joe's brand items at Walmart, no Costco-size packs at 7-Eleven, no Whole Foods 365 items at Aldi, etc.). If a desired item type isn't in this catalog, pick the closest item that IS in the catalog.
+- Favor each store's signature brands when they appear in the catalog (e.g. Kirkland at Costco, Great Value at Walmart, Good & Gather / Market Pantry at Target, Trader Joe's brand at Trader Joe's, 365 at Whole Foods, Simple Truth at Kroger/Ralphs/Smith's/Fred Meyer/King Soopers, O Organics / Lucerne at Albertsons/Vons/Safeway, Wegmans brand at Wegmans, HEB brand at HEB, Publix brand at Publix, Aldi brand at Aldi).
 - Hit calorie target within ±7% and meet or exceed protein target.
 - Stay at or under the daily budget when possible.
 - Always include: 1 breakfast, 1 lunch, 1 dinner, and 1-2 snacks. Do NOT include drinks — the plan covers food only.
@@ -305,7 +317,8 @@ Return ONLY a JSON object with this EXACT shape — no prose, no markdown fences
 }
 Do NOT nest items under "meals". Do NOT include name/calories/protein. Do NOT invent ids — only use ids from catalog.`;
 
-    const userPrompt = `Goal: ${goals.goal_type}
+    const userPrompt = `Store: ${storeLabel}${storeChain ? ` (chain: ${storeChain})` : ""}
+Goal: ${goals.goal_type}
 Calorie target: ${goals.calorie_target} cal
 Protein target: ${goals.protein_target} g
 Daily budget: $${(goals.daily_budget_cents / 100).toFixed(2)}
@@ -556,7 +569,7 @@ export const swapItem = createServerFn({ method: "POST" })
     if (!data.replacementId) {
       // Return suggestions: same meal_slot, similar calories ±30%, in stock
       const orig = item.catalog_items;
-      const catalog = await loadCatalogForUser(supabase, userId);
+      const { catalog } = await loadCatalogForUser(supabase, userId);
       const alternates = catalog
         .filter((c) => c.id !== orig.id && c.category !== "drink")
         .map((c) => ({
@@ -627,7 +640,7 @@ export const markOutOfStock = createServerFn({ method: "POST" })
   });
 
 async function fetchSwapAlternates(supabase: any, userId: string, orig: any) {
-  const catalog = await loadCatalogForUser(supabase, userId);
+  const { catalog } = await loadCatalogForUser(supabase, userId);
   return catalog
     .filter((c) => c.id !== orig.id && c.category === orig.category)
     .map((c) => ({
