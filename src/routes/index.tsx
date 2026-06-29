@@ -58,12 +58,14 @@ function Index() {
             <span className="text-hero-gradient">get there.</span>
           </h1>
           <p className="mt-5 text-lg text-foreground/80 leading-relaxed">
-            Other apps make you <span className="line-through text-muted-foreground">count</span> calories.<br />
-            We make you <span className="font-semibold text-foreground">hit</span> them.
+            <span className="font-semibold text-foreground">No scale. No thinking.</span> Just grab your food and hit your goals.
           </p>
           <p className="mt-4 text-base text-muted-foreground leading-relaxed">
-            An AI meal planner that tells you exactly what to grab from your grocery store. Every item has a label — the label IS the calorie count.
+            Every item is pre-portioned by nature or by the manufacturer — 1 banana, 1 yogurt cup, 1 frozen meal. The label is the calorie count. You never weigh, measure, or guess.
           </p>
+          <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">
+            ✅ Zero Thinking Required
+          </div>
           <Link to="/auth" className="mt-7 block">
             <Button className="w-full h-14 text-base rounded-2xl bg-hero-gradient text-white hover:opacity-95 shadow-lg shadow-primary/25">
               Build my plan
