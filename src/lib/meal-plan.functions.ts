@@ -648,6 +648,12 @@ export const swapItem = createServerFn({ method: "POST" })
       catalog_item_id: item.catalog_item_id,
       signal: "swapped_out",
     });
+    // Learn what the user swaps TO so future plans bias toward it.
+    await supabase.from("taste_signals").insert({
+      user_id: userId,
+      catalog_item_id: data.replacementId,
+      signal: "swapped_in",
+    });
     // Recompute plan totals
     await recomputePlanTotals(supabase, item.plan_id);
     return { ok: true };
