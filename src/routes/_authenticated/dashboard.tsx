@@ -634,8 +634,14 @@ function Dashboard() {
                   key={s.id}
                   disabled={pickStore.isPending || generate.isPending}
                   onClick={async () => {
+                    if (active) { setStorePickerOpen(false); return; }
+                    // If a plan already exists for today, confirm replacement.
+                    if (dash.data?.plan && currentStore) {
+                      setPendingStore(s);
+                      return;
+                    }
                     await pickStore.mutateAsync(s.id);
-                    startGenerate({ storeId: s.id });
+                    startGenerate({ storeId: s.id, storeName: s.name });
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl border ${active ? "border-primary bg-secondary" : "border-border"}`}
                 >
@@ -651,6 +657,32 @@ function Dashboard() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={!!pendingStore} onOpenChange={(o) => { if (!o) setPendingStore(null); }}>
+        <AlertDialogContent className="rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change store to {pendingStore?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Changing your store will regenerate your meal plan with items available at {pendingStore?.name}. Your current plan and shopping list will be replaced.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-2xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-2xl"
+              onClick={async () => {
+                const s = pendingStore;
+                setPendingStore(null);
+                if (!s) return;
+                await pickStore.mutateAsync(s.id);
+                startGenerate({ storeId: s.id, storeName: s.name });
+              }}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <MorningBriefing
         open={briefingOpen}
