@@ -769,6 +769,81 @@ export const toggleConsumed = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// When the user switches stores, favorites pointing to items not sold at the
+// new chain are auto-substituted with the closest macro match (same category)
+// at the new store. Returns the list of swaps so the UI can surface a toast
+// like "We swapped [old] for [new] at [store]".
+export const migrateFavoritesToStore = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { storeId: string }) => input)
+  .handler(async ({ data, context }: any) => {
+    const supabase = context.supabase;
+    const { data: store } = await supabase
+      .from("stores")
+      .select("id, name, chain")
+      .eq("id", data.storeId)
+      .maybeSingle();
+    if (!store?.chain) return { swaps: [] as any[] };
+
+    const { data: favs } = await supabase
+      .from("favorites")
+      .select("catalog_item_id, catalog_items(id, name, brand, category, store_chain, calories, protein_g)")
+      .eq("user_id", context.userId);
+
+    const orphans = (favs ?? []).filter(
+      (f: any) => f.catalog_items && f.catalog_items.store_chain !== store.chain,
+    );
+    if (!orphans.length) return { swaps: [], store: store.name };
+
+    const categories = Array.from(
+      new Set(orphans.map((o: any) => o.catalog_items.category).filter(Boolean)),
+    );
+    const { data: pool } = await supabase
+      .from("catalog_items")
+      .select("id, name, brand, category, calories, protein_g")
+      .eq("store_chain", store.chain)
+      .eq("in_stock", true)
+      .in("category", categories.length ? categories : ["__none__"]);
+
+    const swaps: { old: any; new: any }[] = [];
+    const used = new Set<string>();
+    for (const o of orphans) {
+      const src = o.catalog_items;
+      const candidates = (pool ?? []).filter(
+        (p: any) => p.category === src.category && !used.has(p.id),
+      );
+      if (!candidates.length) continue;
+      const scored = candidates
+        .map((p: any) => ({
+          p,
+          score:
+            Math.abs(Number(p.calories ?? 0) - Number(src.calories ?? 0)) +
+            Math.abs(Number(p.protein_g ?? 0) - Number(src.protein_g ?? 0)) * 5 +
+            (p.brand && src.brand && p.brand === src.brand ? -50 : 0),
+        }))
+        .sort((a: any, b: any) => a.score - b.score);
+      const best = scored[0].p;
+      used.add(best.id);
+
+      await supabase
+        .from("favorites")
+        .delete()
+        .eq("user_id", context.userId)
+        .eq("catalog_item_id", src.id);
+      await supabase
+        .from("favorites")
+        .upsert(
+          { user_id: context.userId, catalog_item_id: best.id },
+          { onConflict: "user_id,catalog_item_id" },
+        );
+      swaps.push({
+        old: { name: src.name, brand: src.brand },
+        new: { name: best.name, brand: best.brand },
+      });
+    }
+    return { swaps, store: store.name };
+  });
+
 export const setSlotConsumed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { planId: string; mealSlot: "breakfast" | "lunch" | "dinner" | "snack"; consumed: boolean }) => input)

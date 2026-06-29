@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { getDashboard } from "@/lib/data.functions";
 import { getOnboardingStatus } from "@/lib/data.functions";
-import { generatePlan, swapItem, toggleFavorite, toggleConsumed, setSlotConsumed } from "@/lib/meal-plan.functions";
+import { generatePlan, swapItem, toggleFavorite, toggleConsumed, setSlotConsumed, migrateFavoritesToStore } from "@/lib/meal-plan.functions";
 import { submitPlanFeedback } from "@/lib/taste.functions";
 import { markReferralConverted } from "@/lib/referrals.functions";
 import { MacroRing } from "@/components/MacroRing";
@@ -193,6 +193,20 @@ function Dashboard() {
   const pickStore = useMutation({
     mutationFn: async (storeId: string) => {
       await saveStore({ data: { store_id: storeId } } as any);
+      try {
+        const res: any = await migrateFavoritesToStore({ data: { storeId } } as any);
+        const swaps = res?.swaps ?? [];
+        for (const s of swaps.slice(0, 3)) {
+          const oldLabel = [s.old?.brand, s.old?.name].filter(Boolean).join(" ");
+          const newLabel = [s.new?.brand, s.new?.name].filter(Boolean).join(" ");
+          toast.message("Favorite updated", {
+            description: `Swapped ${oldLabel} for ${newLabel} at ${res.store}`,
+          });
+        }
+        if (swaps.length > 3) {
+          toast.message(`+${swaps.length - 3} more favorites updated`);
+        }
+      } catch {}
     },
     onSuccess: () => {
       setStorePickerOpen(false);
