@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticated/upgrade'
 import { Route as AuthenticatedShoppingRouteImport } from './routes/_authenticated/shopping'
 import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/share'
+import { Route as AuthenticatedRestaurantRouteImport } from './routes/_authenticated/restaurant'
 import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated/progress'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -51,6 +52,11 @@ const AuthenticatedShoppingRoute = AuthenticatedShoppingRouteImport.update({
 const AuthenticatedShareRoute = AuthenticatedShareRouteImport.update({
   id: '/share',
   path: '/share',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRestaurantRoute = AuthenticatedRestaurantRouteImport.update({
+  id: '/restaurant',
+  path: '/restaurant',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedProgressRoute = AuthenticatedProgressRouteImport.update({
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/progress': typeof AuthenticatedProgressRoute
+  '/restaurant': typeof AuthenticatedRestaurantRoute
   '/share': typeof AuthenticatedShareRoute
   '/shopping': typeof AuthenticatedShoppingRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/progress': typeof AuthenticatedProgressRoute
+  '/restaurant': typeof AuthenticatedRestaurantRoute
   '/share': typeof AuthenticatedShareRoute
   '/shopping': typeof AuthenticatedShoppingRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
+  '/_authenticated/restaurant': typeof AuthenticatedRestaurantRoute
   '/_authenticated/share': typeof AuthenticatedShareRoute
   '/_authenticated/shopping': typeof AuthenticatedShoppingRoute
   '/_authenticated/upgrade': typeof AuthenticatedUpgradeRoute
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/progress'
+    | '/restaurant'
     | '/share'
     | '/shopping'
     | '/upgrade'
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/progress'
+    | '/restaurant'
     | '/share'
     | '/shopping'
     | '/upgrade'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/profile'
     | '/_authenticated/progress'
+    | '/_authenticated/restaurant'
     | '/_authenticated/share'
     | '/_authenticated/shopping'
     | '/_authenticated/upgrade'
@@ -238,6 +250,13 @@ declare module '@tanstack/react-router' {
       path: '/share'
       fullPath: '/share'
       preLoaderRoute: typeof AuthenticatedShareRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/restaurant': {
+      id: '/_authenticated/restaurant'
+      path: '/restaurant'
+      fullPath: '/restaurant'
+      preLoaderRoute: typeof AuthenticatedRestaurantRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/progress': {
@@ -308,6 +327,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
+  AuthenticatedRestaurantRoute: typeof AuthenticatedRestaurantRoute
   AuthenticatedShareRoute: typeof AuthenticatedShareRoute
   AuthenticatedShoppingRoute: typeof AuthenticatedShoppingRoute
   AuthenticatedUpgradeRoute: typeof AuthenticatedUpgradeRoute
@@ -322,6 +342,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedProgressRoute: AuthenticatedProgressRoute,
+  AuthenticatedRestaurantRoute: AuthenticatedRestaurantRoute,
   AuthenticatedShareRoute: AuthenticatedShareRoute,
   AuthenticatedShoppingRoute: AuthenticatedShoppingRoute,
   AuthenticatedUpgradeRoute: AuthenticatedUpgradeRoute,

@@ -163,6 +163,39 @@ export type Database = {
           },
         ]
       }
+      custom_meals: {
+        Row: {
+          calories: number
+          created_at: string
+          id: string
+          logged_on: string
+          name: string
+          protein_g: number
+          source: string | null
+          user_id: string
+        }
+        Insert: {
+          calories?: number
+          created_at?: string
+          id?: string
+          logged_on?: string
+          name: string
+          protein_g?: number
+          source?: string | null
+          user_id: string
+        }
+        Update: {
+          calories?: number
+          created_at?: string
+          id?: string
+          logged_on?: string
+          name?: string
+          protein_g?: number
+          source?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           catalog_item_id: string
@@ -775,7 +808,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_public_profiles: {
+        Args: { _ids: string[] }
+        Returns: {
+          display_name: string
+          id: string
+        }[]
+      }
     }
     Enums: {
       goal_type: "cut" | "lean_bulk" | "maintain" | "custom"

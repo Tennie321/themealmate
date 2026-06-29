@@ -14,7 +14,7 @@ export const listPosts = createServerFn({ method: "GET" })
     const postIds = (posts ?? []).map((p: any) => p.id);
     const [{ data: profiles }, { data: likes }] = await Promise.all([
       userIds.length
-        ? context.supabase.from("profiles").select("id, display_name, avatar_url").in("id", userIds)
+        ? context.supabase.rpc("get_public_profiles", { _ids: userIds })
         : Promise.resolve({ data: [] }),
       postIds.length
         ? context.supabase.from("post_likes").select("post_id").eq("user_id", context.userId).in("post_id", postIds)
@@ -118,7 +118,7 @@ export const listComments = createServerFn({ method: "GET" })
       .order("created_at", { ascending: true });
     const userIds = Array.from(new Set((comments ?? []).map((c: any) => c.user_id)));
     const { data: profiles } = userIds.length
-      ? await context.supabase.from("profiles").select("id, display_name, avatar_url").in("id", userIds)
+      ? await context.supabase.rpc("get_public_profiles", { _ids: userIds })
       : { data: [] };
     const map = new Map((profiles ?? []).map((p: any) => [p.id, p]));
     return {
