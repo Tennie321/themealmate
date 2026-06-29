@@ -349,6 +349,17 @@ Do NOT nest items under "meals". Do NOT include name/calories/protein. Do NOT in
 Goal: ${goals.goal_type}
 Calorie target: ${goals.calorie_target} cal
 Protein target: ${goals.protein_target} g
+${(() => {
+  const mt = goals.meal_targets as Record<string, { cal: number; protein: number }> | null | undefined;
+  if (!mt) return "Per-meal split: even distribution (~25% breakfast, 30% lunch, 35% dinner, 10% snack).";
+  const slots = ["breakfast", "lunch", "dinner", "snack"] as const;
+  const anySet = slots.some((s) => Number(mt[s]?.cal) > 0 || Number(mt[s]?.protein) > 0);
+  if (!anySet) return "Per-meal split: even distribution (~25% breakfast, 30% lunch, 35% dinner, 10% snack).";
+  const lines = slots
+    .map((s) => `  - ${s}: ${Number(mt[s]?.cal ?? 0)} cal, ${Number(mt[s]?.protein ?? 0)}g protein`)
+    .join("\n");
+  return `Per-meal targets (HARD targets — each slot's totals must land within ±10% of these numbers):\n${lines}`;
+})()}
 Daily budget: $${(goals.daily_budget_cents / 100).toFixed(2)}
 Allergies (hard): ${(prefs?.allergies ?? []).join(", ") || "none"}
 Diet tags: ${(prefs?.diet_tags ?? []).join(", ") || "none"}
