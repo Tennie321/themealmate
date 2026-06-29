@@ -9,6 +9,16 @@ import { markReferralConverted } from "@/lib/referrals.functions";
 import { MacroRing } from "@/components/MacroRing";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
@@ -51,6 +61,7 @@ function Dashboard() {
   const reminders = useQuery({ queryKey: ["reminders"], queryFn: () => getReminderSettings() });
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [storePickerOpen, setStorePickerOpen] = useState(false);
+  const [pendingStore, setPendingStore] = useState<any>(null);
   const [newPlanOpen, setNewPlanOpen] = useState(false);
   const [feedbackReasons, setFeedbackReasons] = useState<string[]>([]);
   const [feedbackNote, setFeedbackNote] = useState("");
@@ -70,11 +81,11 @@ function Dashboard() {
 
   useEffect(() => () => clearGenTimers(), []);
 
-  const startGenerate = (opts?: { storeId?: string }) => {
+  const startGenerate = (opts?: { storeId?: string; storeName?: string }) => {
     const token = ++genTokenRef.current;
     clearGenTimers();
     setGenState("generating");
-    setGenMsg(null);
+    setGenMsg(opts?.storeName ? `Building your new ${opts.storeName} meal plan…` : null);
     setGenError(null);
 
     const onSuccess = () => {
@@ -99,7 +110,9 @@ function Dashboard() {
     };
 
     genTimersRef.current.scenic = setTimeout(() => {
-      if (genTokenRef.current === token) setGenMsg("Taking the scenic route…");
+      if (genTokenRef.current === token) {
+        setGenMsg(opts?.storeName ? `Still scanning ${opts.storeName}'s shelves…` : "Taking the scenic route…");
+      }
     }, 15000);
 
     genTimersRef.current.fallback = setTimeout(() => {
