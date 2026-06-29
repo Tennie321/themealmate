@@ -21,6 +21,15 @@ type Catalog = {
   allergens: string[];
   in_stock: boolean;
   is_single_serving?: boolean;
+  is_natural_single_serve?: boolean;
+  is_pre_portioned?: boolean;
+  zero_thinking_eligible?: boolean;
+  requires_cooking?: boolean;
+  cooking_method?: string | null;
+  cooking_time_minutes?: number | null;
+  servings_per_package?: number;
+  macro_confidence?: string;
+  how_to_eat?: string | null;
 };
 
 type MealSlot = "breakfast" | "lunch" | "dinner" | "snack";
@@ -263,6 +272,15 @@ export const generatePlan = createServerFn({ method: "POST" })
       const itemAllergens = c.allergens ?? [];
       const itemDiets = c.diet_tags ?? [];
       if (c.category === "drink") return false;
+      // ZERO-THINKING: only single-serve / natural single / pre-portioned items.
+      // Bulk raw foods (raw chicken, bulk rice, tubs, jars, oils) are filtered out.
+      if (c.zero_thinking_eligible === false) return false;
+      const zt =
+        c.is_single_serving === true ||
+        c.is_natural_single_serve === true ||
+        c.is_pre_portioned === true ||
+        c.zero_thinking_eligible === true;
+      if (!zt) return false;
       if (itemAllergens.some((a) => allergies.has((a ?? "").toLowerCase()))) return false;
       if (dislikes.has((c.name ?? "").toLowerCase())) return false;
       if (dietTags.has("vegetarian") && !itemDiets.includes("vegetarian") && !itemDiets.includes("vegan")) return false;
