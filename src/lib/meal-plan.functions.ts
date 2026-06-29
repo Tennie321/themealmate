@@ -236,7 +236,7 @@ export const generatePlan = createServerFn({ method: "POST" })
         .limit(100),
       supabase
         .from("meal_plans")
-        .select("id, plan_date, plan_items(catalog_item_id, catalog_items(category))")
+        .select("id, plan_date, plan_items(catalog_item_id, meal_slot, catalog_items(category, name, brand))")
         .eq("user_id", userId)
         .gte("plan_date", sevenDaysAgo)
         .neq("plan_date", today),
@@ -258,6 +258,7 @@ export const generatePlan = createServerFn({ method: "POST" })
     const singleOnly = prefs?.single_serving_only !== false; // default true
     const healthPref: "healthier" | "balanced" | "indulgent" =
       (prefs?.health_preference as any) ?? "balanced";
+    const planMode: "surprise" | "comfort" = (prefs?.plan_mode as any) ?? "surprise";
     let allowed = catalog.filter((c) => {
       const itemAllergens = c.allergens ?? [];
       const itemDiets = c.diet_tags ?? [];
@@ -286,11 +287,18 @@ export const generatePlan = createServerFn({ method: "POST" })
     // Last-7-days uniqueness: never repeat a non-favorited item from the past week.
     const recentItemIds = new Set<string>();
     const recentCategoryHits: Record<string, number> = {};
+    const recentProteinAnchors: Record<string, number> = {};
+    const recentBrandHits: Record<string, number> = {};
     for (const p of recentPlans ?? []) {
       for (const pi of (p as any).plan_items ?? []) {
         if (pi.catalog_item_id) recentItemIds.add(pi.catalog_item_id);
         const cat = pi.catalog_items?.category;
         if (cat) recentCategoryHits[cat] = (recentCategoryHits[cat] ?? 0) + 1;
+        const nm = String(pi.catalog_items?.name ?? "").toLowerCase();
+        const brand = String(pi.catalog_items?.brand ?? "").toLowerCase();
+        if (brand) recentBrandHits[brand] = (recentBrandHits[brand] ?? 0) + 1;
+        const m = nm.match(/chicken|turkey|tuna|salmon|beef|pork|tofu|egg|shrimp|jerky/);
+        if (m) recentProteinAnchors[m[0]] = (recentProteinAnchors[m[0]] ?? 0) + 1;
       }
     }
     // Drop disliked + recent (kept if explicitly favorited).
@@ -317,17 +325,24 @@ export const generatePlan = createServerFn({ method: "POST" })
     }
 
     // Trim catalog to ~80 items, prioritizing favs / liked / variety per category
+    const noveltyWeight = planMode === "comfort" ? 0.05 : 0.9;
+    const favWeight = planMode === "comfort" ? 9 : 5;
+    const likeWeight = planMode === "comfort" ? 4 : 2;
     const ranked = allowed
       .map((c) => ({
         c,
         score:
-          (favIds.has(c.id) ? 5 : 0) +
-          (likedIds.has(c.id) ? 2 : 0) +
+          (favIds.has(c.id) ? favWeight : 0) +
+          (likedIds.has(c.id) ? likeWeight : 0) +
           (dislikedIds.has(c.id) ? -10 : 0) +
           (likedCategoryWeight[c.category] ?? 0) * 0.4 +
           // Slight penalty for categories the user already ate a lot of this week
           (recentCategoryHits[c.category] ?? 0) * -0.15 +
-          Math.random() * 0.5,
+          // Penalty for recently-used brands to encourage rotation
+          (recentBrandHits[(c.brand ?? "").toLowerCase()] ?? 0) * -0.2 +
+          // In Surprise Me, give an extra random nudge so we explore new items the user hasn't tried
+          (planMode === "surprise" && !likedIds.has(c.id) && !favIds.has(c.id) ? Math.random() * 1.2 : 0) +
+          Math.random() * noveltyWeight,
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 80)
@@ -353,6 +368,25 @@ export const generatePlan = createServerFn({ method: "POST" })
     const model = gateway("google/gemini-3-flash-preview");
 
     const storeLabel = storeName ?? (storeChain ? storeChain.replace(/_/g, " ") : "the selected grocery store");
+    const now = new Date();
+    const weekday = now.toLocaleDateString("en-US", { weekday: "long" });
+    const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+    const month = now.getMonth() + 1;
+    const season =
+      month >= 3 && month <= 5 ? "spring"
+      : month >= 6 && month <= 8 ? "summer"
+      : month >= 9 && month <= 11 ? "fall"
+      : "winter";
+    const seasonHint =
+      season === "summer" ? "lean toward cold/fresh items (salads, fruit, yogurt parfaits, cold wraps, refreshing drinks)"
+      : season === "winter" ? "lean toward warm/comforting items (soups, microwave bowls, hot oatmeal, baked items)"
+      : season === "spring" ? "lean toward fresh produce, salads, light wraps"
+      : "lean toward hearty bowls, soups, and roasted/baked options";
+    const overusedProteins = Object.entries(recentProteinAnchors).filter(([, n]) => n >= 2).map(([k]) => k);
+    const overusedBrands = Object.entries(recentBrandHits).filter(([, n]) => n >= 3).map(([k]) => k);
+    const cookingPref = Array.isArray(prefs?.taste_profile)
+      ? prefs.taste_profile.find((t: any) => /cook|effort|prep/i.test(t?.question ?? ""))?.answer
+      : null;
     const systemPrompt = `You are MealMate, a packaged-food meal planner. The user is shopping today at ${storeLabel}. Build ONE day of meals using ONLY items from the provided catalog by id — every catalog row below is an item actually stocked at ${storeLabel}, so the resulting plan must read like a realistic ${storeLabel} grocery run.
 
 RULES:
@@ -364,6 +398,15 @@ RULES:
 - Use the "category" field to slot items appropriately. Skip items in the "drink" category entirely.
 - Prefer items marked fav=true and avoid repeating the same item twice.
 - DAILY UNIQUENESS: The catalog below has already been filtered to remove anything the user ate in the last 7 days (except their favorites). Build a plan that feels fresh vs. recent days — vary the protein anchors, brands, and meal styles.
+- VARIETY ACROSS THE WEEK: Today is ${weekday} (${season}). ${seasonHint}.
+  - Rotate protein anchors day-to-day: don't reuse a protein the user already had this week if you can avoid it. Already overused this week: ${overusedProteins.join(", ") || "none yet"}. Pick a DIFFERENT protein family today (chicken / turkey / fish / beef / pork / tofu / eggs / shellfish).
+  - Rotate brands: avoid brands the user has had repeatedly this week: ${overusedBrands.join(", ") || "none yet"}.
+  - Rotate cuisines across the week (e.g. Mexican one day, Asian the next, Mediterranean, American comfort, Italian). Pick a cuisine direction for today's lunch+dinner that contrasts with the last few days.
+  - Cooking methods: vary (grilled, baked, raw/no-cook, microwave bowls, ready-made salads, slow-cooker leftovers).
+- TIME BUDGET: ${isWeekend ? "It's the weekend — slightly more elaborate meals are OK if the user enjoys cooking." : "It's a weekday — favor quick / grab-and-go items, microwave bowls, ready-to-eat options."}${cookingPref ? ` User's stated cooking effort preference: "${cookingPref}".` : ""}
+- PLAN MODE: ${planMode === "comfort"
+      ? "COMFORT MODE — stick with the user's proven favorites and liked items. Only swap in minor variations (different flavor of a beloved brand, different fruit on the same yogurt). No experimental picks."
+      : "SURPRISE ME — the user wants variety. Introduce 1–2 items they haven't had recently but will likely enjoy based on their taste profile. Lean on new brands or new flavors they haven't tried this week."}
 - ${singleOnly
       ? "GRAB-AND-GO MODE: Every item must be a ready-to-eat single package the user can buy at the store, open, and eat in full as one serving — no cooking, no portioning, no measuring. The calorie/protein numbers shown are for eating the WHOLE package. Servings MUST always be exactly 1. Never split, multiply, or assume the user will only eat part of it. To hit macros, ADD another grab-and-go item — never adjust servings. Forbid raw/bulk ingredients (raw chicken breast, ground beef, dry rice, tortilla packs, tubs of yogurt, jars of nut butter, blocks of tofu). Use prepackaged single units: protein shakes, single-serve Greek yogurt cups, string cheese, hard-boiled egg packs, jerky sticks, protein bars, microwave rice cups, microwave egg bites, fruit, single-serve hummus + pretzel cups, ready-to-eat salad bowls, frozen single-serve meals, deli single sandwiches."
       : "Servings are decimal (e.g. 1, 1.5, 2). Adjust servings to hit macros precisely."}
