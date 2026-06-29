@@ -9,6 +9,7 @@ import { Heart, MessageCircle, Loader2, Trash2, ImagePlus, Send, Sparkles, X } f
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FeedSkeleton } from "@/components/skeletons";
+import { usePremiumCheck } from "@/hooks/usePremiumCheck";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   component: Feed,
@@ -27,6 +28,7 @@ function Feed() {
   const feed = useQuery({ queryKey: ["feed"], queryFn: () => listPosts() });
   const [composerOpen, setComposerOpen] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
+  const premium = usePremiumCheck();
 
   const like = useMutation({
     mutationFn: (vars: { post_id: string; like: boolean }) => toggleLike({ data: vars } as any),
@@ -68,10 +70,14 @@ function Feed() {
 
       <div className="mt-5">
         <button
-          onClick={() => setComposerOpen(true)}
+          onClick={() => {
+            if (premium.require("community_posting")) setComposerOpen(true);
+          }}
           className="w-full text-left bg-card border border-border rounded-2xl px-4 py-3 text-sm text-muted-foreground hover:border-primary"
         >
-          Share an update, progress photo, or meal win…
+          {premium.has("community_posting")
+            ? "Share an update, progress photo, or meal win…"
+            : "Posting is a Pro feature — tap to upgrade"}
         </button>
       </div>
 
@@ -184,7 +190,12 @@ function Composer({ open, onClose }: { open: boolean; onClose: () => void }) {
       qc.invalidateQueries({ queryKey: ["feed"] });
       onClose();
     } catch (e: any) {
-      toast.error(e.message ?? "Couldn't post");
+      const msg = e?.message ?? "Couldn't post";
+      if (/UPGRADE_REQUIRED|Pro feature/i.test(msg)) {
+        toast.error("Posting is a Pro feature", { action: { label: "Upgrade", onClick: () => (window.location.href = "/upgrade") } });
+      } else {
+        toast.error(msg);
+      }
     } finally { setBusy(false); }
   }
 

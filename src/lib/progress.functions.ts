@@ -116,9 +116,19 @@ export const getProgress = createServerFn({ method: "GET" })
         context.supabase.from("user_badges").select("*").eq("user_id", userId),
         context.supabase
           .from("profiles")
-          .select("streak_freeze_count, streak_freeze_reset_date, streak_freeze_used_on")
+          .select("streak_freeze_count, streak_freeze_reset_date, streak_freeze_used_on, plan_tier, plan_expires_at")
           .eq("id", userId).maybeSingle(),
       ]);
+
+    // Free-tier: cap weight history to last 7 days.
+    const isFree =
+      !profile?.plan_tier ||
+      profile.plan_tier === "free" ||
+      (profile.plan_expires_at && new Date(profile.plan_expires_at).getTime() <= Date.now());
+    const weightCutoffIso = new Date(today.getTime() - 7 * 86400000).toISOString().slice(0, 10);
+    const trimmedWeights = isFree
+      ? (weights ?? []).filter((w: any) => String(w.logged_on) >= weightCutoffIso)
+      : (weights ?? []);
 
     // Weekly renewal of streak freeze
     const todayKey = dateKey(today);
@@ -217,7 +227,9 @@ export const getProgress = createServerFn({ method: "GET" })
       checkin_streak: checkinStreak,
       streak_freeze_count: freezeCount,
       streak_freeze_available: freezeCount > 0,
-      weights: (weights ?? []).map((w: any) => ({ id: w.id, logged_on: w.logged_on, weight_kg: Number(w.weight_kg) })),
+      weights: trimmedWeights.map((w: any) => ({ id: w.id, logged_on: w.logged_on, weight_kg: Number(w.weight_kg) })),
+      tier: isFree ? "free" : profile?.plan_tier,
+      weights_truncated: isFree && (weights?.length ?? 0) > trimmedWeights.length,
       week: {
         days: c7.length,
         avg_adherence: avgAdh,

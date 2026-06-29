@@ -9,6 +9,7 @@ import { toPng } from "html-to-image";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createPost } from "@/lib/community.functions";
+import { usePremiumCheck } from "@/hooks/usePremiumCheck";
 
 export const Route = createFileRoute("/_authenticated/share")({
   component: ShareDay,
@@ -18,6 +19,9 @@ function ShareDay() {
   const dash = useQuery({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
   const cardRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState<"download" | "share" | "post" | null>(null);
+  const premium = usePremiumCheck();
+  const canExport = premium.has("share_card_export");
+  const canPost = premium.has("community_posting");
 
   if (dash.isLoading) {
     return <div className="p-6 grid place-items-center h-[60vh]"><Loader2 className="animate-spin" /></div>;
@@ -65,6 +69,7 @@ function ShareDay() {
   }
 
   async function downloadPng() {
+    if (!canExport) { premium.showUpsell("share_card_export"); return; }
     try {
       setBusy("download");
       const blob = await renderPng();
@@ -80,6 +85,7 @@ function ShareDay() {
   }
 
   async function nativeShare() {
+    if (!canExport) { premium.showUpsell("share_card_export"); return; }
     try {
       setBusy("share");
       const blob = await renderPng();
@@ -97,6 +103,7 @@ function ShareDay() {
   }
 
   async function postToFeed() {
+    if (!canPost) { premium.showUpsell("community_posting"); return; }
     try {
       setBusy("post");
       const blob = await renderPng();
@@ -133,7 +140,7 @@ function ShareDay() {
       <div className="mt-5 rounded-3xl overflow-hidden border border-border bg-card">
         <div className="aspect-[9/16] bg-black/5 overflow-hidden">
           {/* Scaled preview of the high-res off-screen card */}
-          <div className="origin-top-left" style={{ transform: "scale(0.31)", width: 1080, height: 1920 }}>
+          <div className="origin-top-left relative" style={{ transform: "scale(0.31)", width: 1080, height: 1920 }}>
             <ShareCard
               ref={cardRef}
               dateLabel={dateLabel}
@@ -144,9 +151,22 @@ function ShareDay() {
               proTarget={goals.protein_target ?? 0}
               meals={meals}
             />
+            {!canExport && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="rotate-[-20deg] text-white/70 font-black tracking-widest" style={{ fontSize: 140 }}>
+                  MEALMATE PREVIEW
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+      {!canExport && (
+        <div className="mt-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-sm p-3 flex items-center justify-between">
+          <span>Free preview is watermarked.</span>
+          <Link to="/upgrade" className="font-semibold underline">Upgrade</Link>
+        </div>
+      )}
 
       <div className="mt-5 grid grid-cols-1 gap-3">
         <Button onClick={nativeShare} disabled={!!busy} className="h-12 rounded-2xl font-semibold">

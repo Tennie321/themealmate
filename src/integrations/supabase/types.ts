@@ -396,6 +396,10 @@ export type Database = {
           is_premium: boolean
           last_briefing_date: string | null
           onboarded: boolean
+          plan_expires_at: string | null
+          plan_tier: string
+          plans_generated_count: number
+          plans_generated_on: string | null
           premium_expires_at: string | null
           reminder_times: Json
           reminders_enabled: boolean
@@ -411,6 +415,10 @@ export type Database = {
           is_premium?: boolean
           last_briefing_date?: string | null
           onboarded?: boolean
+          plan_expires_at?: string | null
+          plan_tier?: string
+          plans_generated_count?: number
+          plans_generated_on?: string | null
           premium_expires_at?: string | null
           reminder_times?: Json
           reminders_enabled?: boolean
@@ -426,6 +434,10 @@ export type Database = {
           is_premium?: boolean
           last_briefing_date?: string | null
           onboarded?: boolean
+          plan_expires_at?: string | null
+          plan_tier?: string
+          plans_generated_count?: number
+          plans_generated_on?: string | null
           premium_expires_at?: string | null
           reminder_times?: Json
           reminders_enabled?: boolean

@@ -22,6 +22,7 @@ import { MorningBriefing } from "@/components/MorningBriefing";
 import { FoodImage } from "@/components/FoodImage";
 import { StoreLogo } from "@/components/StoreLogo";
 import { DashboardSkeleton } from "@/components/skeletons";
+import { usePremiumCheck } from "@/hooks/usePremiumCheck";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -41,6 +42,7 @@ function fmt(cents: number) {
 function Dashboard() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const premium = usePremiumCheck();
   const onb = useQuery({ queryKey: ["onb"], queryFn: () => getOnboardingStatus() });
   const dash = useQuery({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
   const [swapTarget, setSwapTarget] = useState<any>(null);
@@ -87,7 +89,11 @@ function Dashboard() {
       if (genTokenRef.current !== token) return;
       clearGenTimers();
       setGenState("error");
-      setGenError(e?.message ?? "Couldn't build plan");
+      const msg: string = e?.message ?? "Couldn't build plan";
+      setGenError(msg);
+      if (/free plan generations|FREE_LIMIT_REACHED/i.test(msg) || e?.code === "FREE_LIMIT_REACHED") {
+        premium.showUpsell("unlimited_plans");
+      }
     };
 
     genTimersRef.current.scenic = setTimeout(() => {
@@ -395,6 +401,12 @@ function Dashboard() {
             >
               Build today's plan
             </Button>
+          )}
+          {premium.tier === "free" && premium.status && (
+            <div className="mt-2 text-[11px] text-white/80 text-center">
+              {premium.status.generations_remaining ?? 0} of {premium.status.generations_limit ?? 3} free plans left today ·{" "}
+              <Link to="/upgrade" className="underline">Upgrade</Link>
+            </div>
           )}
         </div>
       )}

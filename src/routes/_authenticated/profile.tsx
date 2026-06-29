@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, LogOut, Settings, LineChart, Heart, Bell } from "lucide-react";
+import { Loader2, LogOut, Settings, LineChart, Heart, Bell, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { TasteQuestions } from "@/components/TasteQuestions";
 import { ProfileSkeleton } from "@/components/skeletons";
@@ -156,6 +156,12 @@ function ProfilePage() {
       </div>
 
       <InviteFriends />
+
+      <Link to="/upgrade">
+        <Button className="w-full h-12 rounded-2xl bg-hero-gradient text-white">
+          <Sparkles className="w-4 h-4 mr-2" /> Upgrade plan
+        </Button>
+      </Link>
 
       <div className="grid grid-cols-2 gap-3">
         <Link to="/progress"><Button variant="outline" className="w-full h-12 rounded-2xl"><LineChart className="w-4 h-4 mr-2" /> Progress</Button></Link>
