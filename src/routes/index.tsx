@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Check, ShoppingBasket, Sparkles, Tag, Target, CheckSquare } from "lucide-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AddToHomeScreen } from "@/components/AddToHomeScreen";
 
 export const Route = createFileRoute("/")({
   head: () => ({
