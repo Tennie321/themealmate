@@ -205,7 +205,7 @@ function Progress() {
   );
 }
 
-function Stat({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
+function Stat({ label, value, icon }: { label: string; value: React.ReactNode; icon?: React.ReactNode }) {
   return (
     <div className="rounded-2xl bg-secondary/50 py-3">
       <div className="text-xl font-bold flex items-center justify-center gap-1">{icon}{value}</div>
