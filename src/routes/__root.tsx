@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import ogImageAsset from "../assets/mealmate-og.png.asset.json";
 import "@fontsource/outfit/400.css";
 import "@fontsource/outfit/600.css";
 import "@fontsource/outfit/700.css";
@@ -90,12 +91,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "MealMate — Eat this, get there." },
       { property: "og:description", content: "An AI meal planner that tells you exactly what to eat from your grocery store to hit your calorie and protein goals." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { property: "og:url", content: "https://themealmate.lovable.app/" },
+      { property: "og:image", content: `https://themealmate.lovable.app${ogImageAsset.url}` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "MealMate — Eat this, get there." },
       { name: "twitter:description", content: "An AI meal planner that tells you exactly what to eat from your grocery store to hit your calorie and protein goals." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8db0b154-f214-443f-a079-d9f477c9e1d2/id-preview-c21bd46e--e5083802-363b-4e08-b0f4-d7d06d7f7082.lovable.app-1782679674115.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8db0b154-f214-443f-a079-d9f477c9e1d2/id-preview-c21bd46e--e5083802-363b-4e08-b0f4-d7d06d7f7082.lovable.app-1782679674115.png" },
+      { name: "twitter:image", content: `https://themealmate.lovable.app${ogImageAsset.url}` },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "MealMate" },
