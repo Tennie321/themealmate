@@ -23,7 +23,7 @@ type Catalog = {
   is_single_serving?: boolean;
 };
 
-type MealSlot = "breakfast" | "lunch" | "dinner" | "snack" | "drink";
+type MealSlot = "breakfast" | "lunch" | "dinner" | "snack";
 
 type GeneratedPlanItem = {
   catalog_item_id: string;
@@ -37,7 +37,7 @@ const PlanSchema = z.object({
     .array(
       z.object({
         catalog_item_id: z.string(),
-        meal_slot: z.enum(["breakfast", "lunch", "dinner", "snack", "drink"]),
+        meal_slot: z.enum(["breakfast", "lunch", "dinner", "snack"]),
         servings: z.number().min(0.25).max(5),
         position: z.number().int().min(0).max(20),
       }),
@@ -85,7 +85,7 @@ function buildReliablePlan(catalog: Catalog[], goals: any): GeneratedPlanItem[] 
     if (!item) return;
     const safeServings = Math.max(0.25, Math.min(5, Math.round(servings * 4) / 4));
     plan.push({ catalog_item_id: item.id, meal_slot, servings: safeServings, position: plan.filter((p) => p.meal_slot === meal_slot).length });
-    if (meal_slot !== "drink") used.add(item.id);
+    used.add(item.id);
   };
 
   const scoreLeanProtein = (item: Catalog, text: string) =>
@@ -97,7 +97,6 @@ function buildReliablePlan(catalog: Catalog[], goals: any): GeneratedPlanItem[] 
   const scoreCarbProduce = (item: Catalog, text: string) =>
     (hasAny(text, ["rice", "quinoa", "oatmeal", "oats", "tortilla", "potato", "banana", "apple", "berries", "vegetable", "salad", "fruit"]) ? 65 : 0) + Number(item.calories) * 0.15;
 
-  const isDrink = (item: Catalog, text: string) => item.category === "drink" || hasAny(text, ["water", "coffee", "tea", "shake", "fairlife", "premier", "owyn", "celsius", "beverage"]);
   const isProtein = (item: Catalog, text: string) => item.category === "protein" || item.category === "meal" || Number(item.protein_g) >= 15 || hasAny(text, ["protein", "chicken", "turkey", "tuna", "salmon", "egg", "tofu", "yogurt", "cottage", "skyr", "jerky"]);
   const isBreakfast = (item: Catalog, text: string) => hasAny(text, ["yogurt", "oikos", "skyr", "cottage", "egg", "oatmeal", "oats", "granola", "berries", "banana"]);
   const isSnack = (item: Catalog, text: string) => item.category === "snack" || hasAny(text, ["bar", "jerky", "string cheese", "nuts", "hummus", "snack", "quest", "built", "rxbar", "pure protein"]);
@@ -110,8 +109,6 @@ function buildReliablePlan(catalog: Catalog[], goals: any): GeneratedPlanItem[] 
   add(pickBest(catalog, used, (i, t) => isProtein(i, t), scoreLeanProtein), "dinner");
   add(pickBest(catalog, used, (i, t) => isCarbProduce(i, t), scoreCarbProduce), "dinner");
   add(pickBest(catalog, used, (i, t) => isSnack(i, t), scoreSnack), "snack");
-  add(pickBest(catalog, used, (i, t) => isDrink(i, t) && (t.includes("water") || Number(i.calories) <= 20), (i) => 100 - Number(i.calories), true), "drink");
-  add(pickBest(catalog, used, (i, t) => isDrink(i, t) && Number(i.protein_g) >= 10, (i) => Number(i.protein_g) * 10 - Number(i.calories) * 0.1, true), "drink");
 
   while (plan.length < 5) {
     const next = pickBest(catalog, used, () => true, (item) => Number(item.protein_g) * 4 + Number(item.calories) * 0.05);
@@ -220,6 +217,7 @@ export const generatePlan = createServerFn({ method: "POST" })
     let allowed = catalog.filter((c) => {
       const itemAllergens = c.allergens ?? [];
       const itemDiets = c.diet_tags ?? [];
+      if (c.category === "drink") return false;
       if (itemAllergens.some((a) => allergies.has((a ?? "").toLowerCase()))) return false;
       if (dislikes.has((c.name ?? "").toLowerCase())) return false;
       if (dietTags.has("vegetarian") && !itemDiets.includes("vegetarian") && !itemDiets.includes("vegan")) return false;
@@ -275,9 +273,9 @@ export const generatePlan = createServerFn({ method: "POST" })
 RULES:
 - Hit calorie target within ±7% and meet or exceed protein target.
 - Stay at or under the daily budget when possible.
-- Always include: 1 breakfast, 1 lunch, 1 dinner, 1-2 snacks, and 2-3 drinks (water should appear once; add coffee/tea/protein shake as fits).
-- Use the "category" field to slot items appropriately. Drinks go in meal_slot "drink".
-- Prefer items marked fav=true and avoid repeating the same item twice unless it's a drink.
+- Always include: 1 breakfast, 1 lunch, 1 dinner, and 1-2 snacks. Do NOT include drinks — the plan covers food only.
+- Use the "category" field to slot items appropriately. Skip items in the "drink" category entirely.
+- Prefer items marked fav=true and avoid repeating the same item twice.
 - ${singleOnly ? "Servings MUST always be exactly 1. Every item is one prepackaged single serving — never split or multiply. To hit macros, add more items, do not change servings." : "Servings are decimal (e.g. 1, 1.5, 2). Adjust servings to hit macros precisely."}
 - HEALTH BIAS: ${
       healthPref === "healthier"
@@ -300,7 +298,7 @@ COHERENCE RULES (very important — meals must actually sound and taste good tog
 Return ONLY a JSON object with this EXACT shape — no prose, no markdown fences, no extra fields:
 {
   "items": [
-    { "catalog_item_id": "<id from catalog>", "meal_slot": "breakfast|lunch|dinner|snack|drink", "servings": 1.5, "position": 0 }
+    { "catalog_item_id": "<id from catalog>", "meal_slot": "breakfast|lunch|dinner|snack", "servings": 1.5, "position": 0 }
   ]
 }
 Do NOT nest items under "meals". Do NOT include name/calories/protein. Do NOT invent ids — only use ids from catalog.`;
@@ -370,7 +368,7 @@ ${catalogForPrompt
           position: Number(it.position ?? 0),
         }))
         .filter((it: any) => it.catalog_item_id && it.meal_slot);
-      const validSlots = new Set(["breakfast", "lunch", "dinner", "snack", "drink"]);
+      const validSlots = new Set(["breakfast", "lunch", "dinner", "snack"]);
       parsed = {
         items: candidate.items.filter((it: any) => validSlots.has(it.meal_slot)),
       };
@@ -402,8 +400,7 @@ ${catalogForPrompt
         const t = `${c.name} ${c.brand ?? ""}`;
         let slot = it.meal_slot;
         if (slot === "lunch" || slot === "dinner") {
-          if (isShakeText(t)) slot = "drink";
-          else if (isBarText(t) || isJerkyText(t)) slot = "snack";
+          if (isShakeText(t) || isBarText(t) || isJerkyText(t)) slot = "snack";
         }
         relocated.push({ ...it, meal_slot: slot });
       }
@@ -555,12 +552,7 @@ export const swapItem = createServerFn({ method: "POST" })
       const orig = item.catalog_items;
       const catalog = await loadCatalogForUser(supabase, userId);
       const alternates = catalog
-        .filter(
-          (c) =>
-            c.id !== orig.id &&
-            ((item.meal_slot === "drink" && c.category === "drink") ||
-              (item.meal_slot !== "drink" && c.category !== "drink")),
-        )
+        .filter((c) => c.id !== orig.id && c.category !== "drink")
         .map((c) => ({
           ...c,
           deltaCal: Math.round(c.calories - orig.calories),
@@ -702,7 +694,7 @@ export const toggleConsumed = createServerFn({ method: "POST" })
 
 export const setSlotConsumed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { planId: string; mealSlot: "breakfast" | "lunch" | "dinner" | "snack" | "drink"; consumed: boolean }) => input)
+  .inputValidator((input: { planId: string; mealSlot: "breakfast" | "lunch" | "dinner" | "snack"; consumed: boolean }) => input)
   .handler(async ({ data, context }: any) => {
     await context.supabase
       .from("plan_items")

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Sun, Moon, Cookie, Droplets, Share2, Store as StoreIcon, Check } from "lucide-react";
+import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Sun, Moon, Cookie, Share2, Store as StoreIcon, Check } from "lucide-react";
 import { saveStore } from "@/lib/data.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +28,6 @@ const SECTION_META: Record<string, { label: string; icon: any }> = {
   lunch: { label: "Lunch", icon: Sun },
   dinner: { label: "Dinner", icon: Moon },
   snack: { label: "Snacks", icon: Cookie },
-  drink: { label: "Drinks", icon: Droplets },
 };
 
 function fmt(cents: number) {
@@ -175,7 +174,7 @@ function Dashboard() {
   const proRemaining = Math.max(0, proTarget - eaten.pro);
   const calPct = calTarget > 0 ? Math.min(100, (eaten.cal / calTarget) * 100) : 0;
 
-  const sections = ["breakfast", "lunch", "dinner", "snack", "drink"] as const;
+  const sections = ["breakfast", "lunch", "dinner", "snack"] as const;
 
   useMealReminders({
     enabled: !!reminders.data?.enabled && !!plan,

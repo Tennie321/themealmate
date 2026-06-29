@@ -36,7 +36,7 @@ export function useMealReminders({
     if (!("Notification" in window)) return;
 
     const today = new Date().toDateString();
-    const slots = ["breakfast", "lunch", "dinner", "snack", "drink"] as const;
+    const slots = ["breakfast", "lunch", "dinner", "snack"] as const;
     const timeouts: number[] = [];
 
     for (const slot of slots) {
