@@ -202,7 +202,6 @@ function Dashboard() {
       return { prev };
     },
     onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(["dashboard"], ctx.prev); },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
   });
 
   const consumeSlot = useMutation({
@@ -225,7 +224,17 @@ function Dashboard() {
       return { prev };
     },
     onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(["dashboard"], ctx.prev); },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+    onSuccess: (_d, vars) => {
+      if (!vars.consumed) return;
+      const label = SECTION_META[vars.mealSlot]?.label ?? vars.mealSlot;
+      toast.success(`${label} logged ✓`, {
+        duration: 5000,
+        action: {
+          label: "Undo",
+          onClick: () => consumeSlot.mutate({ planId: vars.planId, mealSlot: vars.mealSlot, consumed: false }),
+        },
+      });
+    },
   });
 
   if (dash.isLoading || onb.isLoading) {
