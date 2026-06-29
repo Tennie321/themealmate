@@ -393,8 +393,10 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          is_premium: boolean
           last_briefing_date: string | null
           onboarded: boolean
+          premium_expires_at: string | null
           reminder_times: Json
           reminders_enabled: boolean
           streak_freeze_count: number
@@ -406,8 +408,10 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          is_premium?: boolean
           last_briefing_date?: string | null
           onboarded?: boolean
+          premium_expires_at?: string | null
           reminder_times?: Json
           reminders_enabled?: boolean
           streak_freeze_count?: number
@@ -419,14 +423,46 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_premium?: boolean
           last_briefing_date?: string | null
           onboarded?: boolean
+          premium_expires_at?: string | null
           reminder_times?: Json
           reminders_enabled?: boolean
           streak_freeze_count?: number
           streak_freeze_reset_date?: string | null
           streak_freeze_used_on?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          id: string
+          referred_email: string | null
+          referred_user_id: string | null
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_id?: string
+          status?: string
         }
         Relationships: []
       }
