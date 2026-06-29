@@ -277,9 +277,12 @@ export const generatePlan = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(apiKey);
     const model = gateway("google/gemini-3-flash-preview");
 
-    const systemPrompt = `You are MealMate, a packaged-food meal planner. Build ONE day of meals using ONLY items from the provided catalog by id.
+    const storeLabel = storeName ?? (storeChain ? storeChain.replace(/_/g, " ") : "the selected grocery store");
+    const systemPrompt = `You are MealMate, a packaged-food meal planner. The user is shopping today at ${storeLabel}. Build ONE day of meals using ONLY items from the provided catalog by id — every catalog row below is an item actually stocked at ${storeLabel}, so the resulting plan must read like a realistic ${storeLabel} grocery run.
 
 RULES:
+- STORE FIT: Only use ids from the catalog provided. Do NOT invent or assume items from other chains (no Trader Joe's brand items at Walmart, no Costco-size packs at 7-Eleven, no Whole Foods 365 items at Aldi, etc.). If a desired item type isn't in this catalog, pick the closest item that IS in the catalog.
+- Favor each store's signature brands when they appear in the catalog (e.g. Kirkland at Costco, Great Value at Walmart, Good & Gather / Market Pantry at Target, Trader Joe's brand at Trader Joe's, 365 at Whole Foods, Simple Truth at Kroger/Ralphs/Smith's/Fred Meyer/King Soopers, O Organics / Lucerne at Albertsons/Vons/Safeway, Wegmans brand at Wegmans, HEB brand at HEB, Publix brand at Publix, Aldi brand at Aldi).
 - Hit calorie target within ±7% and meet or exceed protein target.
 - Stay at or under the daily budget when possible.
 - Always include: 1 breakfast, 1 lunch, 1 dinner, and 1-2 snacks. Do NOT include drinks — the plan covers food only.
@@ -314,7 +317,8 @@ Return ONLY a JSON object with this EXACT shape — no prose, no markdown fences
 }
 Do NOT nest items under "meals". Do NOT include name/calories/protein. Do NOT invent ids — only use ids from catalog.`;
 
-    const userPrompt = `Goal: ${goals.goal_type}
+    const userPrompt = `Store: ${storeLabel}${storeChain ? ` (chain: ${storeChain})` : ""}
+Goal: ${goals.goal_type}
 Calorie target: ${goals.calorie_target} cal
 Protein target: ${goals.protein_target} g
 Daily budget: $${(goals.daily_budget_cents / 100).toFixed(2)}
