@@ -131,6 +131,19 @@ export const setHealthPreference = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const setPlanMode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { value: "surprise" | "comfort" }) => input)
+  .handler(async ({ data, context }: any) => {
+    await context.supabase
+      .from("preferences")
+      .upsert(
+        { user_id: context.userId, plan_mode: data.value },
+        { onConflict: "user_id" },
+      );
+    return { ok: true };
+  });
+
 export const getStores = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }: any) => {
