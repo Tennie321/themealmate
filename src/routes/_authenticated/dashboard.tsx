@@ -416,8 +416,8 @@ function Dashboard() {
       {!plan && (
         <div className="mt-6 bg-hero-gradient rounded-3xl p-6 text-white">
           <Sparkles className="w-6 h-6 mb-2" />
-          <h2 className="text-xl font-bold">No plan yet for today</h2>
-          <p className="text-white/85 text-sm mt-1">We'll pick real packaged items from {currentStore?.name ?? "your store"} that hit your macros and budget.</p>
+          <h2 className="text-xl font-bold">🌅 Good morning</h2>
+          <p className="text-white/85 text-sm mt-1">Here's a fresh plan for today — nothing from the last 7 days repeats unless you favorited it.</p>
           {genState === "generating" ? (
             <div className="mt-4 space-y-2">
               <div className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl bg-white/15 text-white font-semibold">
@@ -464,13 +464,20 @@ function Dashboard() {
         <div className="mt-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-lg">Your meals</h2>
-            <button
-              onClick={() => setNewPlanOpen(true)}
-              disabled={generate.isPending || makeNewPlan.isPending}
-              className="text-xs font-semibold text-primary flex items-center gap-1"
-            >
-              {(generate.isPending || makeNewPlan.isPending) ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />} Make new plan
-            </button>
+            <div className="flex flex-col items-end">
+              <button
+                onClick={() => setNewPlanOpen(true)}
+                disabled={generate.isPending || makeNewPlan.isPending}
+                className="text-xs font-semibold text-primary flex items-center gap-1"
+              >
+                {(generate.isPending || makeNewPlan.isPending) ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />} Regenerate day
+              </button>
+              {premium.tier === "free" && premium.status && (
+                <span className="text-[10px] text-muted-foreground">
+                  {premium.status.generations_remaining ?? 0}/{premium.status.generations_limit ?? 3} left today
+                </span>
+              )}
+            </div>
           </div>
 
           {sections.map((sec) => {
