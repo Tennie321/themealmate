@@ -78,14 +78,6 @@ function Onboarding() {
     snack: { cal: String(Math.round(cal * 0.1)), protein: String(Math.round(pro * 0.1)) },
   });
   const [mealTargets, setMealTargets] = useState<Record<Slot, { cal: string; protein: string }>>(() => defaultSplit(2000, 150));
-  const seededRef = useState({ seeded: false })[0];
-  useEffect(() => {
-    if (!seededRef.seeded && calorieTarget > 0 && proteinTarget > 0) {
-      setMealTargets(defaultSplit(calorieTarget, proteinTarget));
-      seededRef.seeded = true;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [calorieTarget, proteinTarget]);
 
   const stores = useQuery({ queryKey: ["stores"], queryFn: () => getStores() });
 
