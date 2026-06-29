@@ -402,6 +402,12 @@ function Dashboard() {
               Build today's plan
             </Button>
           )}
+          {premium.tier === "free" && premium.status && (
+            <div className="mt-2 text-[11px] text-white/80 text-center">
+              {premium.status.generations_remaining ?? 0} of {premium.status.generations_limit ?? 3} free plans left today ·{" "}
+              <Link to="/upgrade" className="underline">Upgrade</Link>
+            </div>
+          )}
         </div>
       )}
 
