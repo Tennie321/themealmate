@@ -97,6 +97,12 @@ function Progress() {
           <h2 className="font-bold">Weight trend</h2>
           <span className="text-xs text-muted-foreground">{d.weights.length} entr{d.weights.length === 1 ? "y" : "ies"}</span>
         </div>
+        {d.weights_truncated && (
+          <div className="mt-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs p-3 flex items-center justify-between">
+            <span>Showing last 7 days. Upgrade for full history.</span>
+            <a href="/upgrade" className="font-semibold underline">Upgrade</a>
+          </div>
+        )}
         {chartData.length >= 2 ? (
           <div className="mt-3 h-44">
             <ResponsiveContainer width="100%" height="100%">
