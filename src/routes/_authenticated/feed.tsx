@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FeedSkeleton } from "@/components/skeletons";
 import { usePremiumCheck } from "@/hooks/usePremiumCheck";
+import { WeeklyDigestCard } from "@/components/WeeklyDigest";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   component: Feed,
@@ -79,6 +80,10 @@ function Feed() {
             ? "Share an update, progress photo, or meal win…"
             : "Posting is a Pro feature — tap to upgrade"}
         </button>
+      </div>
+
+      <div className="mt-4">
+        <WeeklyDigestCard />
       </div>
 
       {feed.isLoading && <div className="mt-4"><FeedSkeleton /></div>}
