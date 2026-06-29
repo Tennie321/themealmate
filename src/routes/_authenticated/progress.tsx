@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine, BarChart, Bar } from "recharts";
-import { Loader2, Plus, Target, Trash2, Trophy, Flame, ArrowLeft } from "lucide-react";
+import { Loader2, Plus, Target, Trash2, Trophy, Flame, ArrowLeft, Snowflake } from "lucide-react";
 import { toast } from "sonner";
 import { ProgressSkeleton } from "@/components/skeletons";
 
@@ -149,7 +149,18 @@ function Progress() {
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 text-center">
           <Stat label="Perfect days" value={`${d.week.perfect_days}/7`} />
-          <Stat label="Streak" value={`${d.checkin_streak}d`} icon={<Flame className="w-4 h-4 text-orange-500" />} />
+          <Stat
+            label="Streak"
+            value={
+              <span className="inline-flex items-center gap-1">
+                {d.checkin_streak}d
+                <Snowflake
+                  className={`w-3.5 h-3.5 ${d.streak_freeze_available ? "text-sky-500" : "text-muted-foreground/40"}`}
+                />
+              </span>
+            }
+            icon={<Flame className="w-4 h-4 text-orange-500" />}
+          />
         </div>
         {d.week.series.length > 0 && (
           <div className="mt-4 h-28">
@@ -194,7 +205,7 @@ function Progress() {
   );
 }
 
-function Stat({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
+function Stat({ label, value, icon }: { label: string; value: React.ReactNode; icon?: React.ReactNode }) {
   return (
     <div className="rounded-2xl bg-secondary/50 py-3">
       <div className="text-xl font-bold flex items-center justify-center gap-1">{icon}{value}</div>

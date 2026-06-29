@@ -15,18 +15,45 @@ const BADGES: { key: string; label: string; description: string; check: (ctx: an
 
 export const ALL_BADGES = BADGES.map((b) => ({ key: b.key, label: b.label, description: b.description }));
 
-function consecutiveStreak(dates: string[]): number {
-  if (dates.length === 0) return 0;
+function dateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function consecutiveStreakWithFreeze(
+  dates: string[],
+  freezeAvailable: number,
+  freezeUsedOn: string | null,
+): { streak: number; usedNewFreeze: boolean; freezeUsedOn: string | null } {
+  if (dates.length === 0) return { streak: 0, usedNewFreeze: false, freezeUsedOn };
   const set = new Set(dates);
   const today = new Date();
   let streak = 0;
+  let available = freezeAvailable;
+  let usedNewFreeze = false;
+  let newUsedOn = freezeUsedOn;
   for (let i = 0; i < 365; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    if (set.has(key)) streak++; else { if (i === 0) continue; break; }
+    const key = dateKey(d);
+    if (set.has(key)) {
+      streak++;
+      continue;
+    }
+    if (i === 0) continue; // grace for today (no check-in yet)
+    if (freezeUsedOn && key === freezeUsedOn) {
+      streak++;
+      continue;
+    }
+    if (available > 0) {
+      available--;
+      usedNewFreeze = true;
+      newUsedOn = key;
+      streak++;
+      continue;
+    }
+    break;
   }
-  return streak;
+  return { streak, usedNewFreeze, freezeUsedOn: newUsedOn };
 }
 
 export const logWeight = createServerFn({ method: "POST" })
@@ -77,7 +104,7 @@ export const getProgress = createServerFn({ method: "GET" })
     const userId = context.userId;
     const today = new Date();
     const fromIso = new Date(today.getTime() - 7 * 86400000).toISOString().slice(0, 10);
-    const [{ data: goals }, { data: weights }, { data: checkins7 }, { data: allCheckinDates }, { data: badges }] =
+    const [{ data: goals }, { data: weights }, { data: checkins7 }, { data: allCheckinDates }, { data: badges }, { data: profile }] =
       await Promise.all([
         context.supabase.from("user_goals").select("*").eq("user_id", userId).maybeSingle(),
         context.supabase.from("weight_logs").select("*").eq("user_id", userId).order("logged_on", { ascending: true }),
@@ -87,7 +114,33 @@ export const getProgress = createServerFn({ method: "GET" })
           .eq("user_id", userId).gte("plan_date", fromIso).order("plan_date", { ascending: true }),
         context.supabase.from("check_ins").select("plan_date").eq("user_id", userId),
         context.supabase.from("user_badges").select("*").eq("user_id", userId),
+        context.supabase
+          .from("profiles")
+          .select("streak_freeze_count, streak_freeze_reset_date, streak_freeze_used_on")
+          .eq("id", userId).maybeSingle(),
       ]);
+
+    // Weekly renewal of streak freeze
+    const todayKey = dateKey(today);
+    let freezeCount = profile?.streak_freeze_count ?? 1;
+    let freezeReset = profile?.streak_freeze_reset_date as string | null;
+    let freezeUsedOn = profile?.streak_freeze_used_on as string | null;
+    const needsReset =
+      !freezeReset ||
+      (new Date(todayKey).getTime() - new Date(freezeReset).getTime()) >= 7 * 86400000;
+    if (needsReset) {
+      freezeCount = 1;
+      freezeReset = todayKey;
+      freezeUsedOn = null;
+      await context.supabase
+        .from("profiles")
+        .update({
+          streak_freeze_count: freezeCount,
+          streak_freeze_reset_date: freezeReset,
+          streak_freeze_used_on: freezeUsedOn,
+        })
+        .eq("id", userId);
+    }
 
     const start = goals?.start_weight_kg != null ? Number(goals.start_weight_kg) : (weights?.[0]?.weight_kg ?? null);
     const latest = weights && weights.length > 0 ? Number(weights[weights.length - 1].weight_kg) : null;
@@ -105,7 +158,23 @@ export const getProgress = createServerFn({ method: "GET" })
       toGoLbs = Math.abs(latest - target) * KG_TO_LB;
     }
 
-    const checkinStreak = consecutiveStreak((allCheckinDates ?? []).map((c: any) => c.plan_date));
+    const streakRes = consecutiveStreakWithFreeze(
+      (allCheckinDates ?? []).map((c: any) => c.plan_date),
+      freezeCount,
+      freezeUsedOn,
+    );
+    const checkinStreak = streakRes.streak;
+    if (streakRes.usedNewFreeze) {
+      freezeCount = Math.max(0, freezeCount - 1);
+      freezeUsedOn = streakRes.freezeUsedOn;
+      await context.supabase
+        .from("profiles")
+        .update({
+          streak_freeze_count: freezeCount,
+          streak_freeze_used_on: freezeUsedOn,
+        })
+        .eq("id", userId);
+    }
 
     // Weekly report card
     const c7 = checkins7 ?? [];
@@ -146,6 +215,8 @@ export const getProgress = createServerFn({ method: "GET" })
       lost_lbs: lostLbs,
       goal_pct: Math.round(goalPct),
       checkin_streak: checkinStreak,
+      streak_freeze_count: freezeCount,
+      streak_freeze_available: freezeCount > 0,
       weights: (weights ?? []).map((w: any) => ({ id: w.id, logged_on: w.logged_on, weight_kg: Number(w.weight_kg) })),
       week: {
         days: c7.length,
