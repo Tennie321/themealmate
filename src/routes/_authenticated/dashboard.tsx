@@ -476,6 +476,13 @@ function Dashboard() {
 
       {plan && (
         <div className="mt-6 space-y-4">
+          <div className="rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 flex items-start gap-2">
+            <div className="text-base leading-none mt-0.5">🔒</div>
+            <div className="text-[12px] leading-snug">
+              <div className="font-semibold text-primary">No Scale Guaranteed</div>
+              <div className="text-muted-foreground">Every item is pre-portioned. No weighing, no measuring — just grab and eat.</div>
+            </div>
+          </div>
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-lg">Your meals</h2>
             <div className="flex flex-col items-end">
