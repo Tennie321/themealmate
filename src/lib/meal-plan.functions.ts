@@ -337,7 +337,9 @@ ${catalogForPrompt
   .join("\n")}`;
 
     let parsed: { items: GeneratedPlanItem[] };
-    try {
+    if (data.fallbackOnly) {
+      parsed = { items: buildReliablePlan(ranked.length >= 5 ? ranked : allowed, goals) };
+    } else try {
       const result: any = await (generateText as any)({
         model,
         system: systemPrompt,
