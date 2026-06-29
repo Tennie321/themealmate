@@ -20,6 +20,7 @@ import { useMealReminders, requestNotificationPermission } from "@/hooks/useMeal
 import { MorningBriefing } from "@/components/MorningBriefing";
 import { FoodImage } from "@/components/FoodImage";
 import { StoreLogo } from "@/components/StoreLogo";
+import { DashboardSkeleton } from "@/components/skeletons";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -228,7 +229,6 @@ function Dashboard() {
   });
 
   if (dash.isLoading || onb.isLoading) {
-    const { DashboardSkeleton } = require("@/components/skeletons");
     return <DashboardSkeleton />;
   }
 
