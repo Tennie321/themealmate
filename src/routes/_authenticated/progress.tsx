@@ -182,7 +182,32 @@ function Progress() {
 
       {/* Badges */}
       <section className="mt-5 bg-card border border-border rounded-3xl p-5">
-        <h2 className="font-bold flex items-center gap-2"><Trophy className="w-4 h-4 text-primary" /> Badges</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold flex items-center gap-2"><Trophy className="w-4 h-4 text-primary" /> Badges</h2>
+          <span className="text-xs text-muted-foreground">
+            {d.badges.filter((b: any) => b.earned).length} / {d.badges.length}
+          </span>
+        </div>
+        {d.badges.every((b: any) => !b.earned) && (
+          <div className="mt-3 rounded-2xl bg-secondary/60 p-3 text-sm">
+            <p className="font-semibold">No badges yet — easy first wins:</p>
+            <ul className="mt-1.5 space-y-1 text-muted-foreground text-[13px]">
+              <li className="flex items-center justify-between gap-2">
+                <span>Log your weight</span>
+                <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setLogOpen(true)}>
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Log
+                </Button>
+              </li>
+              <li className="flex items-center justify-between gap-2">
+                <span>Set a target weight</span>
+                <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setTargetOpen(true)}>
+                  <Target className="w-3.5 h-3.5 mr-1" /> Set
+                </Button>
+              </li>
+              <li>Check in 3 days in a row to unlock your first streak badge.</li>
+            </ul>
+          </div>
+        )}
         <div className="mt-3 grid grid-cols-3 gap-3">
           {d.badges.map((b: any) => (
             <div
