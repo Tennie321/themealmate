@@ -123,6 +123,7 @@ function Index() {
           Premier Protein, Fairlife, Oikos, RXBAR, and 60+ packaged staples already in our catalog.
         </p>
       </main>
+      <AddToHomeScreen />
     </div>
   );
 }
