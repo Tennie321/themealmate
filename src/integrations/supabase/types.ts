@@ -452,6 +452,7 @@ export type Database = {
           id: string
           is_premium: boolean
           last_briefing_date: string | null
+          last_digest_date: string | null
           onboarded: boolean
           plan_expires_at: string | null
           plan_tier: string
@@ -471,6 +472,7 @@ export type Database = {
           id: string
           is_premium?: boolean
           last_briefing_date?: string | null
+          last_digest_date?: string | null
           onboarded?: boolean
           plan_expires_at?: string | null
           plan_tier?: string
@@ -490,6 +492,7 @@ export type Database = {
           id?: string
           is_premium?: boolean
           last_briefing_date?: string | null
+          last_digest_date?: string | null
           onboarded?: boolean
           plan_expires_at?: string | null
           plan_tier?: string
