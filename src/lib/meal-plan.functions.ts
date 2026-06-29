@@ -187,7 +187,7 @@ async function loadCatalogForUser(
 
 export const generatePlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { date?: string; regenerate?: boolean; storeId?: string }) => input ?? {})
+  .inputValidator((input: { date?: string; regenerate?: boolean; storeId?: string; fallbackOnly?: boolean }) => input ?? {})
   .handler(async ({ data, context }: any) => {
     const supabase = context.supabase;
     const userId = context.userId;
