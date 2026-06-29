@@ -184,7 +184,12 @@ function Composer({ open, onClose }: { open: boolean; onClose: () => void }) {
       qc.invalidateQueries({ queryKey: ["feed"] });
       onClose();
     } catch (e: any) {
-      toast.error(e.message ?? "Couldn't post");
+      const msg = e?.message ?? "Couldn't post";
+      if (/UPGRADE_REQUIRED|Pro feature/i.test(msg)) {
+        toast.error("Posting is a Pro feature", { action: { label: "Upgrade", onClick: () => (window.location.href = "/upgrade") } });
+      } else {
+        toast.error(msg);
+      }
     } finally { setBusy(false); }
   }
 
