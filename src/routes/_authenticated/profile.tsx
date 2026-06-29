@@ -11,6 +11,7 @@ import { Loader2, LogOut, Settings, LineChart, Heart, Bell } from "lucide-react"
 import { toast } from "sonner";
 import { TasteQuestions } from "@/components/TasteQuestions";
 import { ProfileSkeleton } from "@/components/skeletons";
+import { InviteFriends } from "@/components/InviteFriends";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
@@ -153,6 +154,8 @@ function ProfilePage() {
           </div>
         )}
       </div>
+
+      <InviteFriends />
 
       <div className="grid grid-cols-2 gap-3">
         <Link to="/progress"><Button variant="outline" className="w-full h-12 rounded-2xl"><LineChart className="w-4 h-4 mr-2" /> Progress</Button></Link>

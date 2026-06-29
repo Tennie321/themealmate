@@ -21,6 +21,11 @@ export const Route = createFileRoute("/")({
 function Index() {
   const navigate = useNavigate();
   useEffect(() => {
+    // Capture ?ref=<userId> so we can credit the referrer after sign-up.
+    try {
+      const ref = new URLSearchParams(window.location.search).get("ref");
+      if (ref) localStorage.setItem("mm_ref", ref);
+    } catch {}
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard" });
     });

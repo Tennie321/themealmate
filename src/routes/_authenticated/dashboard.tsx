@@ -5,6 +5,7 @@ import { getDashboard } from "@/lib/data.functions";
 import { getOnboardingStatus } from "@/lib/data.functions";
 import { generatePlan, swapItem, toggleFavorite, toggleConsumed, setSlotConsumed } from "@/lib/meal-plan.functions";
 import { submitPlanFeedback } from "@/lib/taste.functions";
+import { markReferralConverted } from "@/lib/referrals.functions";
 import { MacroRing } from "@/components/MacroRing";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -80,6 +81,7 @@ function Dashboard() {
       toast.success("Plan ready");
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["shopping"] });
+      markReferralConverted().catch(() => {});
     };
     const onFailure = (e: any) => {
       if (genTokenRef.current !== token) return;
@@ -105,6 +107,7 @@ function Dashboard() {
           toast.success("Plan ready");
           qc.invalidateQueries({ queryKey: ["dashboard"] });
           qc.invalidateQueries({ queryKey: ["shopping"] });
+          markReferralConverted().catch(() => {});
         })
         .catch((e: any) => {
           if (genTokenRef.current !== fbToken) return;

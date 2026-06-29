@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { recordReferralSignup } from "@/lib/referrals.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,11 +21,19 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+    const tryRecordRef = async () => {
+      try {
+        const ref = localStorage.getItem("mm_ref");
+        if (!ref) return;
+        await recordReferralSignup({ data: { referrerId: ref } });
+        localStorage.removeItem("mm_ref");
+      } catch {}
+    };
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (data.session) { await tryRecordRef(); navigate({ to: "/dashboard" }); }
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) navigate({ to: "/dashboard" });
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_e, session) => {
+      if (session) { await tryRecordRef(); navigate({ to: "/dashboard" }); }
     });
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
