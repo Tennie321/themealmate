@@ -437,6 +437,12 @@ RULES:
     }
 - Return positions as 0..N per meal_slot for stable ordering.
 
+ZERO-THINKING PHILOSOPHY (non-negotiable):
+- The user NEVER weighs, measures, or guesses anything. Every item in this catalog is pre-portioned (label = exact) or a natural single-serve item (1 banana, 1 apple, 1 egg).
+- Every "servings" value MUST be an integer. Default to 1. Eggs may go up to 3. No 1.5, no 0.5, no half-cups, no "split the package".
+- To hit macros, ADD another single-serve item — never inflate servings.
+- The catalog has already been filtered to exclude bulk/raw foods (no raw chicken, no bulk rice, no jars/tubs). Only use what's there.
+
 COHERENCE RULES (very important — meals must actually sound and taste good together):
 - Each meal slot (breakfast/lunch/dinner) should read like a real meal a person would sit down and eat, not a random pile of packaged snacks. Build it around ONE clear protein anchor + a complementary carb/produce side that flavor-wise belongs with it (e.g. chicken + rice + veg; turkey + tortilla + fruit; salmon + quinoa; eggs + oatmeal + berries; Greek yogurt + granola + fruit).
 - Foods in the same meal must be flavor-congruent. Do NOT combine clashing items (e.g. tuna + chocolate protein bar, jerky + yogurt, cottage cheese + salsa-flavored chips). Sweet stays with sweet, savory with savory.
