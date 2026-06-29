@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { getDashboard } from "@/lib/data.functions";
 import { getOnboardingStatus } from "@/lib/data.functions";
-import { generatePlan, swapItem, toggleFavorite, toggleConsumed, setSlotConsumed } from "@/lib/meal-plan.functions";
+import { generatePlan, swapItem, toggleFavorite, toggleConsumed, setSlotConsumed, migrateFavoritesToStore } from "@/lib/meal-plan.functions";
 import { submitPlanFeedback } from "@/lib/taste.functions";
 import { markReferralConverted } from "@/lib/referrals.functions";
 import { MacroRing } from "@/components/MacroRing";
