@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, LogOut, Settings, LineChart, Heart, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { TasteQuestions } from "@/components/TasteQuestions";
+import { ProfileSkeleton } from "@/components/skeletons";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
@@ -33,7 +34,7 @@ function ProfilePage() {
       setHealthPreference({ data: { value } } as any),
     onSuccess: () => { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["dashboard"] }); },
   });
-  if (dash.isLoading) return <div className="p-10 grid place-items-center"><Loader2 className="animate-spin" /></div>;
+  if (dash.isLoading) return <ProfileSkeleton />;
   const goals: any = dash.data?.goals;
   const bio = goals?.biometrics ?? {};
   const prefs: any = (dash.data as any)?.preferences;

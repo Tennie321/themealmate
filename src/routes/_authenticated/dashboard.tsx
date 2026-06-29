@@ -20,6 +20,7 @@ import { useMealReminders, requestNotificationPermission } from "@/hooks/useMeal
 import { MorningBriefing } from "@/components/MorningBriefing";
 import { FoodImage } from "@/components/FoodImage";
 import { StoreLogo } from "@/components/StoreLogo";
+import { DashboardSkeleton } from "@/components/skeletons";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -228,7 +229,7 @@ function Dashboard() {
   });
 
   if (dash.isLoading || onb.isLoading) {
-    return <div className="p-6 flex items-center justify-center h-[60vh]"><Loader2 className="animate-spin" /></div>;
+    return <DashboardSkeleton />;
   }
 
   const goals: any = dash.data?.goals;
