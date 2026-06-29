@@ -48,6 +48,23 @@ export const createPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { kind: "progress" | "update" | "meal" | "share"; body?: string; image_path?: string; meta?: any }) => input)
   .handler(async ({ data, context }: any) => {
+    // Gate posting behind Pro/Premium.
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("plan_tier, plan_expires_at")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tier =
+      prof?.plan_tier && prof.plan_tier !== "free"
+        ? !prof?.plan_expires_at || new Date(prof.plan_expires_at).getTime() > Date.now()
+          ? prof.plan_tier
+          : "free"
+        : "free";
+    if (tier === "free") {
+      const err: any = new Error("Posting to the community is a Pro feature. Upgrade to share your progress.");
+      err.code = "UPGRADE_REQUIRED";
+      throw err;
+    }
     const body = (data.body ?? "").slice(0, 2000);
     const { data: row, error } = await context.supabase
       .from("posts")
