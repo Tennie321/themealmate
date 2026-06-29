@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getDashboard } from "@/lib/data.functions";
 import { getOnboardingStatus } from "@/lib/data.functions";
 import { generatePlan, swapItem, toggleFavorite, toggleConsumed, setSlotConsumed } from "@/lib/meal-plan.functions";
@@ -49,6 +49,82 @@ function Dashboard() {
   const [feedbackReasons, setFeedbackReasons] = useState<string[]>([]);
   const [feedbackNote, setFeedbackNote] = useState("");
 
+  // Generation state machine for "Build today's plan" with timeout + cancel + fallback
+  const [genState, setGenState] = useState<"idle" | "generating" | "error">("idle");
+  const [genMsg, setGenMsg] = useState<string | null>(null);
+  const [genError, setGenError] = useState<string | null>(null);
+  const genTokenRef = useRef(0);
+  const genTimersRef = useRef<{ scenic?: any; fallback?: any }>({});
+
+  const clearGenTimers = () => {
+    if (genTimersRef.current.scenic) clearTimeout(genTimersRef.current.scenic);
+    if (genTimersRef.current.fallback) clearTimeout(genTimersRef.current.fallback);
+    genTimersRef.current = {};
+  };
+
+  useEffect(() => () => clearGenTimers(), []);
+
+  const startGenerate = (opts?: { storeId?: string }) => {
+    const token = ++genTokenRef.current;
+    clearGenTimers();
+    setGenState("generating");
+    setGenMsg(null);
+    setGenError(null);
+
+    const onSuccess = () => {
+      if (genTokenRef.current !== token) return;
+      clearGenTimers();
+      setGenState("idle");
+      setGenMsg(null);
+      toast.success("Plan ready");
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["shopping"] });
+    };
+    const onFailure = (e: any) => {
+      if (genTokenRef.current !== token) return;
+      clearGenTimers();
+      setGenState("error");
+      setGenError(e?.message ?? "Couldn't build plan");
+    };
+
+    genTimersRef.current.scenic = setTimeout(() => {
+      if (genTokenRef.current === token) setGenMsg("Taking the scenic route…");
+    }, 15000);
+
+    genTimersRef.current.fallback = setTimeout(() => {
+      if (genTokenRef.current !== token) return;
+      // AI is taking too long — invalidate the in-flight request and run the deterministic planner.
+      const fbToken = ++genTokenRef.current;
+      setGenMsg("Taking too long — building a reliable plan…");
+      generatePlan({ data: { regenerate: true, storeId: opts?.storeId, fallbackOnly: true } } as any)
+        .then(() => {
+          if (genTokenRef.current !== fbToken) return;
+          setGenState("idle");
+          setGenMsg(null);
+          toast.success("Plan ready");
+          qc.invalidateQueries({ queryKey: ["dashboard"] });
+          qc.invalidateQueries({ queryKey: ["shopping"] });
+        })
+        .catch((e: any) => {
+          if (genTokenRef.current !== fbToken) return;
+          setGenState("error");
+          setGenError(e?.message ?? "Couldn't build plan");
+        });
+    }, 45000);
+
+    generatePlan({ data: { regenerate: true, storeId: opts?.storeId } } as any)
+      .then(onSuccess)
+      .catch(onFailure);
+  };
+
+  const cancelGenerate = () => {
+    genTokenRef.current++; // invalidate any in-flight callbacks
+    clearGenTimers();
+    setGenState("idle");
+    setGenMsg(null);
+    setGenError(null);
+  };
+
   useEffect(() => {
     if (onb.data && !onb.data.onboarded) navigate({ to: "/onboarding" });
   }, [onb.data, navigate]);
@@ -67,16 +143,7 @@ function Dashboard() {
     }
   }, [reminders.data?.enabled]);
 
-  const generate = useMutation({
-    mutationFn: (vars?: { storeId?: string }) =>
-      generatePlan({ data: { regenerate: true, storeId: vars?.storeId } } as any),
-    onSuccess: () => {
-      toast.success("Plan ready");
-      qc.invalidateQueries({ queryKey: ["dashboard"] });
-      qc.invalidateQueries({ queryKey: ["shopping"] });
-    },
-    onError: (e: any) => toast.error(e.message ?? "Couldn't build plan"),
-  });
+  const generate = { isPending: genState === "generating" };
 
   const makeNewPlan = useMutation({
     mutationFn: async () => {
