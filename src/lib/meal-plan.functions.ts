@@ -237,10 +237,10 @@ export const generatePlan = createServerFn({ method: "POST" })
 
     if (!goals) throw new Error("Please complete onboarding first.");
     // Free tier doesn't get personalization — neutralize taste profile + signals.
-    if (tier === "free" && prefs) {
-      (prefs as any).taste_profile = [];
+    if (tier === "free") {
+      if (prefs) (prefs as any).taste_profile = [];
+      if (Array.isArray(signals)) signals.splice(0, signals.length);
     }
-    const effectiveSignals = tier === "free" ? [] : signals;
     const { catalog, storeName, storeChain } = await loadCatalogForUser(supabase, userId);
     if (catalog.length === 0) throw new Error("No catalog items available for your store yet.");
 
