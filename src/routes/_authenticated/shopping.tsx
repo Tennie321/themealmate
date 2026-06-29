@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { getShoppingList } from "@/lib/data.functions";
 import { toggleListItem, markOutOfStock, substituteListItem } from "@/lib/meal-plan.functions";
-import { Loader2, Check, Package } from "lucide-react";
+import { Loader2, Check, Package, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { FoodImage } from "@/components/FoodImage";
@@ -70,7 +71,20 @@ function ShoppingPage() {
       </div>
 
       {items.length === 0 && (
-        <p className="mt-10 text-center text-muted-foreground">No list yet — build a plan first.</p>
+        <div className="mt-10 flex flex-col items-center text-center px-6">
+          <div className="w-14 h-14 rounded-full bg-secondary grid place-items-center mb-3">
+            <Package className="w-7 h-7 text-primary" />
+          </div>
+          <h3 className="font-bold">No shopping list yet</h3>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">
+            Build today's plan and we'll organize everything by aisle with prices.
+          </p>
+          <Button asChild>
+            <Link to="/dashboard">
+              <Sparkles className="w-4 h-4 mr-1.5" /> Build today's plan
+            </Link>
+          </Button>
+        </div>
       )}
 
       <div className="mt-6 space-y-5">
