@@ -68,6 +68,24 @@ function Onboarding() {
   const [dietTags, setDietTags] = useState<string[]>([]);
   const [singleServingOnly, setSingleServingOnly] = useState(true);
   const [healthPref, setHealthPref] = useState<"healthier" | "balanced" | "indulgent">("balanced");
+  const [perMealOn, setPerMealOn] = useState(false);
+  const SLOTS = ["breakfast", "lunch", "dinner", "snack"] as const;
+  type Slot = (typeof SLOTS)[number];
+  const defaultSplit = (cal: number, pro: number): Record<Slot, { cal: string; protein: string }> => ({
+    breakfast: { cal: String(Math.round(cal * 0.25)), protein: String(Math.round(pro * 0.25)) },
+    lunch: { cal: String(Math.round(cal * 0.3)), protein: String(Math.round(pro * 0.3)) },
+    dinner: { cal: String(Math.round(cal * 0.35)), protein: String(Math.round(pro * 0.35)) },
+    snack: { cal: String(Math.round(cal * 0.1)), protein: String(Math.round(pro * 0.1)) },
+  });
+  const [mealTargets, setMealTargets] = useState<Record<Slot, { cal: string; protein: string }>>(() => defaultSplit(2000, 150));
+  const seededRef = useState({ seeded: false })[0];
+  useEffect(() => {
+    if (!seededRef.seeded && calorieTarget > 0 && proteinTarget > 0) {
+      setMealTargets(defaultSplit(calorieTarget, proteinTarget));
+      seededRef.seeded = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calorieTarget, proteinTarget]);
 
   const stores = useQuery({ queryKey: ["stores"], queryFn: () => getStores() });
 
@@ -90,9 +108,19 @@ function Onboarding() {
         await saveGoalM.mutateAsync({ goal_type: goal });
         setStep(1);
       } else if (step === 1) {
+        const meal_targets = perMealOn
+          ? SLOTS.reduce<Record<string, { cal: number; protein: number }>>((acc, slot) => {
+              acc[slot] = {
+                cal: Math.max(0, Number(mealTargets[slot].cal) || 0),
+                protein: Math.max(0, Number(mealTargets[slot].protein) || 0),
+              };
+              return acc;
+            }, {})
+          : null;
         await saveBioM.mutateAsync({
           sex, age, height_cm: heightCm, weight_kg: weightKg, activity, tdee,
           calorie_target: calorieTarget, protein_target: proteinTarget,
+          meal_targets,
         });
         setStep(2);
       } else if (step === 2) {
