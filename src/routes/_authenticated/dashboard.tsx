@@ -711,14 +711,14 @@ function Dashboard() {
             <Button
               variant="outline"
               className="flex-1 rounded-2xl h-12"
-              onClick={() => { setFeedbackReasons([]); setFeedbackNote(""); makeNewPlan.mutate(); }}
+              onClick={() => { setFeedbackReasons([]); setFeedbackNote(""); makeNewPlan.mutate(undefined); }}
               disabled={makeNewPlan.isPending}
             >
               Skip & rebuild
             </Button>
             <Button
               className="flex-1 rounded-2xl h-12 font-semibold"
-              onClick={() => makeNewPlan.mutate()}
+              onClick={() => makeNewPlan.mutate(undefined)}
               disabled={makeNewPlan.isPending}
             >
               {makeNewPlan.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Make new plan"}
