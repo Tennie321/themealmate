@@ -66,6 +66,11 @@ function Dashboard() {
   const [feedbackReasons, setFeedbackReasons] = useState<string[]>([]);
   const [feedbackNote, setFeedbackNote] = useState("");
 
+  // "Describe today's vibe" chat bubble shown before generation
+  const [vibeOpen, setVibeOpen] = useState(false);
+  const [vibeText, setVibeText] = useState("");
+  const [vibeContext, setVibeContext] = useState<{ storeId?: string; storeName?: string; mode: "first" | "regen" } | null>(null);
+
   // Generation state machine for "Build today's plan" with timeout + cancel + fallback
   const [genState, setGenState] = useState<"idle" | "generating" | "error">("idle");
   const [genMsg, setGenMsg] = useState<string | null>(null);
@@ -81,7 +86,7 @@ function Dashboard() {
 
   useEffect(() => () => clearGenTimers(), []);
 
-  const startGenerate = (opts?: { storeId?: string; storeName?: string }) => {
+  const startGenerate = (opts?: { storeId?: string; storeName?: string; vibe?: string }) => {
     const token = ++genTokenRef.current;
     clearGenTimers();
     setGenState("generating");
@@ -120,7 +125,7 @@ function Dashboard() {
       // AI is taking too long — invalidate the in-flight request and run the deterministic planner.
       const fbToken = ++genTokenRef.current;
       setGenMsg("Taking too long — building a reliable plan…");
-      generatePlan({ data: { regenerate: true, storeId: opts?.storeId, fallbackOnly: true } } as any)
+      generatePlan({ data: { regenerate: true, storeId: opts?.storeId, fallbackOnly: true, vibe: opts?.vibe } } as any)
         .then(() => {
           if (genTokenRef.current !== fbToken) return;
           setGenState("idle");
@@ -137,9 +142,27 @@ function Dashboard() {
         });
     }, 45000);
 
-    generatePlan({ data: { regenerate: true, storeId: opts?.storeId } } as any)
+    generatePlan({ data: { regenerate: true, storeId: opts?.storeId, vibe: opts?.vibe } } as any)
       .then(onSuccess)
       .catch(onFailure);
+  };
+
+  const openVibePrompt = (opts?: { storeId?: string; storeName?: string; mode?: "first" | "regen" }) => {
+    setVibeContext({ storeId: opts?.storeId, storeName: opts?.storeName, mode: opts?.mode ?? "first" });
+    setVibeText("");
+    setVibeOpen(true);
+  };
+
+  const submitVibe = (skip?: boolean) => {
+    const ctx = vibeContext;
+    const vibe = skip ? undefined : vibeText.trim() || undefined;
+    setVibeOpen(false);
+    if (ctx?.mode === "regen") {
+      // Route through the existing "Make new plan" feedback flow but with the vibe note
+      makeNewPlan.mutate(vibe);
+    } else {
+      startGenerate({ storeId: ctx?.storeId, storeName: ctx?.storeName, vibe });
+    }
   };
 
   const cancelGenerate = () => {
@@ -171,13 +194,13 @@ function Dashboard() {
   const generate = { isPending: genState === "generating" };
 
   const makeNewPlan = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (vibe?: string) => {
       if (feedbackReasons.length || feedbackNote.trim()) {
         await submitPlanFeedback({
           data: { reasons: feedbackReasons, note: feedbackNote.trim() || undefined },
         } as any);
       }
-      return generatePlan({ data: { regenerate: true } } as any);
+      return generatePlan({ data: { regenerate: true, vibe } } as any);
     },
     onSuccess: () => {
       toast.success("New plan ready — tuned to your feedback");
