@@ -486,6 +486,7 @@ function Dashboard() {
               className="mt-4 bg-white text-primary hover:bg-white/90 rounded-2xl w-full h-12 font-semibold"
             >
               Build today's plan
+              {/* opens vibe prompt first */}
             </Button>
           )}
           {premium.tier === "free" && premium.status && (
