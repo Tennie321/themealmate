@@ -482,7 +482,7 @@ function Dashboard() {
             </div>
           ) : (
             <Button
-              onClick={() => startGenerate()}
+              onClick={() => openVibePrompt({ mode: "first" })}
               className="mt-4 bg-white text-primary hover:bg-white/90 rounded-2xl w-full h-12 font-semibold"
             >
               Build today's plan
