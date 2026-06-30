@@ -874,6 +874,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_my_referrals: {
+        Args: never
+        Returns: {
+          converted_at: string
+          created_at: string
+          status: string
+        }[]
+      }
       get_public_profiles: {
         Args: { _ids: string[] }
         Returns: {
