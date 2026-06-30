@@ -659,6 +659,90 @@ function Dashboard() {
 
       <SwapSheet target={swapTarget} onClose={() => setSwapTarget(null)} />
 
+      <Sheet open={vibeOpen} onOpenChange={setVibeOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="sr-only">Describe today's meal plan</SheetTitle>
+          </SheetHeader>
+          <div className="mt-2 flex gap-2 items-start">
+            <div className="w-9 h-9 rounded-2xl bg-hero-gradient grid place-items-center text-white shrink-0">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div className="flex-1">
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">MealMate AI</div>
+              <div className="mt-1 bg-secondary text-foreground rounded-2xl rounded-tl-md px-3.5 py-2.5 text-sm">
+                What kind of day are we eating? Tell me anything — cravings, mood,
+                what you ate yesterday, what you want more or less of. I'll tune today's plan to match.
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">Quick add</div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                "Low carbs in the morning",
+                "High protein at night",
+                "Lighter lunch",
+                "Something savory",
+                "Spicy dinner",
+                "Sweet breakfast",
+                "Easy / no cooking",
+                "Comfort food vibes",
+                "Mediterranean",
+                "Mexican flavors",
+                "Asian flavors",
+                "More veggies",
+              ].map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() =>
+                    setVibeText((prev) => {
+                      const cur = prev.trim();
+                      if (!cur) return chip;
+                      if (cur.toLowerCase().includes(chip.toLowerCase())) return cur;
+                      return `${cur}, ${chip.toLowerCase()}`;
+                    })
+                  }
+                  className="text-xs px-3 py-1.5 rounded-full border border-border hover:bg-secondary"
+                >
+                  + {chip}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="text-xs font-medium text-muted-foreground">Or describe it in your own words</label>
+            <Textarea
+              value={vibeText}
+              onChange={(e) => setVibeText(e.target.value)}
+              placeholder="e.g. low carb breakfast, big high-protein dinner, nothing too sweet…"
+              className="mt-1 rounded-2xl"
+              rows={4}
+              autoFocus
+            />
+          </div>
+
+          <div className="mt-5 flex gap-2 pb-4">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-2xl h-12"
+              onClick={() => submitVibe(true)}
+            >
+              Skip
+            </Button>
+            <Button
+              className="flex-1 rounded-2xl h-12 font-semibold"
+              onClick={() => submitVibe(false)}
+            >
+              {vibeContext?.mode === "regen" ? "Rebuild plan" : "Build my plan"}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <Sheet open={newPlanOpen} onOpenChange={(o) => { setNewPlanOpen(o); if (!o) { setFeedbackReasons([]); setFeedbackNote(""); } }}>
         <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
           <SheetHeader>
