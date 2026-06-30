@@ -196,7 +196,7 @@ async function loadCatalogForUser(
 
 export const generatePlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { date?: string; regenerate?: boolean; storeId?: string; fallbackOnly?: boolean }) => input ?? {})
+  .inputValidator((input: { date?: string; regenerate?: boolean; storeId?: string; fallbackOnly?: boolean; vibe?: string }) => input ?? {})
   .handler(async ({ data, context }: any) => {
     const supabase = context.supabase;
     const userId = context.userId;
@@ -464,6 +464,9 @@ Do NOT nest items under "meals". Do NOT include name/calories/protein. Do NOT in
 Goal: ${goals.goal_type}
 Calorie target: ${goals.calorie_target} cal
 Protein target: ${goals.protein_target} g
+${data.vibe && String(data.vibe).trim()
+  ? `\nUSER REQUEST FOR TODAY (high priority — bias the entire plan to match this, while still hitting macros + budget + allergies):\n"""${String(data.vibe).trim().slice(0, 600)}"""\n`
+  : ""}
 ${(() => {
   const mt = goals.meal_targets as Record<string, { cal: number; protein: number }> | null | undefined;
   if (!mt) return "Per-meal split: even distribution (~25% breakfast, 30% lunch, 35% dinner, 10% snack).";
