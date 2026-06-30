@@ -9,7 +9,7 @@ export const getReferralStats = createServerFn({ method: "GET" })
   .handler(async ({ context }: any) => {
     const { supabase, userId } = context;
     const [{ data: rows }, { data: profile }] = await Promise.all([
-      supabase.from("referrals").select("status, created_at, converted_at").eq("referrer_id", userId),
+      supabase.rpc("get_my_referrals"),
       supabase.from("profiles").select("is_premium, premium_expires_at").eq("id", userId).maybeSingle(),
     ]);
     const all = rows ?? [];
