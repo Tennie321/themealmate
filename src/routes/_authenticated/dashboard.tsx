@@ -730,6 +730,57 @@ function Dashboard() {
 
       <SwapSheet target={swapTarget} onClose={() => setSwapTarget(null)} />
 
+      {plan && uneaten.length > 0 && (
+        <button
+          onClick={() => setQuickLogOpen(true)}
+          className="fixed bottom-24 right-5 z-40 h-14 pl-4 pr-5 rounded-full bg-hero-gradient text-white shadow-xl shadow-primary/30 flex items-center gap-2 font-semibold text-sm active:scale-95 transition"
+          aria-label="Quick log a meal"
+        >
+          <Plus className="w-5 h-5" /> Quick Log
+        </button>
+      )}
+
+      <Sheet open={quickLogOpen} onOpenChange={setQuickLogOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[80vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Quick Log</SheetTitle>
+          </SheetHeader>
+          <p className="text-sm text-muted-foreground mt-1">Tap what you just ate — totals update instantly.</p>
+          {uneaten.length === 0 ? (
+            <div className="mt-6 text-center text-sm text-muted-foreground">Everything's logged for today. 🎉</div>
+          ) : (
+            <ul className="mt-4 divide-y divide-border">
+              {uneaten.map((it) => {
+                const s = Number(it.servings ?? 1);
+                const cal = Math.round(Number(it.catalog_items?.calories ?? 0) * s);
+                const pro = Math.round(Number(it.catalog_items?.protein_g ?? 0) * s);
+                return (
+                  <li key={it.id} className="py-3 flex items-center gap-3">
+                    <FoodImage
+                      name={it.catalog_items?.name}
+                      category={it.catalog_items?.category}
+                      imageUrl={it.catalog_items?.image_url}
+                      size="sm"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{it.catalog_items?.name}</div>
+                      <div className="text-[11px] text-muted-foreground capitalize">{it.meal_slot} · {cal} cal · {pro}g protein</div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => consume.mutate({ planItemId: it.id, consumed: true })}
+                      className="rounded-full h-8"
+                    >
+                      <Check className="w-4 h-4" /> Log
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </SheetContent>
+      </Sheet>
+
       <Sheet open={vibeOpen} onOpenChange={setVibeOpen}>
         <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
           <SheetHeader>
