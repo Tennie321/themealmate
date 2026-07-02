@@ -436,6 +436,21 @@ function Dashboard() {
           <MacroRing value={eaten.cal} target={calTarget} label="eaten" unit="" color="primary" />
           <MacroRing value={eaten.pro} target={proTarget} label="protein" unit="g" color="accent" />
         </div>
+        {/* Quick-stats summary strip: 4 metrics at a glance */}
+        <div className="mt-5 grid grid-cols-4 gap-2">
+          {[
+            { label: "Eaten", value: `${Math.round(eaten.cal)}`, sub: "cal" },
+            { label: "Left", value: `${Math.round(calRemaining)}`, sub: "cal" },
+            { label: "Protein", value: `${Math.round(eaten.pro)}g`, sub: `/ ${proTarget}g` },
+            { label: "Carbs·Fat", value: `${Math.round(eaten.carbs)}·${Math.round(eaten.fat)}`, sub: "g" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl bg-secondary/60 px-2 py-2.5 text-center">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{s.label}</div>
+              <div className="mt-0.5 font-bold text-sm leading-none">{s.value}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</div>
+            </div>
+          ))}
+        </div>
         {plan && (
           <div className="mt-5">
             <div className="flex justify-between text-xs mb-1.5">
@@ -466,6 +481,45 @@ function Dashboard() {
           </Link>
         )}
       </section>
+
+      {plan && recentMeals.length > 0 && (
+        <section className="mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-bold text-lg flex items-center gap-2">
+              <Clock className="w-4 h-4 text-primary" /> Recent meals
+            </h2>
+            <span className="text-xs text-muted-foreground">Last {recentMeals.length}</span>
+          </div>
+          <ul className="bg-card border border-border rounded-3xl divide-y divide-border overflow-hidden">
+            {recentMeals.map((it) => {
+              const s = Number(it.servings ?? 1);
+              const cal = Math.round(Number(it.catalog_items?.calories ?? 0) * s);
+              const pro = Math.round(Number(it.catalog_items?.protein_g ?? 0) * s);
+              const when = it.consumed_at ?? it.updated_at;
+              const timeLabel = when
+                ? new Date(when).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+                : "";
+              return (
+                <li key={it.id} className="flex items-center gap-3 px-4 py-3">
+                  <FoodImage
+                    name={it.catalog_items?.name}
+                    category={it.catalog_items?.category}
+                    imageUrl={it.catalog_items?.image_url}
+                    size="sm"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{it.catalog_items?.name}</div>
+                    <div className="text-[11px] text-muted-foreground">{cal} cal · {pro}g protein{timeLabel ? ` · ${timeLabel}` : ""}</div>
+                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary grid place-items-center">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {!plan && (
         <div className="mt-6 bg-hero-gradient rounded-3xl p-6 text-white">
