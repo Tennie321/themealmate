@@ -7,11 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Check, Eye, EyeOff, X } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in — MealMate" }] }),
   component: AuthPage,
 });
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function friendlyAuthError(message: string, mode: "signin" | "signup"): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login")) return "That email and password don't match. Try again.";
+  if (m.includes("email not confirmed")) return "Please confirm your email before signing in.";
+  if (m.includes("user already registered") || m.includes("already registered"))
+    return "An account with this email already exists. Try signing in instead.";
+  if (m.includes("password should be") || m.includes("password") && m.includes("6"))
+    return "Password is too short. Use at least 8 characters.";
+  if (m.includes("rate limit") || m.includes("too many"))
+    return "Too many attempts. Please wait a minute and try again.";
+  if (m.includes("network") || m.includes("failed to fetch"))
+    return "Network hiccup. Check your connection and try again.";
+  if (m.includes("invalid") && m.includes("email"))
+    return "That email address doesn't look right.";
+  return mode === "signup" ? "Couldn't create your account. Please try again." : "Couldn't sign you in. Please try again.";
+}
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -19,6 +39,17 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+
+  const emailValid = EMAIL_RE.test(email.trim());
+  const pwChecks = {
+    length: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    number: /[0-9]/.test(password),
+  };
+  const pwScore = Object.values(pwChecks).filter(Boolean).length;
+  const pwStrong = pwScore === 3;
 
   useEffect(() => {
     const tryRecordRef = async () => {
@@ -40,6 +71,14 @@ function AuthPage() {
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
+    if (!emailValid) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    if (mode === "signup" && !pwStrong) {
+      toast.error("Please meet all password requirements.");
+      return;
+    }
     setLoading(true);
     try {
       if (mode === "signup") {
@@ -55,7 +94,28 @@ function AuthPage() {
         if (error) throw error;
       }
     } catch (err: any) {
-      toast.error(err.message ?? "Something went wrong");
+      toast.error(friendlyAuthError(err?.message ?? "", mode));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    if (!emailValid) {
+      toast.error("Enter your email above first so we know where to send the link.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Check your email for a reset link.");
+      setShowForgot(false);
+    } catch (err: any) {
+      toast.error(friendlyAuthError(err?.message ?? "", "signin"));
     } finally {
       setLoading(false);
     }
@@ -98,14 +158,96 @@ function AuthPage() {
         <form onSubmit={handleEmail} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-12 rounded-xl" />
+            <div className="relative">
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-12 rounded-xl pr-10"
+                autoComplete="email"
+              />
+              {email.length > 0 && (
+                <div className="absolute inset-y-0 right-3 flex items-center">
+                  {emailValid ? (
+                    <Check className="w-5 h-5 text-green-600" aria-label="Valid email" />
+                  ) : (
+                    <X className="w-5 h-5 text-muted-foreground" aria-label="Invalid email" />
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 rounded-xl" />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              {mode === "signin" && (
+                <button
+                  type="button"
+                  onClick={() => setShowForgot((v) => !v)}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={mode === "signup" ? 8 : 6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-12 rounded-xl pr-12"
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            {mode === "signup" && password.length > 0 && (
+              <div className="pt-2 space-y-2">
+                <div className="flex gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className={`h-1 flex-1 rounded-full ${
+                        i < pwScore
+                          ? pwScore === 1
+                            ? "bg-red-500"
+                            : pwScore === 2
+                              ? "bg-yellow-500"
+                              : "bg-green-500"
+                          : "bg-muted"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <ul className="text-xs space-y-1">
+                  <PwReq ok={pwChecks.length} label="At least 8 characters" />
+                  <PwReq ok={pwChecks.upper} label="1 uppercase letter" />
+                  <PwReq ok={pwChecks.number} label="1 number" />
+                </ul>
+              </div>
+            )}
           </div>
+          {mode === "signin" && showForgot && (
+            <div className="rounded-xl border border-border p-3 text-sm space-y-2">
+              <p className="text-muted-foreground">We'll email a reset link to <span className="font-medium text-foreground">{email || "your address above"}</span>.</p>
+              <Button type="button" onClick={handleForgot} disabled={loading} variant="secondary" className="w-full h-10 rounded-xl">
+                Send reset link
+              </Button>
+            </div>
+          )}
           <Button type="submit" disabled={loading} className="w-full h-12 rounded-2xl bg-hero-gradient text-white">
-            {loading ? "..." : mode === "signup" ? "Create account" : "Sign in"}
+            {loading ? "..." : mode === "signup" ? "Get Started" : "Sign in"}
           </Button>
         </form>
 
@@ -117,5 +259,14 @@ function AuthPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+function PwReq({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <li className={`flex items-center gap-2 ${ok ? "text-green-600" : "text-muted-foreground"}`}>
+      {ok ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+      {label}
+    </li>
   );
 }
