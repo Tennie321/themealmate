@@ -22,7 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Sun, Moon, Cookie, Share2, Store as StoreIcon, Check } from "lucide-react";
+import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Sun, Moon, Cookie, Share2, Store as StoreIcon, Check, Plus, Clock } from "lucide-react";
 import { saveStore } from "@/lib/data.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -328,10 +328,12 @@ function Dashboard() {
       const s = Number(it.servings ?? 1);
       acc.cal += Number(ci.calories ?? 0) * s;
       acc.pro += Number(ci.protein_g ?? 0) * s;
+      acc.carbs += Number(ci.carbs_g ?? 0) * s;
+      acc.fat += Number(ci.fat_g ?? 0) * s;
       acc.cost += Number(ci.price_cents ?? 0) * s;
       return acc;
     },
-    { cal: 0, pro: 0, cost: 0 },
+    { cal: 0, pro: 0, carbs: 0, fat: 0, cost: 0 },
   );
 
   const eaten = items.reduce(
@@ -341,15 +343,30 @@ function Dashboard() {
       const s = Number(it.servings ?? 1);
       acc.cal += Number(ci.calories ?? 0) * s;
       acc.pro += Number(ci.protein_g ?? 0) * s;
+      acc.carbs += Number(ci.carbs_g ?? 0) * s;
+      acc.fat += Number(ci.fat_g ?? 0) * s;
       return acc;
     },
-    { cal: 0, pro: 0 },
+    { cal: 0, pro: 0, carbs: 0, fat: 0 },
   );
   const calTarget = goals?.calorie_target ?? 0;
   const proTarget = goals?.protein_target ?? 0;
   const calRemaining = Math.max(0, calTarget - eaten.cal);
   const proRemaining = Math.max(0, proTarget - eaten.pro);
   const calPct = calTarget > 0 ? Math.min(100, (eaten.cal / calTarget) * 100) : 0;
+
+  // Recent meals: last 3 items that were consumed, most recent first.
+  const recentMeals = [...items]
+    .filter((i) => i.consumed)
+    .sort((a, b) => {
+      const ta = new Date(a.consumed_at ?? a.updated_at ?? 0).getTime();
+      const tb = new Date(b.consumed_at ?? b.updated_at ?? 0).getTime();
+      return tb - ta;
+    })
+    .slice(0, 3);
+
+  const uneaten = items.filter((i) => !i.consumed);
+  const [quickLogOpen, setQuickLogOpenLocal] = [null, null] as any; // placeholder to keep hook order stable
 
   const sections = ["breakfast", "lunch", "dinner", "snack"] as const;
 
