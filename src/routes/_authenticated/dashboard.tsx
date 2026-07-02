@@ -65,6 +65,7 @@ function Dashboard() {
   const [newPlanOpen, setNewPlanOpen] = useState(false);
   const [feedbackReasons, setFeedbackReasons] = useState<string[]>([]);
   const [feedbackNote, setFeedbackNote] = useState("");
+  const [quickLogOpen, setQuickLogOpen] = useState(false);
 
   // "Describe today's vibe" chat bubble shown before generation
   const [vibeOpen, setVibeOpen] = useState(false);
@@ -366,7 +367,6 @@ function Dashboard() {
     .slice(0, 3);
 
   const uneaten = items.filter((i) => !i.consumed);
-  const [quickLogOpen, setQuickLogOpenLocal] = [null, null] as any; // placeholder to keep hook order stable
 
   const sections = ["breakfast", "lunch", "dinner", "snack"] as const;
 
