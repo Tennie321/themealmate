@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, Link, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, ShoppingBasket, User, CheckCircle2, Users } from "lucide-react";
+import { Home, User, CheckCircle2, Heart, Sparkles } from "lucide-react";
 import { useEffect } from "react";
 import { PremiumProvider } from "@/hooks/usePremiumCheck";
 
@@ -38,9 +38,9 @@ function AuthedLayout() {
 function BottomNav({ path }: { path: string }) {
   const items = [
     { to: "/dashboard", label: "Today", icon: Home },
-    { to: "/shopping", label: "List", icon: ShoppingBasket },
-    { to: "/feed", label: "Feed", icon: Users },
+    { to: "/coach", label: "Coach", icon: Sparkles },
     { to: "/checkin", label: "Check-in", icon: CheckCircle2 },
+    { to: "/favorites", label: "Favorites", icon: Heart },
     { to: "/profile", label: "Me", icon: User },
   ] as const;
   return (
