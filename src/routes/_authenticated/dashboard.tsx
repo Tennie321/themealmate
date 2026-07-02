@@ -22,7 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Sun, Moon, Cookie, Share2, Store as StoreIcon, Check } from "lucide-react";
+import { Heart, RefreshCw, Sparkles, ShoppingBasket, ChevronRight, Loader2, Sun, Moon, Cookie, Share2, Store as StoreIcon, Check, Plus, Clock } from "lucide-react";
 import { saveStore } from "@/lib/data.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +65,7 @@ function Dashboard() {
   const [newPlanOpen, setNewPlanOpen] = useState(false);
   const [feedbackReasons, setFeedbackReasons] = useState<string[]>([]);
   const [feedbackNote, setFeedbackNote] = useState("");
+  const [quickLogOpen, setQuickLogOpen] = useState(false);
 
   // "Describe today's vibe" chat bubble shown before generation
   const [vibeOpen, setVibeOpen] = useState(false);
@@ -328,10 +329,12 @@ function Dashboard() {
       const s = Number(it.servings ?? 1);
       acc.cal += Number(ci.calories ?? 0) * s;
       acc.pro += Number(ci.protein_g ?? 0) * s;
+      acc.carbs += Number(ci.carbs_g ?? 0) * s;
+      acc.fat += Number(ci.fat_g ?? 0) * s;
       acc.cost += Number(ci.price_cents ?? 0) * s;
       return acc;
     },
-    { cal: 0, pro: 0, cost: 0 },
+    { cal: 0, pro: 0, carbs: 0, fat: 0, cost: 0 },
   );
 
   const eaten = items.reduce(
@@ -341,15 +344,29 @@ function Dashboard() {
       const s = Number(it.servings ?? 1);
       acc.cal += Number(ci.calories ?? 0) * s;
       acc.pro += Number(ci.protein_g ?? 0) * s;
+      acc.carbs += Number(ci.carbs_g ?? 0) * s;
+      acc.fat += Number(ci.fat_g ?? 0) * s;
       return acc;
     },
-    { cal: 0, pro: 0 },
+    { cal: 0, pro: 0, carbs: 0, fat: 0 },
   );
   const calTarget = goals?.calorie_target ?? 0;
   const proTarget = goals?.protein_target ?? 0;
   const calRemaining = Math.max(0, calTarget - eaten.cal);
   const proRemaining = Math.max(0, proTarget - eaten.pro);
   const calPct = calTarget > 0 ? Math.min(100, (eaten.cal / calTarget) * 100) : 0;
+
+  // Recent meals: last 3 items that were consumed, most recent first.
+  const recentMeals = [...items]
+    .filter((i) => i.consumed)
+    .sort((a, b) => {
+      const ta = new Date(a.consumed_at ?? a.updated_at ?? 0).getTime();
+      const tb = new Date(b.consumed_at ?? b.updated_at ?? 0).getTime();
+      return tb - ta;
+    })
+    .slice(0, 3);
+
+  const uneaten = items.filter((i) => !i.consumed);
 
   const sections = ["breakfast", "lunch", "dinner", "snack"] as const;
 
@@ -419,6 +436,21 @@ function Dashboard() {
           <MacroRing value={eaten.cal} target={calTarget} label="eaten" unit="" color="primary" />
           <MacroRing value={eaten.pro} target={proTarget} label="protein" unit="g" color="accent" />
         </div>
+        {/* Quick-stats summary strip: 4 metrics at a glance */}
+        <div className="mt-5 grid grid-cols-4 gap-2">
+          {[
+            { label: "Eaten", value: `${Math.round(eaten.cal)}`, sub: "cal" },
+            { label: "Left", value: `${Math.round(calRemaining)}`, sub: "cal" },
+            { label: "Protein", value: `${Math.round(eaten.pro)}g`, sub: `/ ${proTarget}g` },
+            { label: "Carbs·Fat", value: `${Math.round(eaten.carbs)}·${Math.round(eaten.fat)}`, sub: "g" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl bg-secondary/60 px-2 py-2.5 text-center">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{s.label}</div>
+              <div className="mt-0.5 font-bold text-sm leading-none">{s.value}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</div>
+            </div>
+          ))}
+        </div>
         {plan && (
           <div className="mt-5">
             <div className="flex justify-between text-xs mb-1.5">
@@ -449,6 +481,45 @@ function Dashboard() {
           </Link>
         )}
       </section>
+
+      {plan && recentMeals.length > 0 && (
+        <section className="mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-bold text-lg flex items-center gap-2">
+              <Clock className="w-4 h-4 text-primary" /> Recent meals
+            </h2>
+            <span className="text-xs text-muted-foreground">Last {recentMeals.length}</span>
+          </div>
+          <ul className="bg-card border border-border rounded-3xl divide-y divide-border overflow-hidden">
+            {recentMeals.map((it) => {
+              const s = Number(it.servings ?? 1);
+              const cal = Math.round(Number(it.catalog_items?.calories ?? 0) * s);
+              const pro = Math.round(Number(it.catalog_items?.protein_g ?? 0) * s);
+              const when = it.consumed_at ?? it.updated_at;
+              const timeLabel = when
+                ? new Date(when).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+                : "";
+              return (
+                <li key={it.id} className="flex items-center gap-3 px-4 py-3">
+                  <FoodImage
+                    name={it.catalog_items?.name}
+                    category={it.catalog_items?.category}
+                    imageUrl={it.catalog_items?.image_url}
+                    size="sm"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{it.catalog_items?.name}</div>
+                    <div className="text-[11px] text-muted-foreground">{cal} cal · {pro}g protein{timeLabel ? ` · ${timeLabel}` : ""}</div>
+                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary grid place-items-center">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {!plan && (
         <div className="mt-6 bg-hero-gradient rounded-3xl p-6 text-white">
@@ -658,6 +729,57 @@ function Dashboard() {
       )}
 
       <SwapSheet target={swapTarget} onClose={() => setSwapTarget(null)} />
+
+      {plan && uneaten.length > 0 && (
+        <button
+          onClick={() => setQuickLogOpen(true)}
+          className="fixed bottom-24 right-5 z-40 h-14 pl-4 pr-5 rounded-full bg-hero-gradient text-white shadow-xl shadow-primary/30 flex items-center gap-2 font-semibold text-sm active:scale-95 transition"
+          aria-label="Quick log a meal"
+        >
+          <Plus className="w-5 h-5" /> Quick Log
+        </button>
+      )}
+
+      <Sheet open={quickLogOpen} onOpenChange={setQuickLogOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[80vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Quick Log</SheetTitle>
+          </SheetHeader>
+          <p className="text-sm text-muted-foreground mt-1">Tap what you just ate — totals update instantly.</p>
+          {uneaten.length === 0 ? (
+            <div className="mt-6 text-center text-sm text-muted-foreground">Everything's logged for today. 🎉</div>
+          ) : (
+            <ul className="mt-4 divide-y divide-border">
+              {uneaten.map((it) => {
+                const s = Number(it.servings ?? 1);
+                const cal = Math.round(Number(it.catalog_items?.calories ?? 0) * s);
+                const pro = Math.round(Number(it.catalog_items?.protein_g ?? 0) * s);
+                return (
+                  <li key={it.id} className="py-3 flex items-center gap-3">
+                    <FoodImage
+                      name={it.catalog_items?.name}
+                      category={it.catalog_items?.category}
+                      imageUrl={it.catalog_items?.image_url}
+                      size="sm"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{it.catalog_items?.name}</div>
+                      <div className="text-[11px] text-muted-foreground capitalize">{it.meal_slot} · {cal} cal · {pro}g protein</div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => consume.mutate({ planItemId: it.id, consumed: true })}
+                      className="rounded-full h-8"
+                    >
+                      <Check className="w-4 h-4" /> Log
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <Sheet open={vibeOpen} onOpenChange={setVibeOpen}>
         <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
