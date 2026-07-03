@@ -78,9 +78,16 @@ function pickBest(
   score: (item: Catalog, text: string) => number,
   allowRepeat = false,
 ) {
-  return catalog
+  // Rank candidates, then pick randomly among the top few so the deterministic
+  // fallback planner doesn't produce the exact same plan every day.
+  const ranked = catalog
     .filter((item) => (allowRepeat || !used.has(item.id)) && predicate(item, textForItem(item)))
-    .sort((a, b) => score(b, textForItem(b)) - score(a, textForItem(a)))[0];
+    .map((item) => ({ item, s: score(item, textForItem(item)) + Math.random() * 0.01 }))
+    .sort((a, b) => b.s - a.s);
+  if (ranked.length === 0) return undefined;
+  const topN = Math.min(ranked.length, 5);
+  const pick = Math.floor(Math.random() * topN);
+  return ranked[pick].item;
 }
 
 function buildReliablePlan(catalog: Catalog[], goals: any): GeneratedPlanItem[] {
