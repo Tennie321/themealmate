@@ -78,9 +78,16 @@ function pickBest(
   score: (item: Catalog, text: string) => number,
   allowRepeat = false,
 ) {
-  return catalog
+  // Rank candidates, then pick randomly among the top few so the deterministic
+  // fallback planner doesn't produce the exact same plan every day.
+  const ranked = catalog
     .filter((item) => (allowRepeat || !used.has(item.id)) && predicate(item, textForItem(item)))
-    .sort((a, b) => score(b, textForItem(b)) - score(a, textForItem(a)))[0];
+    .map((item) => ({ item, s: score(item, textForItem(item)) + Math.random() * 0.01 }))
+    .sort((a, b) => b.s - a.s);
+  if (ranked.length === 0) return undefined;
+  const topN = Math.min(ranked.length, 5);
+  const pick = Math.floor(Math.random() * topN);
+  return ranked[pick].item;
 }
 
 function buildReliablePlan(catalog: Catalog[], goals: any): GeneratedPlanItem[] {
@@ -304,12 +311,15 @@ export const generatePlan = createServerFn({ method: "POST" })
 
     // Last-7-days uniqueness: never repeat a non-favorited item from the past week.
     const recentItemIds = new Set<string>();
+    const recentItemNames: string[] = [];
     const recentCategoryHits: Record<string, number> = {};
     const recentProteinAnchors: Record<string, number> = {};
     const recentBrandHits: Record<string, number> = {};
     for (const p of recentPlans ?? []) {
       for (const pi of (p as any).plan_items ?? []) {
         if (pi.catalog_item_id) recentItemIds.add(pi.catalog_item_id);
+        const rname = String(pi.catalog_items?.name ?? "").trim();
+        if (rname && !recentItemNames.includes(rname)) recentItemNames.push(rname);
         const cat = pi.catalog_items?.category;
         if (cat) recentCategoryHits[cat] = (recentCategoryHits[cat] ?? 0) + 1;
         const nm = String(pi.catalog_items?.name ?? "").toLowerCase();
@@ -481,6 +491,10 @@ ${(() => {
 Daily budget: $${(goals.daily_budget_cents / 100).toFixed(2)}
 Allergies (hard): ${(prefs?.allergies ?? []).join(", ") || "none"}
 Diet tags: ${(prefs?.diet_tags ?? []).join(", ") || "none"}
+${recentItemNames.length
+  ? `AVOID (user ate these in the last 7 days — pick DIFFERENT items even if similar ones exist in the catalog):\n${recentItemNames.slice(0, 40).map((n) => `- ${n}`).join("\n")}\n`
+  : ""}
+Randomization seed (use this to vary today's picks vs. previous generations): ${Math.random().toString(36).slice(2, 10)}
 ${Array.isArray(prefs?.taste_profile) && prefs.taste_profile.length
   ? `Taste profile (use these to bias picks toward what the user actually likes):\n${prefs.taste_profile.map((t: any) => `- ${t.question} → ${t.answer}`).join("\n")}\n`
   : ""}
@@ -501,6 +515,7 @@ ${catalogForPrompt
         model,
         system: systemPrompt,
         prompt: userPrompt,
+        temperature: 1.0,
         experimental_output: Output.object({ schema: PlanSchema }),
       });
       const extractJson = (raw: string): any => {
