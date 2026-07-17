@@ -865,7 +865,12 @@ async function fetchSwapAlternates(supabase: any, userId: string, orig: any) {
       deltaProtein: Math.round(Number(c.protein_g) - Number(orig.protein_g)),
       deltaPrice: c.price_cents - orig.price_cents,
     }))
-    .slice(0, 6);
+    .sort(
+      (a, b) =>
+        Math.abs(a.deltaCal) + Math.abs(a.deltaProtein) * 5 -
+        (Math.abs(b.deltaCal) + Math.abs(b.deltaProtein) * 5),
+    )
+    .slice(0, 20);
 }
 
 export const substituteListItem = createServerFn({ method: "POST" })
