@@ -373,7 +373,7 @@ export const generatePlan = createServerFn({ method: "POST" })
           Math.random() * noveltyWeight,
       }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, 80)
+      .slice(0, 140)
       .map((x) => x.c);
 
     const catalogForPrompt = ranked.map((c) => ({
