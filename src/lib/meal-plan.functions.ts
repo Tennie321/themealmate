@@ -373,7 +373,7 @@ export const generatePlan = createServerFn({ method: "POST" })
           Math.random() * noveltyWeight,
       }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, 80)
+      .slice(0, 140)
       .map((x) => x.c);
 
     const catalogForPrompt = ranked.map((c) => ({
@@ -763,19 +763,33 @@ export const swapItem = createServerFn({ method: "POST" })
     if (!item) throw new Error("Item not found");
 
     if (!data.replacementId) {
-      // Return suggestions: same meal_slot, similar calories ±30%, in stock
+      // Return a rich set of alternates. Prefer same category first (closest by
+      // macros), then include other categories so the user always sees plenty
+      // of options in the swap sheet.
       const orig = item.catalog_items;
       const { catalog } = await loadCatalogForUser(supabase, userId);
-      const alternates = catalog
-        .filter((c) => c.id !== orig.id && c.category !== "drink")
+      const scored = catalog
+        .filter((c) => c.id !== orig.id && c.category !== "drink" && c.in_stock !== false)
         .map((c) => ({
           ...c,
           deltaCal: Math.round(c.calories - orig.calories),
           deltaProtein: Math.round(Number(c.protein_g) - Number(orig.protein_g)),
           deltaPrice: c.price_cents - orig.price_cents,
-        }))
-        .sort((a, b) => Math.abs(a.deltaCal) - Math.abs(b.deltaCal))
-        .slice(0, 8);
+          _macroDist:
+            Math.abs(Number(c.calories) - Number(orig.calories)) +
+            Math.abs(Number(c.protein_g) - Number(orig.protein_g)) * 5,
+        }));
+      const sameCat = scored
+        .filter((c) => c.category === orig.category)
+        .sort((a, b) => a._macroDist - b._macroDist);
+      const otherCat = scored
+        .filter((c) => c.category !== orig.category)
+        .sort((a, b) => a._macroDist - b._macroDist);
+      const alternates = [...sameCat, ...otherCat].slice(0, 24).map((c) => {
+        const { _macroDist, ...rest } = c as any;
+        void _macroDist;
+        return rest;
+      });
       return { alternates };
     }
 
@@ -851,7 +865,12 @@ async function fetchSwapAlternates(supabase: any, userId: string, orig: any) {
       deltaProtein: Math.round(Number(c.protein_g) - Number(orig.protein_g)),
       deltaPrice: c.price_cents - orig.price_cents,
     }))
-    .slice(0, 6);
+    .sort(
+      (a, b) =>
+        Math.abs(a.deltaCal) + Math.abs(a.deltaProtein) * 5 -
+        (Math.abs(b.deltaCal) + Math.abs(b.deltaProtein) * 5),
+    )
+    .slice(0, 20);
 }
 
 export const substituteListItem = createServerFn({ method: "POST" })
