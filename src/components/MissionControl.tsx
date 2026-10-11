@@ -167,7 +167,7 @@ export function MissionControl({ model, active, onBack }: Props) {
         const latest = missionsRef.current.find(m => m.id === missionId);
         if (latest) patch(missionId, {
           status: 'paused',
-          steps: latest.steps.map(s => s.status === 'running' ? { ...s, status: 'failed', output: '' } : s),
+          steps: latest.steps.map(s => s.status === 'running' ? { ...s, status: 'failed' as const, output: '' } : s),
           error: cause instanceof Error ? cause.message : 'A mission step failed',
         });
       }
@@ -179,7 +179,7 @@ export function MissionControl({ model, active, onBack }: Props) {
         if (controller.signal.aborted && latest && latest.status === 'running') {
           patch(missionId, {
             status: 'paused',
-            steps: latest.steps.map(s => s.status === 'running' ? { ...s, status: 'pending', output: '' } : s),
+            steps: latest.steps.map(s => s.status === 'running' ? { ...s, status: 'pending' as const, output: '' } : s),
           });
         }
       }

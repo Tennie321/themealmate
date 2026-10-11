@@ -33,7 +33,7 @@ export function recoverMission(mission: Mission): Mission {
     ...mission,
     status: interrupted ? 'paused' : mission.status,
     steps: mission.steps.map(step =>
-      step.status === 'running' ? { ...step, status: 'pending', output: '' } : step,
+      step.status === 'running' ? { ...step, status: 'pending' as const, output: '' } : step,
     ),
   };
 }

@@ -20,7 +20,7 @@ jobs:
           node-version: '22'
           cache: npm
       - name: Install
-        run: npm ci
+        run: npm install --no-audit --no-fund
       - name: Build and generate routes
         run: npm run build
       - name: Typecheck
