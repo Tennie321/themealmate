@@ -52,3 +52,9 @@ npx tsc --noEmit
 5. Optional secure Mac/Windows computer bridge (no mobile-use automation until separately prioritized).
 
 This is active development; see CI and validate staging deployments before exposing public AI billing.
+
+## Optional private beta access protection
+
+Configure **both** server-only `ASTRA_ACCESS_CODE` (at least 12 characters) and `ASTRA_SESSION_SECRET` (random value at least 32 characters) to enable a lock screen and signed, HTTP-only, seven-day session cookies. The app's AI, research, mission-plan, and mission-step endpoints will then reject unauthenticated requests. Do not commit or leak either value. Test the code in staging.
+
+Without `ASTRA_ACCESS_CODE`, the app remains open to anyone with its published URL. This protection is **not** a replacement for authenticated individual accounts, database row-level security, or a centrally enforced spending quota. AI endpoints still need those controls before general public release.

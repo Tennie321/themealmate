@@ -1,9 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { denyIfPrivate } from '../lib/private-access.server';
 import { createMissionPlan } from '../lib/mission-plan.server';
 import { DEFAULT_MODEL, isModelId } from '../lib/models';
 import { denyExpensiveRequest, readValidatedBody } from '../lib/request-safety.server';
 
 async function handle(request: Request): Promise<Response> {
+  const denied = await denyIfPrivate(request);
+  if (denied) return denied;
   if (!process.env.LOVABLE_API_KEY) return Response.json({ error: 'Lovable AI has not been configured.' }, { status: 503 });
   const rejected = denyExpensiveRequest(request, 'plan', 10);
   if (rejected) return rejected;

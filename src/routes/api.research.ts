@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { denyIfPrivate } from '../lib/private-access.server';
 import { generateText } from 'ai';
 import { aiProvider } from '../lib/ai-provider.server';
 import { DEFAULT_MODEL, isModelId } from '../lib/models';
@@ -9,6 +10,8 @@ const PPLX_ENDPOINT = 'https://api.perplexity.ai/search';
 type SearchRecord = { title?: string; url?: string; snippet?: string; date?: string };
 
 async function handleResearch(request: Request): Promise<Response> {
+  const denied = await denyIfPrivate(request);
+  if (denied) return denied;
   const key = process.env.PERPLEXITY_API_KEY;
   if (!key || !process.env.LOVABLE_API_KEY) {
     return Response.json({ error: 'Live research is not configured. The server needs PERPLEXITY_API_KEY and LOVABLE_API_KEY.' }, { status: 503 });

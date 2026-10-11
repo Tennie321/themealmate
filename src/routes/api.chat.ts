@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { denyIfPrivate } from '../lib/private-access.server';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { streamText } from 'ai';
 import { DEFAULT_MODEL, MODELS, isModelId } from '../lib/models';
@@ -35,6 +36,8 @@ function rateLimit(request: Request, premium: boolean): Response | null {
 }
 
 async function handleChat(request: Request): Promise<Response> {
+  const denied = await denyIfPrivate(request);
+  if (denied) return denied;
   const origin = request.headers.get('origin');
   if (origin && origin !== new URL(request.url).origin) {
     return Response.json({ error: 'Cross-origin requests are not allowed.' }, { status: 403 });
