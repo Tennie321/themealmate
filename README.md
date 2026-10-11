@@ -29,7 +29,7 @@ npx tsc --noEmit
 - Chat and mission histories are local-device only; there are no authenticated per-user accounts or cross-device sync.
 - The AI analysis/verification steps call actual Lovable AI models but **do not browse the web or execute connector actions**. Research steps perform live searching only when Perplexity is configured.
 - Connectors listed in UI are informational, not user-OAuth connections. No Gmail, GitHub, Slack, desktop/phone control, or approval-based external actions are activated.
-- Current throttles are per server instance/IP best-effort; **NOT sufficient for public production deployment**. Secure authentication, persistent per-user quotas, spend caps, and anti-abuse must precede public release.
+- Every billable AI endpoint requires the private beta code and signed session to be configured. A conservative **instance-local AI request fuse** covers chat, research, and mission calls (default 40 weighted units/hour, configurable via `ASTRA_AI_HOURLY_UNITS`). This is **not a currency cap** and is not durable or shared across replicas. Secure per-user authentication and centrally enforced monetary budgets are still required before public release.
 - The selected model must be supported/enabled by the Lovable project. Provider errors and quota exhaustion can still occur.
 
 ## Architecture
@@ -53,11 +53,11 @@ npx tsc --noEmit
 
 This is active development; see CI and validate staging deployments before exposing public AI billing.
 
-## Optional private beta access protection
+## Required private AI access protection
 
-Configure **both** server-only `ASTRA_ACCESS_CODE` (at least 12 characters) and `ASTRA_SESSION_SECRET` (random value at least 32 characters) to enable a lock screen and signed, HTTP-only, seven-day session cookies. The app's AI, research, mission-plan, and mission-step endpoints will then reject unauthenticated requests. Do not commit or leak either value. Test the code in staging.
+When `LOVABLE_API_KEY` is configured, Astra **fails closed** until **both** server-only `ASTRA_ACCESS_CODE` (at least 12 characters) and `ASTRA_SESSION_SECRET` (random value at least 32 characters) are configured. The AI endpoints reject requests and the app shows a setup-required screen until this is done. Valid credentials unlock signed, HTTP-only, SameSite=Strict seven-day sessions. Changing the signing secret revokes all sessions. Never commit these values; test in staging. Without an AI key or any access credentials, the non-billable UI remains accessible.
 
-Without `ASTRA_ACCESS_CODE`, the app remains open to anyone with its published URL. This protection is **not** a replacement for authenticated individual accounts, database row-level security, or a centrally enforced spending quota. AI endpoints still need those controls before general public release.
+`ASTRA_AI_HOURLY_UNITS` is an optional integer from 1 to 1000 (default 40). Standard chat/plan/analysis steps cost one request unit; premium chat/steps cost three; live research costs two. Invalid values fail closed. This is a best-effort **per-process request fuse, not actual dollars/tokens, not a shared database quota, and not safe for multi-instance public deployment**. A production rollout still requires individual accounts, centrally enforced budgets, and usage metering.
 
 ## Local data backup
 

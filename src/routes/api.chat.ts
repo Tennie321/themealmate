@@ -3,6 +3,7 @@ import { denyIfPrivate } from '../lib/private-access.server';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { streamText } from 'ai';
 import { DEFAULT_MODEL, MODELS, isModelId } from '../lib/models';
+import { denyAIUnitBudget, readValidatedBody } from '../lib/request-safety.server';
 
 type ChatRole = 'user' | 'assistant';
 type ChatTurn = { role: ChatRole; content: string };
@@ -46,11 +47,9 @@ async function handleChat(request: Request): Promise<Response> {
   if (!apiKey) {
     return Response.json({ error: 'Lovable AI is not configured for this deployment. Enable the built-in AI connector and project Cloud key in Lovable.' }, { status: 503 });
   }
-  if (Number(request.headers.get('content-length') || 0) > 48_000) {
-    return Response.json({ error: 'Conversation is too long. Start a new chat.' }, { status: 413 });
-  }
   let raw: unknown;
-  try { raw = await request.json(); } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }); }
+  try { raw = await readValidatedBody(request, 48_000); }
+  catch { return Response.json({ error: 'Invalid or oversized conversation.' }, { status: 400 }); }
   if (!raw || typeof raw !== 'object') return Response.json({ error: 'Invalid conversation.' }, { status: 400 });
   const input = raw as { model?: unknown; messages?: unknown; mode?: unknown };
   if (input.model !== undefined && !isModelId(input.model)) {
@@ -81,6 +80,8 @@ async function handleChat(request: Request): Promise<Response> {
   const tier = MODELS.find((m) => m.id === model)?.tier;
   const blocked = rateLimit(request, tier === 'Premium');
   if (blocked) return blocked;
+  const budgetDenied = denyAIUnitBudget(tier === 'Premium' ? 3 : 1);
+  if (budgetDenied) return budgetDenied;
 
   try {
     const gateway = createOpenAICompatible({

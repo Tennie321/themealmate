@@ -3,7 +3,7 @@ import { denyIfPrivate } from '../lib/private-access.server';
 import { generateText } from 'ai';
 import { aiProvider } from '../lib/ai-provider.server';
 import { DEFAULT_MODEL, isModelId } from '../lib/models';
-import { denyExpensiveRequest, readValidatedBody } from '../lib/request-safety.server';
+import { denyAIUnitBudget, denyExpensiveRequest, readValidatedBody } from '../lib/request-safety.server';
 
 async function handle(request: Request): Promise<Response> {
   const denied = await denyIfPrivate(request);
@@ -23,6 +23,8 @@ async function handle(request: Request): Promise<Response> {
   }
   if (body.model !== undefined && !isModelId(body.model)) return Response.json({ error: 'Unsupported model.' }, { status: 400 });
   const model = isModelId(body.model) ? body.model : DEFAULT_MODEL;
+  const budgetDenied = denyAIUnitBudget(model.includes('astra') || model.includes('opus') || model.includes('pro-preview') ? 3 : 1);
+  if (budgetDenied) return budgetDenied;
   try {
     const answer = await generateText({
       model: aiProvider().chatModel(model),

@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { denyIfPrivate } from '../lib/private-access.server';
 import { createMissionPlan } from '../lib/mission-plan.server';
 import { DEFAULT_MODEL, isModelId } from '../lib/models';
-import { denyExpensiveRequest, readValidatedBody } from '../lib/request-safety.server';
+import { denyAIUnitBudget, denyExpensiveRequest, readValidatedBody } from '../lib/request-safety.server';
 
 async function handle(request: Request): Promise<Response> {
   const denied = await denyIfPrivate(request);
@@ -18,6 +18,8 @@ async function handle(request: Request): Promise<Response> {
     return Response.json({ error: 'Describe a goal between 8 and 1500 characters.' }, { status: 400 });
   }
   if (body.model !== undefined && !isModelId(body.model)) return Response.json({ error: 'Unsupported model.' }, { status: 400 });
+  const budgetDenied = denyAIUnitBudget(1);
+  if (budgetDenied) return budgetDenied;
   try {
     const steps = await createMissionPlan(body.goal.trim(), isModelId(body.model) ? body.model : DEFAULT_MODEL);
     return Response.json({ steps }, { headers: { 'Cache-Control': 'no-store' } });

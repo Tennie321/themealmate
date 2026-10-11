@@ -1,6 +1,6 @@
 /**
- * Optional private beta protection. Configure both ASTRA_ACCESS_CODE and
- * ASTRA_SESSION_SECRET in server-only environment variables to enable.
+ * Fail-closed AI protection: a configured Lovable key requires both server-only
+ * ASTRA_ACCESS_CODE and ASTRA_SESSION_SECRET before any billable endpoint runs.
  * This is a single-owner gate, NOT full per-user authentication.
  */
 const MAX_SESSION = 7 * 24 * 60 * 60 * 1000;
@@ -8,7 +8,7 @@ const cookieName = 'astra_beta_session';
 const encoder = new TextEncoder();
 
 function configured(): boolean {
-  return Boolean(process.env.ASTRA_ACCESS_CODE);
+  return Boolean(process.env.LOVABLE_API_KEY || process.env.ASTRA_ACCESS_CODE || process.env.ASTRA_SESSION_SECRET);
 }
 function signingSecret(): string | null {
   const value = process.env.ASTRA_SESSION_SECRET;
@@ -16,7 +16,7 @@ function signingSecret(): string | null {
 }
 export function accessSetupError(): string | null {
   if (!configured()) return null;
-  if ((process.env.ASTRA_ACCESS_CODE || '').length < 12) return 'ASTRA_ACCESS_CODE must be at least 12 characters.';
+  if ((process.env.ASTRA_ACCESS_CODE || '').length < 12) return 'AI access requires ASTRA_ACCESS_CODE (at least 12 characters).';
   if (!signingSecret()) return 'ASTRA_SESSION_SECRET must be at least 32 characters.';
   return null;
 }
@@ -45,7 +45,8 @@ export async function checkAccessCode(code: string): Promise<boolean> {
 }
 export async function createAccessCookie(request: Request): Promise<string> {
   const until = Date.now() + MAX_SESSION;
-  const token = `${until}.${await hmac(String(until))}`;
+  const nonce = crypto.randomUUID();
+  const token = `${until}.${nonce}.${await hmac(`${until}.${nonce}`)}`;
   const secure = new URL(request.url).protocol === 'https:' ? '; Secure' : '';
   return `${cookieName}=${token}; Path=/; Max-Age=604800; HttpOnly; SameSite=Strict${secure}`;
 }
@@ -58,17 +59,17 @@ export async function isAccessGranted(request: Request): Promise<boolean> {
   if (accessSetupError()) return false;
   const token = request.headers.get('cookie')?.split(';').map(x => x.trim()).find(x => x.startsWith(`${cookieName}=`))?.slice(cookieName.length + 1);
   if (!token) return false;
-  const match = token.match(/^(\d{13})\.([0-9a-f]{64})$/);
+  const match = token.match(/^(\d{13})\.([0-9a-f-]{36})\.([0-9a-f]{64})$/);
   if (!match) return false;
   const expiry = Number(match[1]);
   const now = Date.now();
   if (!Number.isSafeInteger(expiry) || expiry < now || expiry > now + MAX_SESSION) return false;
-  const expected = await hmac(match[1]);
-  return constantTimeEqual(encoder.encode(match[2]), encoder.encode(expected));
+  const expected = await hmac(`${match[1]}.${match[2]}`);
+  return constantTimeEqual(encoder.encode(match[3]), encoder.encode(expected));
 }
 export async function denyIfPrivate(request: Request): Promise<Response | null> {
   const setup = accessSetupError();
-  if (setup) return Response.json({ error: 'Private beta configuration is incomplete. Check server access credentials.' }, { status: 503 });
-  if (!await isAccessGranted(request)) return Response.json({ error: 'Please unlock the private beta before using AI.' }, { status: 401 });
+  if (setup) return Response.json({ error: 'AI is locked until the server has a valid ASTRA_ACCESS_CODE and ASTRA_SESSION_SECRET.' }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
+  if (!await isAccessGranted(request)) return Response.json({ error: 'Please unlock the private beta before using AI.' }, { status: 401, headers: { 'Cache-Control': 'no-store' } });
   return null;
 }

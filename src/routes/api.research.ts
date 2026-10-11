@@ -3,7 +3,7 @@ import { denyIfPrivate } from '../lib/private-access.server';
 import { generateText } from 'ai';
 import { aiProvider } from '../lib/ai-provider.server';
 import { DEFAULT_MODEL, isModelId } from '../lib/models';
-import { denyExpensiveRequest, readValidatedBody } from '../lib/request-safety.server';
+import { denyAIUnitBudget, denyExpensiveRequest, readValidatedBody } from '../lib/request-safety.server';
 import { safeSource, type ResearchResult, type ResearchSource } from '../lib/research-types';
 
 const PPLX_ENDPOINT = 'https://api.perplexity.ai/search';
@@ -29,6 +29,8 @@ async function handleResearch(request: Request): Promise<Response> {
   if (data.model !== undefined && !isModelId(data.model)) return Response.json({ error: 'Unsupported model.' }, { status: 400 });
   const query = data.query.trim();
   const model = isModelId(data.model) ? data.model : DEFAULT_MODEL;
+  const budgetDenied = denyAIUnitBudget(2);
+  if (budgetDenied) return budgetDenied;
   try {
     const upstream = await fetch(PPLX_ENDPOINT, {
       method: 'POST',
