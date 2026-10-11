@@ -92,8 +92,9 @@ export function parseBackup(json: string): { chats: StoredState; missions: Missi
   }
   const conversations = Array.isArray(raw.chats.conversations) ? raw.chats.conversations.slice(0, 100)
     .map(restoreConversation).filter((v): v is Conversation => v !== null) : [];
-  const selectedId = typeof raw.chats.selectedId === 'string' && conversations.some(c => c.id === raw.chats.selectedId)
-    ? raw.chats.selectedId : null;
+  const importedSelectedId = raw.chats.selectedId;
+  const selectedId = typeof importedSelectedId === 'string' && conversations.some(c => c.id === importedSelectedId)
+    ? importedSelectedId : null;
   const theme = raw.chats.theme === 'light' || raw.chats.theme === 'system' ? raw.chats.theme : 'dark';
   return {
     chats: {
