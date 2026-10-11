@@ -58,8 +58,18 @@ export function MissionControl({ model, active, onBack }: Props) {
     missionsRef.current = saved;
     setMissions(saved);
     setHydrated(true);
+    const restore = () => {
+      controllerRef.current?.abort();
+      controllerRef.current = null;
+      working.current = false;
+      const restored = loadMissions();
+      missionsRef.current = restored;
+      setMissions(restored);
+      setSelectedId(null);
+    };
+    window.addEventListener('astra:missions-restored', restore);
     void fetch('/api/capabilities').then(r => r.json()).then((data: Capabilities) => setCapabilities(data)).catch(() => {});
-    return () => { controllerRef.current?.abort(); };
+    return () => { window.removeEventListener('astra:missions-restored', restore); controllerRef.current?.abort(); };
   }, []);
 
   const updateMissions = useCallback((updater: (previous: Mission[]) => Mission[]) => {

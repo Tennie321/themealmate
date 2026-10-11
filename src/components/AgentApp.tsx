@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode, type ChangeEvent } from 'react';
 import {
   ArrowRight, ArrowUp, BookOpen, Bot, BrainCircuit, Check, ChevronDown,
   ChevronRight, CircleHelp, Cloud, Code2, Copy, Database,
@@ -9,6 +9,8 @@ import {
 import { MODELS, getModel, type ModelId } from '../lib/models';
 import { MissionControl } from './MissionControl';
 import type { ResearchResult } from '../lib/research-types';
+import { createBackup, parseBackup } from '../lib/backup';
+import { loadMissions, persistMissions } from '../lib/mission-types';
 import {
   EMPTY_STORE, loadStore, makeId, saveStore,
   type AppTheme, type ChatMessage, type ChatMode, type Conversation, type StoredState,
@@ -73,6 +75,8 @@ export function AgentApp() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [view, setView] = useState<'chat' | 'missions'>('chat');
   const [researchAvailable, setResearchAvailable] = useState(false);
+  const [privateBetaProtected, setPrivateBetaProtected] = useState(false);
+  const backupInputRef = useRef<HTMLInputElement | null>(null);
   const [sheet, setSheet] = useState<Sheet>(null);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>('general');
   const [draft, setDraft] = useState('');
@@ -88,6 +92,7 @@ export function AgentApp() {
 
   useEffect(() => { setStore(loadStore()); setHydrated(true); }, []);
   useEffect(() => { void fetch('/api/capabilities').then(r => r.json()).then((x: { research?: boolean }) => setResearchAvailable(Boolean(x.research))).catch(() => {}); }, []);
+  useEffect(() => { void fetch('/api/access/status').then(r => r.json()).then((x: { protected?: boolean }) => setPrivateBetaProtected(Boolean(x.protected))).catch(() => {}); }, []);
   useEffect(() => {
     if (!hydrated) return;
     const serialized = JSON.stringify(store);
@@ -261,6 +266,42 @@ export function AgentApp() {
     await runReply(current.id, turns, last.id, model, mode);
   };
   const stop = () => requestRef.current?.abort();
+  const exportWorkspace = () => {
+    try {
+      const data = createBackup(store, loadMissions());
+      const blob = new Blob([data], { type: 'application/json' });
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = `astra-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+      setToast('Workspace backup prepared');
+    } catch { setToast('Could not export workspace'); }
+  };
+  const importWorkspace = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      if (file.size > 5_000_000) throw new Error('Backup is larger than 5 MB.');
+      const restored = parseBackup(await file.text());
+      if (!window.confirm(`Replace this device's chat and mission history with ${restored.chats.conversations.length} conversations and ${restored.missions.length} missions? This cannot be undone.`)) return;
+      requestRef.current?.abort();
+      requestRef.current = null;
+      requestLock.current = false;
+      setLoading(false);
+      if (!persistMissions(restored.missions)) throw new Error('Could not save missions on this device.');
+      window.dispatchEvent(new Event('astra:missions-restored'));
+      setStore(restored.chats);
+      setSheet(null);
+      setToast('Workspace restored on this device');
+    } catch (cause) {
+      setToast(cause instanceof Error ? cause.message : 'Could not import workspace');
+    }
+  };
   const copy = (content: string) => {
     navigator.clipboard?.writeText(content).then(() => setToast('Copied to clipboard')).catch(() => setToast('Could not copy text'));
   };
@@ -289,7 +330,7 @@ export function AgentApp() {
       <div className="sidebar-section-heading">WORKSPACE</div>
       <button type="button" className={`sidebar-nav ${view === 'chat' ? 'selected' : ''}`} onClick={() => { createNew(); }}><MessageSquare size={18} /> Chat <ChevronRight size={14} className="nav-end" /></button>
       <button type="button" className={`sidebar-nav ${view === 'missions' ? 'selected' : ''}`} onClick={() => { setView('missions'); setDrawerOpen(false); setSheet(null); }}><Layers3 size={18} /> Mission Control <ChevronRight size={14} className="nav-end" /></button>
-      <button type="button" className="sidebar-nav" onClick={() => { setDrawerOpen(false); setMode('research'); setSheet(null); }}><Globe2 size={18} /> Research planner <span className="nav-tiny">PLAN</span></button>
+      <button type="button" className="sidebar-nav" onClick={() => { setView('chat'); setDrawerOpen(false); setMode('research'); setSheet(null); }}><Globe2 size={18} /> Research planner <span className="nav-tiny">PLAN</span></button>
       <button type="button" className="sidebar-nav" onClick={() => { setView('missions'); setDrawerOpen(false); setSheet(null); }}><Bot size={18} /> Agent missions <span className="nav-tiny">BETA</span></button>
       <div className="history-section"><div className="sidebar-section-heading">RECENTS <span>{store.conversations.length}</span></div>
         {groups.length ? groups.map(([groupName, entries]) => <section key={groupName} className="history-group"><div className="history-label">{groupName}</div>{entries.map((c) =>
@@ -396,7 +437,12 @@ export function AgentApp() {
             <button type="button" className="current-model-setting" onClick={() => setSheet('models')}><span className="provider-badge provider-google"><BrainCircuit size={17}/></span><span><strong>{activeModel.name}</strong><small>{activeModel.provider} · {activeModel.tier}</small></span><ChevronRight size={19}/></button>
             <div className="setting-info"><Zap size={18}/><span>Gemini 3.8 Flash is the recommended balance of intelligence and speed. Change to a premium model for challenging work.</span></div>
           </div>}
-          {settingsSection === 'privacy' && <div className="settings-pane"><div className="setting-label">Data and privacy</div><div className="privacy-note"><Database size={21}/><div><strong>Local conversation history</strong><p>Your chat history is stored in this browser's local storage, not synced across devices. Prompts are sent to Lovable AI only when you send them.</p></div></div>
+          {settingsSection === 'privacy' && <div className="settings-pane"><div className="setting-label">Data and privacy</div><div className="data-actions">
+              <button type="button" onClick={exportWorkspace}><Database size={16}/> Export workspace backup</button>
+              <button type="button" onClick={() => backupInputRef.current?.click()}><ArrowRight size={16}/> Import workspace backup</button>
+              <input ref={backupInputRef} type="file" accept=".json,application/json" onChange={e => { void importWorkspace(e); }} aria-label="Choose Astra backup file" className="backup-file-input" />
+            </div><p className="setting-copy">Backups are saved to your device, not uploaded to a server. Importing replaces local chats and missions.</p>
+            {privateBetaProtected && <button type="button" className="clear-history" onClick={() => window.dispatchEvent(new Event('astra:lock'))}><ShieldCheck size={16}/> Lock private workspace</button>}<div className="privacy-note"><Database size={21}/><div><strong>Local conversation history</strong><p>Your chat history is stored in this browser's local storage, not synced across devices. Prompts are sent to Lovable AI only when you send them.</p></div></div>
             <button type="button" className="clear-history" onClick={() => { if (window.confirm('Delete all Astra chats saved on this device? This cannot be undone.')) { requestRef.current?.abort(); setLoading(false); requestLock.current = false; requestRef.current = null; setStore((s) => ({ ...s, conversations: [], selectedId: null })); setSheet(null); setToast('Local chat history cleared'); } }}><Trash2 size={16} /> Clear local chat history</button>
             <p className="setting-copy">For multi-user access, per-user connector permissions and cross-device sync, account authentication and a secured database must be configured before launch.</p>
           </div>}

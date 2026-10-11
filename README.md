@@ -58,3 +58,7 @@ This is active development; see CI and validate staging deployments before expos
 Configure **both** server-only `ASTRA_ACCESS_CODE` (at least 12 characters) and `ASTRA_SESSION_SECRET` (random value at least 32 characters) to enable a lock screen and signed, HTTP-only, seven-day session cookies. The app's AI, research, mission-plan, and mission-step endpoints will then reject unauthenticated requests. Do not commit or leak either value. Test the code in staging.
 
 Without `ASTRA_ACCESS_CODE`, the app remains open to anyone with its published URL. This protection is **not** a replacement for authenticated individual accounts, database row-level security, or a centrally enforced spending quota. AI endpoints still need those controls before general public release.
+
+## Local data backup
+
+Settings → Privacy offers **Export workspace backup** and **Import workspace backup** for portable JSON copies of chats and Mission Control history. Imports are validated and require explicit confirmation before replacing local data. Backups contain conversation contents, so store them privately. Cloud sync remains a separate future feature.

@@ -8,6 +8,15 @@ export function AccessGate({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const lock = () => {
+      void fetch('/api/access/logout', { method: 'POST', credentials: 'same-origin' })
+        .then(response => { if (!response.ok) throw new Error('Could not lock workspace'); setStatus({ protected: true, authenticated: false, misconfigured: false }); })
+        .catch(() => setError('Could not lock the workspace. Please retry.'));
+    };
+    window.addEventListener('astra:lock', lock);
+    return () => window.removeEventListener('astra:lock', lock);
+  }, []);
+  useEffect(() => {
     let mounted = true;
     fetch('/api/access/status', { cache: 'no-store' }).then(async response => {
       if (!response.ok) throw new Error('Could not confirm access.');
