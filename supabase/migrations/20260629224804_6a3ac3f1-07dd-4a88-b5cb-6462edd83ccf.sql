@@ -1,1 +1,0 @@
-ALTER TABLE public.preferences ADD COLUMN IF NOT EXISTS plan_mode text NOT NULL DEFAULT 'surprise' CHECK (plan_mode IN ('surprise','comfort'));

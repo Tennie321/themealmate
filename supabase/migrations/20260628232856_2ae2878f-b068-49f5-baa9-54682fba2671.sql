@@ -1,1 +1,0 @@
-ALTER TABLE public.preferences ADD COLUMN IF NOT EXISTS health_preference TEXT NOT NULL DEFAULT 'balanced' CHECK (health_preference IN ('healthier','balanced','indulgent'));

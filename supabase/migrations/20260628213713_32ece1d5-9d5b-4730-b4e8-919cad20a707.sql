@@ -1,1 +1,0 @@
-ALTER TABLE public.plan_items ADD COLUMN IF NOT EXISTS consumed boolean NOT NULL DEFAULT false;
