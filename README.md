@@ -1,47 +1,54 @@
-# Astra — Mobile AI Workspace
+# Astra — iPhone-first AI Agent
 
-An iPhone-first AI chat application with a model switcher, conversation history, research/agent **planning** modes, responsive settings, and Lovable AI Gateway integration.
+Astra is a mobile AI workspace using Lovable AI credits for inference. **Development happens through GitHub commits**, not Lovable's AI builder chat.
 
-## How this was developed
+## Features
 
-**Code changes are made through GitHub.** No Lovable builder/agent-chat credits are needed for GitHub commits. **Inference from inside the running app uses Lovable AI usage credits.** These are separate billable products.
+- Native-feeling responsive mobile chat, PWA install, model picker, local chat history and settings.
+- **Mission Control (beta):** propose plans through Lovable AI, run genuine AI analysis and critique steps, pause for review, resume interrupted runs, and display actual outputs/timestamps. Autopilot advances through model steps while the tab is open. User confirmation is required between steps in Review/Manual modes.
+- **Live research (optional):** search via Perplexity Search API, then synthesize with the selected Lovable AI model, preserving clickable real source links and numbered citations. Clearly displays unavailable state when not configured.
+- Chat, Research and Agent planning modes; research chat switches to live research when a search key is present.
+- Safe default: no computer control, no account writes, no fake connectors, no uncontrolled payments.
 
-## Features (V1)
+## Set up the backend
 
-- iPhone-oriented responsive interface with safe-area layout, home-screen icon, installable web manifest, light/dark/system modes, and mobile sidebar.
-- Real server-side streaming AI through Lovable's AI Gateway; per-message model selection with a server-enforced allowlist.
-- Models: Gemini 3.8 Flash (default), GPT-6 Luna / Sol / Astra, Claude Sonnet 5 / Opus 5.5, Gemini 3.1 Pro Preview. Availability depends on project AI connector settings.
-- Chat history, selected model, and settings saved **locally to the current browser**. No server-side chat sync or authenticated accounts yet.
-- Research mode currently provides **research planning**, without live web access or citations. Agent mode currently provides **task planning** without tool execution. Connectors are **not connected**; the UI does not pretend they are.
-- Server validates input sizes and model IDs. Best-effort hourly instance-level limits reduce incidental runaway costs; not a substitute for production authentication, centrally enforced rate limiting and billing controls.
+The Lovable project must expose `LOVABLE_API_KEY` **only to the server**. Lovable AI requests consume AI usage credits, not Lovable builder/chat credits.
 
-## Lovable AI setup
-
-The linked Lovable Cloud project manages a server-only `LOVABLE_API_KEY` for its built-in **AI** connector. Ensure AI is enabled for the project in Lovable > Connectors > AI. The key must be injected into the server's runtime environment, **never** into `VITE_*` or browser JavaScript. No separate OpenAI/Google/Anthropic provider key is needed.
-
-On a non-Lovable host, supply `LOVABLE_API_KEY` securely as a server environment variable. Chat calls will fail with a clear 503 explanation if not configured.
-
-## Local development
+To turn on live research, configure `PERPLEXITY_API_KEY` as a **server-side secret** in the deployment platform. Perplexity Search requests are billed separately by that provider; Lovable AI is used for the final synthesis. Do not put these secrets in any `VITE_` variable, public file or GitHub commit.
 
 ```bash
 npm ci
 npm run dev
 npm run build
+npx tsc --noEmit
 ```
 
-This app uses the existing Lovable TanStack Start + React 19/Vite toolchain. File routing regenerates `src/routeTree.gen.ts` during development/build (do not hand edit).
+## Limitations, by design
 
-## Production checklist
+- Mission execution is **foreground only**. It continues while the browser tab stays alive, but the iPhone may suspend it when locked. Runs persist only to this browser's localStorage; re-open and press Resume to continue interrupted missions. The browser does **not** have a background worker.
+- Chat and mission histories are local-device only; there are no authenticated per-user accounts or cross-device sync.
+- The AI analysis/verification steps call actual Lovable AI models but **do not browse the web or execute connector actions**. Research steps perform live searching only when Perplexity is configured.
+- Connectors listed in UI are informational, not user-OAuth connections. No Gmail, GitHub, Slack, desktop/phone control, or approval-based external actions are activated.
+- Current throttles are per server instance/IP best-effort; **NOT sufficient for public production deployment**. Secure authentication, persistent per-user quotas, spend caps, and anti-abuse must precede public release.
+- The selected model must be supported/enabled by the Lovable project. Provider errors and quota exhaustion can still occur.
 
-- Add authenticated user accounts and database tables with RLS for private, cross-device chats.
-- Replace in-memory IP rate limits with centrally enforced per-user quotas and budget alerts, especially before public publishing.
-- Add per-user OAuth connectors for Google, GitHub, Slack, and others; workspace builder connectors are **not** end-user authorizations.
-- Integrate a live search/research provider and only then enable actual source citations.
-- Add an approved tool execution layer, permissions, and audit logs before enabling agent actions.
-- Check model IDs and quota status against your Lovable workspace. Some models may require different feature permissions or have provider availability constraints.
-- Disable the old site's service worker in browsers, or clear site data if old pages remain cached; this starter no longer registers any service worker.
+## Architecture
 
-## Reference
+- `src/components/AgentApp.tsx`: chat experience, model chooser, settings, history and research source rendering.
+- `src/components/MissionControl.tsx`: mission planning and step-run UI (foreground-only execution).
+- `src/routes/api.chat.ts`: streamed Lovable AI chat.
+- `src/routes/api.research.ts`: Perplexity Search results + Lovable AI synthesis.
+- `src/routes/api.missions.plan.ts`: restricted AI-generated task plan.
+- `src/routes/api.missions.step.ts`: one actual AI analysis or verification step.
+- `src/routes/api.capabilities.ts`: feature availability, no secret disclosure.
+- `src/lib/mission-types.ts`: mission persistence/restore model.
 
-- [Lovable in-app AI and supported models](https://docs.lovable.dev/features/ai)
-- [TanStack Start server routes](https://tanstack.com/start/latest/docs/framework/react/guide/server-routes)
+## Next engineering milestones
+
+1. Auth + row-level secured database for private accounts and synced conversations/missions.
+2. **Server-side durable job queue** with cron/worker, retries, concurrency, budgets, notifications and audit logs (this is required for real closed-phone autonomy).
+3. OAuth connector registry with per-user grants, token rotation and approval policies.
+4. Research task decomposition, parallel multi-source evidence checks, fact confidence and citation auditing.
+5. Optional secure Mac/Windows computer bridge (no mobile-use automation until separately prioritized).
+
+This is active development; see CI and validate staging deployments before exposing public AI billing.

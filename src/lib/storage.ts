@@ -1,3 +1,4 @@
+import type { ResearchSource } from './research-types';
 import { DEFAULT_MODEL, isModelId, type ModelId } from './models';
 
 export type ChatMode = 'chat' | 'research' | 'agent';
@@ -9,6 +10,7 @@ export interface ChatMessage {
   content: string;
   createdAt: number;
   status: MessageStatus;
+  sources?: ResearchSource[];
 }
 export interface Conversation {
   id: string;

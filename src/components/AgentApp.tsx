@@ -7,6 +7,8 @@ import {
   Search, Settings2, ShieldCheck, Sparkles, Square, Trash2, X, Zap,
 } from 'lucide-react';
 import { MODELS, getModel, type ModelId } from '../lib/models';
+import { MissionControl } from './MissionControl';
+import type { ResearchResult } from '../lib/research-types';
 import {
   EMPTY_STORE, loadStore, makeId, saveStore,
   type AppTheme, type ChatMessage, type ChatMode, type Conversation, type StoredState,
@@ -69,6 +71,8 @@ export function AgentApp() {
   const [store, setStore] = useState<StoredState>(EMPTY_STORE);
   const [hydrated, setHydrated] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [view, setView] = useState<'chat' | 'missions'>('chat');
+  const [researchAvailable, setResearchAvailable] = useState(false);
   const [sheet, setSheet] = useState<Sheet>(null);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>('general');
   const [draft, setDraft] = useState('');
@@ -83,6 +87,7 @@ export function AgentApp() {
   const lastSavedRef = useRef('');
 
   useEffect(() => { setStore(loadStore()); setHydrated(true); }, []);
+  useEffect(() => { void fetch('/api/capabilities').then(r => r.json()).then((x: { research?: boolean }) => setResearchAvailable(Boolean(x.research))).catch(() => {}); }, []);
   useEffect(() => {
     if (!hydrated) return;
     const serialized = JSON.stringify(store);
@@ -131,7 +136,7 @@ export function AgentApp() {
     requestLock.current = false;
     setLoading(false);
     setStore((s) => ({ ...s, selectedId: null }));
-    setDraft(''); setDraftMode('chat'); setDrawerOpen(false); setSheet(null);
+    setDraft(''); setDraftMode('chat'); setView('chat'); setDrawerOpen(false); setSheet(null);
     window.setTimeout(() => textRef.current?.focus(), 40);
   };
   const setModel = (id: ModelId) => {
@@ -146,7 +151,7 @@ export function AgentApp() {
     if (requestRef.current) requestRef.current.abort();
     setLoading(false); requestLock.current = false; requestRef.current = null;
     setStore((s) => ({ ...s, selectedId: id }));
-    setDraft(''); setDrawerOpen(false); setSheet(null);
+    setView('chat'); setDraft(''); setDrawerOpen(false); setSheet(null);
   };
   const deleteConversation = (id: string) => {
     if (requestRef.current && id === store.selectedId) { requestRef.current.abort(); requestLock.current = false; requestRef.current = null; setLoading(false); }
@@ -166,6 +171,25 @@ export function AgentApp() {
     requestLock.current = true;
     setLoading(true);
     try {
+      if (whichMode === 'research' && researchAvailable) {
+        const lastQuestion = messages.filter(m => m.role === 'user').at(-1)?.content || '';
+        const response = await fetch('/api/research', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: lastQuestion, model: whichModel }),
+          signal: controller.signal,
+        });
+        const data: unknown = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const message = data && typeof data === 'object' && 'error' in data ? (data as {error: string}).error : undefined;
+          throw new Error(message || 'Live research failed.');
+        }
+        const result = data as ResearchResult;
+        updateAssistant(conversationId, assistantId, m => ({
+          ...m, content: result.answer, sources: result.sources, status: 'done',
+        }));
+        return;
+      }
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -263,9 +287,10 @@ export function AgentApp() {
       <button type="button" className="new-chat" onClick={createNew}><Plus size={18} strokeWidth={2.2} /> New conversation</button>
       <label className="history-search"><Search size={17} /><input value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} placeholder="Search conversations" aria-label="Search conversations" /></label>
       <div className="sidebar-section-heading">WORKSPACE</div>
-      <button type="button" className="sidebar-nav selected" onClick={() => { createNew(); }}><MessageSquare size={18} /> Chat <ChevronRight size={14} className="nav-end" /></button>
+      <button type="button" className={`sidebar-nav ${view === 'chat' ? 'selected' : ''}`} onClick={() => { createNew(); }}><MessageSquare size={18} /> Chat <ChevronRight size={14} className="nav-end" /></button>
+      <button type="button" className={`sidebar-nav ${view === 'missions' ? 'selected' : ''}`} onClick={() => { setView('missions'); setDrawerOpen(false); setSheet(null); }}><Layers3 size={18} /> Mission Control <ChevronRight size={14} className="nav-end" /></button>
       <button type="button" className="sidebar-nav" onClick={() => { setDrawerOpen(false); setMode('research'); setSheet(null); }}><Globe2 size={18} /> Research planner <span className="nav-tiny">PLAN</span></button>
-      <button type="button" className="sidebar-nav" onClick={() => { setDrawerOpen(false); setMode('agent'); setSheet(null); }}><Bot size={18} /> Agent planner <span className="nav-tiny">PLAN</span></button>
+      <button type="button" className="sidebar-nav" onClick={() => { setView('missions'); setDrawerOpen(false); setSheet(null); }}><Bot size={18} /> Agent missions <span className="nav-tiny">BETA</span></button>
       <div className="history-section"><div className="sidebar-section-heading">RECENTS <span>{store.conversations.length}</span></div>
         {groups.length ? groups.map(([groupName, entries]) => <section key={groupName} className="history-group"><div className="history-label">{groupName}</div>{entries.map((c) =>
           <div className={`history-item ${store.selectedId === c.id ? 'history-active' : ''}`} key={c.id}>
@@ -283,9 +308,10 @@ export function AgentApp() {
     <div className="workspace">
       <header className="topbar">
         <div className="topbar-left"><IconButton label="Open navigation" className="hide-on-desktop menu-btn" onClick={() => setDrawerOpen(true)}><Menu size={21} /></IconButton>
-          <div className="topbar-title"><span className="topbar-kicker">YOUR WORKSPACE</span><strong>{current?.title || 'New conversation'}</strong></div>
+          <div className="topbar-title"><span className="topbar-kicker">YOUR WORKSPACE</span><strong>{view === 'missions' ? 'Mission Control' : current?.title || 'New conversation'}</strong></div>
         </div>
         <div className="topbar-right">
+          <IconButton label="Mission Control" onClick={() => { setView('missions'); setSheet(null); }} className="missions-shortcut"><Layers3 size={19}/></IconButton>
           <button type="button" className="model-chip" onClick={() => setSheet('models')} aria-label={`Select model, currently ${activeModel.name}`}>
             <span className="model-status-dot" /><span className="model-chip-name">{activeModel.name}</span><ChevronDown size={15} />
           </button>
@@ -293,6 +319,8 @@ export function AgentApp() {
         </div>
       </header>
 
+      <MissionControl model={model} active={view === 'missions'} onBack={() => setView('chat')} />
+      <div className="chat-workspace" style={view === 'missions' ? { display: 'none' } : undefined}>
       <main className={`chat-main ${!current?.messages.length ? 'chat-is-empty' : ''}`}>
         {!current?.messages.length ? <div className="welcome">
           <div className="welcome-orbit"><div className="orbit-ring ring-one" /><div className="orbit-ring ring-two" /><AstraMark size="large" /></div>
@@ -311,6 +339,7 @@ export function AgentApp() {
             <div className="message-body">
               {message.role === 'assistant' && <div className="message-author">Astra <span>· {getModel(current.model).name}</span></div>}
               <div className="message-text">{message.status === 'pending' && !message.content ? <div className="thinking-indicator"><span/><span/><span/></div> : <ShortText text={message.content} />}</div>
+              {message.role === 'assistant' && !!message.sources?.length && <div className="chat-sources"><strong>Sources · Live web search</strong>{message.sources.map(source => <a key={source.id} href={source.url} target="_blank" rel="noopener noreferrer"><Globe2 size={13} /><span>[{source.id}] {source.title}</span><ExternalLink size={12}/></a>)}</div>}
               {message.role === 'assistant' && message.status === 'error' && <div className="message-error">Response failed</div>}
               {message.role === 'assistant' && message.status === 'stopped' && <div className="message-stopped">Generation stopped</div>}
               {message.role === 'assistant' && !!message.content && <div className="message-actions"><IconButton label="Copy response" onClick={() => copy(message.content)}><Copy size={15}/></IconButton>{message.id === current.messages.at(-1)?.id && !loading && <IconButton label="Regenerate response" onClick={() => void retry()}><RotateCcw size={15}/></IconButton>}</div>}
@@ -322,7 +351,7 @@ export function AgentApp() {
 
       <footer className="composer-area">
         <div className="composer-wrap">
-          {mode !== 'chat' && <div className="mode-disclaimer"><span className="disclaimer-dot" />{mode === 'research' ? 'Research planning only · live web search not connected' : 'Agent planning only · external tools not connected'}<button type="button" onClick={() => setSheet('connections')}>Details <ChevronRight size={12}/></button></div>}
+          {mode !== 'chat' && <div className="mode-disclaimer"><span className="disclaimer-dot" />{mode === 'research' ? (researchAvailable ? 'Live research enabled · sources from Perplexity Search' : 'Research planning only · search provider not configured') : 'Agent planning only · open Mission Control to run tasks'}<button type="button" onClick={() => mode === 'agent' ? setView('missions') : setSheet('connections')}>{mode === 'agent' ? 'Missions' : 'Details'} <ChevronRight size={12}/></button></div>}
           <div className={`composer ${loading ? 'composer-loading' : ''}`}>
             <textarea ref={textRef} value={draft} rows={1} maxLength={8000} onChange={(e) => setDraft(e.target.value)} onKeyDown={handleKey} placeholder={mode === 'research' ? 'What do you want to investigate?' : mode === 'agent' ? 'What should we plan?' : 'Message Astra...'} aria-label="Message Astra" />
             <div className="composer-controls">
@@ -340,6 +369,7 @@ export function AgentApp() {
           <div className="composer-caption"><ShieldCheck size={12} /> Conversations are saved on this device. AI responses may contain mistakes.</div>
         </div>
       </footer>
+      </div>
     </div>
 
     {sheet && <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setSheet(null); }}>
@@ -373,7 +403,7 @@ export function AgentApp() {
         </div>}
         {sheet === 'connections' && <div className="connections-content"><div className="sheet-intro">The app is ready for integrations. Each connector requires explicit server-side authentication and permissions before it can access your data.</div>
           <div className="connector-list">{CONNECTORS.map((c) => <div className="connector-row" key={c.name}><div className={`connector-logo logo-${c.shade}`}>{c.mark}</div><div className="connector-text"><strong>{c.name}</strong><small>{c.detail}</small></div><span className="connector-status">Not connected</span></div>)}</div>
-          <div className="connector-callout"><ShieldCheck size={19}/><div><strong>Connections are not active yet</strong><p>Lovable workspace/build-time connectors do not automatically authorize end users of this app. The next development phase will add user-scoped OAuth and live research.</p></div></div>
+          <div className="connector-callout"><ShieldCheck size={19}/><div><strong>Connections are not active yet</strong><p>Lovable workspace/build-time connectors do not automatically authorize end users of this app. Live research works when the server has a Perplexity Search API key. User-scoped OAuth and background workers are still pending.</p></div></div>
           <a href="https://docs.lovable.dev/integrations/introduction" rel="noopener noreferrer" target="_blank" className="doc-link">Lovable integration documentation <ExternalLink size={15}/></a>
         </div>}
       </section>
