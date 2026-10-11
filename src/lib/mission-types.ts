@@ -28,10 +28,11 @@ export type Mission = {
 };
 export const MISSION_STORAGE_KEY = 'astra.missions.v1';
 export function recoverMission(mission: Mission): Mission {
-  const interrupted = mission.status === 'running' || mission.status === 'planning';
+  const interrupted = mission.status === 'running';
   return {
     ...mission,
-    status: interrupted ? 'paused' : mission.status,
+    status: mission.status === 'planning' ? 'failed' : interrupted ? 'paused' : mission.status,
+    error: mission.status === 'planning' ? 'Planning was interrupted. Create a new mission to retry.' : mission.error,
     steps: mission.steps.map(step =>
       step.status === 'running' ? { ...step, status: 'pending' as const, output: '' } : step,
     ),

@@ -42,7 +42,7 @@ export function loadStore(): StoredState {
     ).slice(0, 100).map((c) => ({
       ...c,
       model: isModelId(c.model) ? c.model : DEFAULT_MODEL,
-      mode: c.mode === 'agent' || c.mode === 'research' ? c.mode : 'chat',
+      mode: (c.mode === 'agent' || c.mode === 'research' ? c.mode : 'chat') as ChatMode,
       messages: c.messages.filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
         .slice(-100).map((m) => ({ ...m, status: m.status === 'pending' ? 'stopped' : m.status })),
     }));

@@ -17,7 +17,7 @@ The Lovable project must expose `LOVABLE_API_KEY` **only to the server**. Lovabl
 To turn on live research, configure `PERPLEXITY_API_KEY` as a **server-side secret** in the deployment platform. Perplexity Search requests are billed separately by that provider; Lovable AI is used for the final synthesis. Do not put these secrets in any `VITE_` variable, public file or GitHub commit.
 
 ```bash
-npm ci
+npm install
 npm run dev
 npm run build
 npx tsc --noEmit
