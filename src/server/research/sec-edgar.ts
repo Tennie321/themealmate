@@ -4,7 +4,7 @@
  * This module never sends requests until a caller explicitly invokes a function.
  */
 const SEC_ORIGIN = 'https://data.sec.gov'
-const CIK_PATTERN = /^\\d{1,10}$/
+const CIK_PATTERN = /^\d{1,10}$/
 export type SecEvidence = {
   provider: 'sec-edgar'
   url: string
@@ -42,7 +42,7 @@ export type SecClientOptions = {
 }
 export function createSecEdgarClient(options: SecClientOptions) {
   const userAgent = options.userAgent.trim()
-  if (!userAgent || !/[^\\s@]+@[^\\s@]+\\.[^\\s@]+/.test(userAgent)) {
+  if (!userAgent || !/[^\s@]+@[^\s@]+\.[^\s@]+/.test(userAgent)) {
     throw new Error('SEC User-Agent must include a contact email')
   }
   const fetcher = options.fetcher ?? fetch
@@ -57,8 +57,26 @@ export function createSecEdgarClient(options: SecClientOptions) {
     if (!response.ok) throw new Error('SEC EDGAR request failed (HTTP ' + response.status + ')')
     const length = Number(response.headers.get('content-length'))
     if (Number.isFinite(length) && length > 15_000_000) throw new Error('SEC response too large')
-    const body = await response.text()
-    if (body.length > 15_000_000) throw new Error('SEC response too large')
+    const reader = response.body?.getReader()
+    if (!reader) throw new Error('SEC response has no body')
+    const chunks: Uint8Array[] = []
+    let total = 0
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        total += value.byteLength
+        if (total > 15_000_000) throw new Error('SEC response too large')
+        chunks.push(value)
+      }
+    } catch (error) {
+      await reader.cancel().catch(() => {})
+      throw error
+    }
+    const bytes = new Uint8Array(total)
+    let offset = 0
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength }
+    const body = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
     return { data: JSON.parse(body), url, retrievedAt: new Date().toISOString() }
   }
   return {
