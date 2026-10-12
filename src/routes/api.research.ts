@@ -4,7 +4,7 @@ import { generateText } from 'ai';
 import { aiProvider } from '../lib/ai-provider.server';
 import { DEFAULT_MODEL, isModelId } from '../lib/models';
 import { denyAIUnitBudget, denyExpensiveRequest, readValidatedBody } from '../lib/request-safety.server';
-import { safeSource, type ResearchResult, type ResearchSource } from '../lib/research-types';
+import { auditResearchCitations, safeSource, type ResearchResult, type ResearchSource } from '../lib/research-types';
 
 const PPLX_ENDPOINT = 'https://api.perplexity.ai/search';
 type SearchRecord = { title?: string; url?: string; snippet?: string; date?: string };
@@ -43,9 +43,15 @@ async function handleResearch(request: Request): Promise<Response> {
       return Response.json({ error: upstream.status === 429 ? 'Search provider rate limit reached.' : 'The live search provider could not complete this request.' }, { status: 502 });
     }
     const result = await upstream.json() as { results?: SearchRecord[] };
+    const seenUrls = new Set<string>();
     const sources: ResearchSource[] = (Array.isArray(result.results) ? result.results : [])
       .map((item, index) => safeSource(item, index))
       .filter((source): source is ResearchSource => source !== null)
+      .filter(source => {
+        if (seenUrls.has(source.url)) return false;
+        seenUrls.add(source.url);
+        return true;
+      })
       .slice(0, 8)
       .map((source, index) => ({ ...source, id: index + 1 }));
     if (!sources.length) return Response.json({ error: 'No live search sources were returned. Try a more specific question.' }, { status: 422 });
@@ -57,7 +63,21 @@ async function handleResearch(request: Request): Promise<Response> {
       maxOutputTokens: 2400,
       abortSignal: request.signal,
     });
-    const payload: ResearchResult = { answer: response.text, sources, researchedAt: new Date().toISOString(), provider: 'Perplexity Search + Lovable AI', query };
+    const { answer, audit } = auditResearchCitations(response.text, sources);
+    if (!answer.trim()) return Response.json({ error: 'The research model returned no answer.' }, { status: 502 });
+    const notice = audit.status === 'partial'
+      ? 'Citation audit: Some model-generated references did not match retrieved sources and were marked unavailable. Claims using them are unverified.'
+      : audit.status === 'unlinked'
+        ? 'Citation audit: The answer contains no valid source references. Treat factual claims as unverified.'
+        : 'Citation audit: Numbered references link to retrieved search excerpts; their factual support has not been independently checked.';
+    const payload: ResearchResult = {
+      answer: `${answer.trim()}\n\n${notice}`,
+      sources,
+      citationAudit: audit,
+      researchedAt: new Date().toISOString(),
+      provider: 'Perplexity Search + Lovable AI',
+      query,
+    };
     return Response.json(payload, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('Research failed', error);
