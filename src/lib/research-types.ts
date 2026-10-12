@@ -1,5 +1,5 @@
 export type ResearchSource = { id: number; title: string; url: string; snippet: string; publishedAt?: string };
-export type ResearchResult = { answer: string; sources: ResearchSource[]; researchedAt: string; provider: string; query: string };
+export type ResearchResult = { answer: string; sources: ResearchSource[]; citationAudit: CitationAudit; researchedAt: string; provider: string; query: string };
 export function safeSource(value: unknown, index: number): ResearchSource | null {
   if (!value || typeof value !== 'object') return null;
   const item = value as Record<string, unknown>;
