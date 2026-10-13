@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { MODELS, getModel, type ModelId } from '../lib/models';
 import { MissionControl } from './MissionControl';
+import { ChatGPTBridge } from './ChatGPTBridge';
 import type { ResearchResult } from '../lib/research-types';
 import { createBackup, parseBackup } from '../lib/backup';
 import { loadMissions, persistMissions } from '../lib/mission-types';
@@ -73,7 +74,7 @@ export function AgentApp() {
   const [store, setStore] = useState<StoredState>(EMPTY_STORE);
   const [hydrated, setHydrated] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [view, setView] = useState<'chat' | 'missions'>('chat');
+  const [view, setView] = useState<'chat' | 'missions' | 'chatgpt'>('chat');
   const [researchAvailable, setResearchAvailable] = useState(false);
   const [privateBetaProtected, setPrivateBetaProtected] = useState(false);
   const backupInputRef = useRef<HTMLInputElement | null>(null);
@@ -330,6 +331,7 @@ export function AgentApp() {
       <div className="sidebar-section-heading">WORKSPACE</div>
       <button type="button" className={`sidebar-nav ${view === 'chat' ? 'selected' : ''}`} onClick={() => { createNew(); }}><MessageSquare size={18} /> Chat <ChevronRight size={14} className="nav-end" /></button>
       <button type="button" className={`sidebar-nav ${view === 'missions' ? 'selected' : ''}`} onClick={() => { setView('missions'); setDrawerOpen(false); setSheet(null); }}><Layers3 size={18} /> Mission Control <ChevronRight size={14} className="nav-end" /></button>
+      <button type="button" className={`sidebar-nav ${view === 'chatgpt' ? 'selected' : ''}`} onClick={() => { setView('chatgpt'); setDrawerOpen(false); setSheet(null); }}><ExternalLink size={18} /> ChatGPT Bridge <span className="nav-tiny">NEW</span></button>
       <button type="button" className="sidebar-nav" onClick={() => { setView('chat'); setDrawerOpen(false); setMode('research'); setSheet(null); }}><Globe2 size={18} /> Research planner <span className="nav-tiny">PLAN</span></button>
       <button type="button" className="sidebar-nav" onClick={() => { setView('missions'); setDrawerOpen(false); setSheet(null); }}><Bot size={18} /> Agent missions <span className="nav-tiny">BETA</span></button>
       <div className="history-section"><div className="sidebar-section-heading">RECENTS <span>{store.conversations.length}</span></div>
@@ -349,7 +351,7 @@ export function AgentApp() {
     <div className="workspace">
       <header className="topbar">
         <div className="topbar-left"><IconButton label="Open navigation" className="hide-on-desktop menu-btn" onClick={() => setDrawerOpen(true)}><Menu size={21} /></IconButton>
-          <div className="topbar-title"><span className="topbar-kicker">YOUR WORKSPACE</span><strong>{view === 'missions' ? 'Mission Control' : current?.title || 'New conversation'}</strong></div>
+          <div className="topbar-title"><span className="topbar-kicker">YOUR WORKSPACE</span><strong>{view === 'missions' ? 'Mission Control' : view === 'chatgpt' ? 'ChatGPT Bridge' : current?.title || 'New conversation'}</strong></div>
         </div>
         <div className="topbar-right">
           <IconButton label="Mission Control" onClick={() => { setView('missions'); setSheet(null); }} className="missions-shortcut"><Layers3 size={19}/></IconButton>
@@ -361,7 +363,8 @@ export function AgentApp() {
       </header>
 
       <MissionControl model={model} active={view === 'missions'} onBack={() => setView('chat')} />
-      <div className="chat-workspace" style={view === 'missions' ? { display: 'none' } : undefined}>
+      {view === 'chatgpt' && <ChatGPTBridge />}
+      <div className="chat-workspace" style={view !== 'chat' ? { display: 'none' } : undefined}>
       <main className={`chat-main ${!current?.messages.length ? 'chat-is-empty' : ''}`}>
         {!current?.messages.length ? <div className="welcome">
           <div className="welcome-orbit"><div className="orbit-ring ring-one" /><div className="orbit-ring ring-two" /><AstraMark size="large" /></div>

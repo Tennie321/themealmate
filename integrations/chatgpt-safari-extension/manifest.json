@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Astra → ChatGPT Send",
+  "version": "0.1.0",
+  "description": "Submit only prompts explicitly handed off from Astra to your own signed-in ChatGPT tab.",
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
