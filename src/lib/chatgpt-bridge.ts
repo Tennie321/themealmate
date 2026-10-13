@@ -15,5 +15,7 @@ export function buildChatGPTHandoffURL(input: string): string {
   // Only the optional Astra Safari extension acts on this hint.
   // Without that extension, ChatGPT opens with a prefilled message for review.
   url.searchParams.set('astra_send', '1');
+  // Browser-side sender uses a unique one-shot ID to prevent repeat submission.
+  url.searchParams.set('astra_nonce', crypto.randomUUID());
   return url.toString();
 }
