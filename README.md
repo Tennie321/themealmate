@@ -2,6 +2,22 @@
 
 Astra is a mobile AI workspace using Lovable AI credits for inference. **Development happens through GitHub commits**, not Lovable's AI builder chat.
 
+## ChatGPT browser bridge (experimental)
+
+Open **ChatGPT Bridge** in the Astra sidebar to compose a prompt and hand it to
+your real `chatgpt.com` session. Sign in on ChatGPT's own website; Astra does
+not request your ChatGPT login credentials or use the OpenAI API for this route.
+The link pre-fills a new ChatGPT chat for you to review and send.
+
+An optional iPhone **Safari Web Extension** can attempt a one-shot Send click
+for an explicitly marked Astra handoff, without reading replies or account
+cookies. You must separately package and install the extension using Xcode and
+permit access to `chatgpt.com`; it is **not** bundled with the web app.
+See [the Safari integration guide](integrations/chatgpt-safari-extension/README.md)
+for instructions and limitations. The browser interface is not an official
+ChatGPT messaging API; it can change or fail. No existing ChatGPT chats,
+memory, or replies are synchronized with Astra.
+
 ## Features
 
 - Native-feeling responsive mobile chat, PWA install, model picker, local chat history and settings.
