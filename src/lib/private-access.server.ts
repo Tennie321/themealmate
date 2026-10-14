@@ -73,3 +73,24 @@ export async function denyIfPrivate(request: Request): Promise<Response | null> 
   if (!await isAccessGranted(request)) return Response.json({ error: 'Please unlock the private beta before using AI.' }, { status: 401, headers: { 'Cache-Control': 'no-store' } });
   return null;
 }
+
+/** Public-safe readiness metadata; never return credentials or their contents. */
+export function getCapabilityReadiness() {
+  const hasAIKey = Boolean(process.env.LOVABLE_API_KEY?.trim());
+  const hasSearchKey = Boolean(process.env.PERPLEXITY_API_KEY?.trim());
+  const needsAccessSetup = Boolean(accessSetupError());
+  const aiStatus = !hasAIKey ? 'missing_lovable_api_key' : needsAccessSetup ? 'access_setup_required' : 'ready';
+  const researchStatus = !hasAIKey ? 'missing_lovable_api_key'
+    : needsAccessSetup ? 'access_setup_required'
+    : !hasSearchKey ? 'missing_perplexity_api_key' : 'ready';
+  return {
+    ai: aiStatus === 'ready',
+    research: researchStatus === 'ready',
+    aiStatus,
+    researchStatus,
+    persistentMissions: false,
+    backgroundExecution: false,
+    oauthConnectors: false,
+    computerUse: false,
+  };
+}

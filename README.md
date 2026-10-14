@@ -28,7 +28,18 @@ memory, or replies are synchronized with Astra.
 
 ## Set up the backend
 
-The Lovable project must expose `LOVABLE_API_KEY` **only to the server**. Lovable AI requests consume AI usage credits, not Lovable builder/chat credits.
+This project is connected to [Astra in Lovable](https://lovable.dev/projects/e5083802-363b-4e08-b0f4-d7d06d7f7082).
+Enable Lovable Cloud and the built-in AI connector for that project. Lovable **automatically generates and manages** the server-only `LOVABLE_API_KEY`; do not paste a personal OpenAI key, a workspace API token, or a client-visible `VITE_` key in its place. Lovable AI inference uses project AI credits, not Lovable builder/chat credits.
+
+Configure the following server-only values in the project environment before using billable AI:
+
+- `ASTRA_ACCESS_CODE`: private beta code of at least 12 characters.
+- `ASTRA_SESSION_SECRET`: an independent cryptographically random secret of at least 32 characters. Rotate it to log out all sessions.
+- `PERPLEXITY_API_KEY` (optional): enables live sourced web research; chat and research planning still work without it.
+
+Check `/api/capabilities` on the deployed app after configuration. The public-safe `aiStatus` and `researchStatus` fields report `ready`, `missing_lovable_api_key`, `access_setup_required`, or `missing_perplexity_api_key` as applicable; they never return secret values. An unavailable live search API is **not** a missing key for core chat. The Connections menu lists planned integrations rather than active OAuth connectors.
+
+Lovable AI requests consume AI usage credits, not Lovable builder/chat credits.
 
 To turn on live research, configure `PERPLEXITY_API_KEY` as a **server-side secret** in the deployment platform. Perplexity Search requests are billed separately by that provider; Lovable AI is used for the final synthesis. Do not put these secrets in any `VITE_` variable, public file or GitHub commit.
 
