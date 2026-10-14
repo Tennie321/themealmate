@@ -4,6 +4,8 @@ Astra is a mobile AI workspace using Lovable AI credits for inference. **Develop
 
 ## ChatGPT browser bridge (experimental)
 
+**New optional remote browser mode:** The ChatGPT Bridge screen also offers a hosted Playwright session with a live interactive screen, human login/CAPTCHA handling and a prompt automation WebSocket that streams DOM text snapshots. It requires **self-hosting the Docker browser worker**, an authenticated private Astra session and BROWSER_BRIDGE_WS_URL; it is not automatically deployed by Lovable. See [worker setup and security guidance](services/browser-bridge/README.md). This is intended for one private operator, not a shared user pool.
+
 Open **ChatGPT Bridge** in the Astra sidebar to compose a prompt and hand it to
 your real `chatgpt.com` session. Sign in on ChatGPT's own website; Astra does
 not request your ChatGPT login credentials or use the OpenAI API for this route.
@@ -15,8 +17,7 @@ cookies. You must separately package and install the extension using Xcode and
 permit access to `chatgpt.com`; it is **not** bundled with the web app.
 See [the Safari integration guide](integrations/chatgpt-safari-extension/README.md)
 for instructions and limitations. The browser interface is not an official
-ChatGPT messaging API; it can change or fail. No existing ChatGPT chats,
-memory, or replies are synchronized with Astra.
+ChatGPT messaging API; it can change or fail. The link-only handoff does not sync existing ChatGPT chats or replies; the optional remote browser mode displays the current tab and streams new reply text while connected.
 
 ## Features
 
