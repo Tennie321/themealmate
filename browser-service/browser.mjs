@@ -15,6 +15,7 @@ export class BrowserController {
     this.boot = null;
     this.busy = false;
     this.lastFrame = null;
+    this.lastFrameAt = 0;
   }
 
   async start() {
@@ -39,8 +40,11 @@ export class BrowserController {
     this.cdp = await this.context.newCDPSession(this.page);
     await this.cdp.send('Page.enable');
     this.cdp.on('Page.screencastFrame', ({ data, sessionId }) => {
-      this.lastFrame = data;
-      this.broadcast({ type: 'frame', jpeg: data, width: WIDTH, height: HEIGHT });
+      if (Date.now() - this.lastFrameAt >= 125) {
+        this.lastFrame = data;
+        this.lastFrameAt = Date.now();
+        this.broadcast({ type: 'frame', jpeg: data, width: WIDTH, height: HEIGHT });
+      }
       void this.cdp?.send('Page.screencastFrameAck', { sessionId }).catch(() => {});
     });
     await this.cdp.send('Page.startScreencast', { format: 'jpeg', quality: 65, everyNthFrame: 1 });

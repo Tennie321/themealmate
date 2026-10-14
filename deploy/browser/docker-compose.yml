@@ -26,8 +26,6 @@ services:
     volumes:
       - browser-profiles:/data/profiles
     shm_size: '1gb'
-    security_opt:
-      - seccomp=unconfined
     restart: unless-stopped
 
   gateway:

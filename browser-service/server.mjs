@@ -6,7 +6,10 @@ import { authenticateUpgrade, parseCommand } from './security.mjs';
 const port = Number(process.env.PORT || 8787);
 const clients = new Set();
 const send = (socket, message) => {
-  if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message));
+  if (socket.readyState !== WebSocket.OPEN) return;
+  // Drop stale frames instead of buffering unbounded JPEGs for slow clients.
+  if (message.type === 'frame' && socket.bufferedAmount > 2_000_000) return;
+  socket.send(JSON.stringify(message));
 };
 const broadcast = message => { for (const socket of clients) send(socket, message); };
 const browser = new BrowserController(process.env.BROWSER_PROFILE_DIR || '/data/profiles/owner', broadcast);
