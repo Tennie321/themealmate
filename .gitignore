@@ -35,3 +35,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Stateful browser profiles contain login cookies and must never be committed.
+browser-service/data/
+data/profiles/

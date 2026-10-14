@@ -4,7 +4,7 @@ Astra is a mobile AI workspace using Lovable AI credits for inference. **Develop
 
 ## ChatGPT browser bridge (experimental)
 
-Open **ChatGPT Bridge** in the Astra sidebar to compose a prompt and hand it to
+The original handoff in **ChatGPT Bridge** lets you compose a prompt and hand it to
 your real `chatgpt.com` session. Sign in on ChatGPT's own website; Astra does
 not request your ChatGPT login credentials or use the OpenAI API for this route.
 The link pre-fills a new ChatGPT chat for you to review and send.
@@ -17,6 +17,93 @@ See [the Safari integration guide](integrations/chatgpt-safari-extension/README.
 for instructions and limitations. The browser interface is not an official
 ChatGPT messaging API; it can change or fail. No existing ChatGPT chats,
 memory, or replies are synchronized with Astra.
+
+
+## Live remote ChatGPT browser (self-hosted beta)
+
+The **ChatGPT Bridge** screen now also contains a live, remotely controllable browser.
+The older prefilled-link/Safari-extension handoff remains available below it.
+This is **browser UI automation, not an OpenAI API integration**. ChatGPT may
+change its interface, challenge remote browsers, or restrict browser automation.
+No CAPTCHA solving or login bypass is implemented: use the remote screen to
+complete interactive login and verification yourself.
+
+The browser runs separately from the Lovable/TanStack server. Lovable Cloud by
+itself does **not** provide a stateful Playwright container or a persistent
+WebSocket upgrade proxy. Deploy on your own Docker-capable host, behind HTTPS.
+
+### Architecture and security
+
+```
+Browser (Astra ChatGPT Bridge)
+  └─ wss://YOUR_DOMAIN/browser/ws (same-origin; HttpOnly session cookie)
+       └─ TLS reverse proxy → WebSocket service :8787
+           ├─ Playwright Chromium (persistent /data/profiles/owner)
+           ├─ CDP Page.screencastFrame → WebSocket JPEG frames
+           ├─ pointer, keyboard, text, scroll, refresh messages → Playwright
+           └─ send_prompt → ChatGPT composer → assistant DOM polling → reply events
+  └─ normal Astra app requests → TanStack Start :3000
+```
+
+The WebSocket service verifies Astra's HMAC-signed `astra_beta_session` cookie
+and an **exact** `Origin` match to `ASTRA_PUBLIC_ORIGIN`. It **fails closed**
+unless `ASTRA_ACCESS_CODE` and `ASTRA_SESSION_SECRET` are configured, even if
+the AI key is absent. The browser service binds only inside the Docker network;
+the sample gateway is published on loopback. **Always terminate HTTPS** at a
+trusted outer reverse proxy and route its traffic to `127.0.0.1:8080`.
+Do **not** publish port 8787. Keep secrets server-only. The shared persistent
+profile stores ChatGPT login cookies: protect the Docker volume as credentials,
+use private infrastructure, never include it in backups/logs, and never commit it.
+
+**Single-owner scope:** Astra currently uses a shared private-beta access code,
+not real per-user identity. Consequently, this deployment provides **one**
+persistent owner browser profile; anyone given the private-beta access code can
+see and control that same browser. Multi-user use requires unique accounts,
+per-user scoped WebSocket authorization, isolated containers/volumes, limits,
+audit logs, and revocation before production exposure.
+
+### Run the containerized deployment
+
+1. Create a local **untracked** `.env` at repository root containing:
+   `ASTRA_ACCESS_CODE` (12+ characters),
+   `ASTRA_SESSION_SECRET` (32+ random characters), and
+   `ASTRA_PUBLIC_ORIGIN=https://YOUR_DOMAIN` (exact browser origin).
+   Add `LOVABLE_API_KEY` for Astra's normal AI chat if needed; it is not
+   required by the remote browser. Set `PERPLEXITY_API_KEY` optionally.
+2. Configure an external TLS-terminating proxy for `https://YOUR_DOMAIN` to
+   `http://127.0.0.1:8080` and forward WebSocket upgrade headers. Do not
+   expose the gateway over plaintext internet.
+3. From the repository root, run:
+   ```bash
+   docker compose --env-file .env -f deploy/browser/docker-compose.yml up --build -d
+   ```
+4. Unlock Astra using the configured access code, open **ChatGPT Bridge**, wait
+   for the remote view, click ChatGPT login and complete any CAPTCHA manually.
+   Enter a prompt below the screen and press **Run prompt in ChatGPT**.
+   Reply text is forwarded incrementally and a final event is sent when the
+   assistant appears to have finished.
+5. Validate changes with:
+   ```bash
+   npm run build
+   npx tsc --noEmit
+   npm run test:security
+   npm --prefix browser-service test
+   ```
+
+For local Vite development, the `/browser/ws` development proxy targets
+`ws://127.0.0.1:8787`; run the browser container with a loopback-only port
+mapping and `ASTRA_PUBLIC_ORIGIN=http://localhost:5173`, matching Vite's
+actual port. The browser service and Astra server must share the same
+`ASTRA_SESSION_SECRET` and access code, including in development.
+
+The browser controller deliberately exposes only a limited command set
+(`click`, `move`, `scroll`, `key`, `text`, `refresh`, `send_prompt`).
+It does not expose raw CDP, unrestricted navigation APIs, cookie export or
+session storage. Prompt streaming parses the displayed ChatGPT UI, so it is
+best-effort rather than a guaranteed protocol. The 3-minute timeout, login
+challenges, changed selectors, network disruption, and suspended headless
+sessions can interrupt workflows. For unattended and scalable production
+automation, prefer an officially supported API.
 
 ## Features
 
