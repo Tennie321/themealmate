@@ -1,0 +1,23 @@
+services:
+  remote-browser:
+    build: .
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3100:3100"
+    environment:
+      PORT: "3100"
+      BROWSER_DATA_DIR: /data
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Set your external HTTPS Astra origin}
+      ASTRA_SESSION_SECRET: ${ASTRA_SESSION_SECRET:?Match the existing Astra session secret}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-mini}
+    volumes:
+      - browser_profiles:/data
+    shm_size: 1gb
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+volumes:
+  browser_profiles:
