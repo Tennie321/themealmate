@@ -18,6 +18,14 @@ for instructions and limitations. The browser interface is not an official
 ChatGPT messaging API; it can change or fail. No existing ChatGPT chats,
 memory, or replies are synchronized with Astra.
 
+## Remote Browser Studio (self-hosted private beta)
+
+The ChatGPT Bridge now includes a **Remote Browser Studio** panel with a Playwright-controlled persistent Chromium session and CDP screencast over a same-origin WebSocket. Users can interactively log in, complete verification, click, scroll and type in their own server-hosted browser. Browser profiles persist in an encrypted-at-rest Docker volume you administer.
+
+The adjacent workflow runner streams text through the **official OpenAI Responses API**, not by scraping a logged-in ChatGPT web session. It requires a server-side `OPENAI_API_KEY` and separately billed API access. This API response is **not part of your ChatGPT website history**. The existing URL handoff remains available without a browser server.
+
+The worker **must** be deployed separately: this Lovable/TanStack app cannot host persistent Chromium or upgrade WebSocket connections on its own. See [Remote Browser service deployment](services/remote-browser/README.md) for Docker Compose, same-origin reverse proxy and authentication setup. Do not expose the worker port publicly or attempt CAPTCHA bypass.
+
 ## Features
 
 - Native-feeling responsive mobile chat, PWA install, model picker, local chat history and settings.
