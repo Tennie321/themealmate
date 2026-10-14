@@ -76,6 +76,8 @@ export function AgentApp() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [view, setView] = useState<'chat' | 'missions' | 'chatgpt'>('chat');
   const [researchAvailable, setResearchAvailable] = useState(false);
+  const [aiAvailable, setAiAvailable] = useState<boolean | null>(null);
+  const [capabilitiesFailed, setCapabilitiesFailed] = useState(false);
   const [privateBetaProtected, setPrivateBetaProtected] = useState(false);
   const backupInputRef = useRef<HTMLInputElement | null>(null);
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -92,7 +94,22 @@ export function AgentApp() {
   const lastSavedRef = useRef('');
 
   useEffect(() => { setStore(loadStore()); setHydrated(true); }, []);
-  useEffect(() => { void fetch('/api/capabilities').then(r => r.json()).then((x: { research?: boolean }) => setResearchAvailable(Boolean(x.research))).catch(() => {}); }, []);
+  useEffect(() => {
+    let active = true;
+    void fetch('/api/capabilities', { cache: 'no-store' })
+      .then(async response => {
+        if (!response.ok) throw new Error('The AI status endpoint is unavailable.');
+        return await response.json() as { ai?: boolean; research?: boolean };
+      })
+      .then(status => {
+        if (!active) return;
+        setAiAvailable(Boolean(status.ai));
+        setResearchAvailable(Boolean(status.research));
+        setCapabilitiesFailed(false);
+      })
+      .catch(() => { if (active) setCapabilitiesFailed(true); });
+    return () => { active = false; };
+  }, []);
   useEffect(() => { void fetch('/api/access/status').then(r => r.json()).then((x: { protected?: boolean }) => setPrivateBetaProtected(Boolean(x.protected))).catch(() => {}); }, []);
   useEffect(() => {
     if (!hydrated) return;
@@ -237,7 +254,7 @@ export function AgentApp() {
 
   const sendMessage = async () => {
     const content = draft.trim();
-    if (!content || requestLock.current || content.length > 8000) return;
+    if (!content || requestLock.current || content.length > 8000 || aiAvailable !== true) return;
     const now = Date.now();
     const convoId = current?.id || makeId();
     const userMessage: ChatMessage = { id: makeId(), role: 'user', content, createdAt: now, status: 'done' };
@@ -258,7 +275,7 @@ export function AgentApp() {
   };
 
   const retry = async () => {
-    if (!current || requestLock.current || current.messages.length < 2) return;
+    if (!current || requestLock.current || current.messages.length < 2 || aiAvailable !== true) return;
     const last = current.messages.at(-1);
     if (last?.role !== 'assistant') return;
     const turns = current.messages.slice(0, -1).filter((m) => m.content && m.status !== 'error');
@@ -342,7 +359,7 @@ export function AgentApp() {
           </div>)}</section>) : <p className="empty-history">{historySearch ? 'No matching conversations' : 'Your conversations will appear here.'}</p>}
       </div>
       <div className="sidebar-bottom">
-        <div className="workspace-note"><div className="status-light" /><div><strong>Lovable AI Gateway</strong><small>Usage billed by Lovable AI</small></div></div>
+        <div className="workspace-note"><div className="status-light" /><div><strong>{aiAvailable === true ? 'Lovable AI Gateway' : aiAvailable === false ? 'AI setup required' : 'Checking AI connection'}</strong><small>{aiAvailable === true ? 'Usage billed by Lovable AI' : aiAvailable === false ? 'Chat and missions unavailable' : 'Awaiting server status'}</small></div></div>
         <button type="button" className="sidebar-nav" onClick={() => { setDrawerOpen(false); setSheet('connections'); }}><Layers3 size={18} /> Connections <ChevronRight size={16} className="nav-end" /></button>
         <button type="button" className="sidebar-nav" onClick={() => openSettings()}><Settings2 size={18} /> Settings <ChevronRight size={16} className="nav-end" /></button>
       </div>
@@ -395,6 +412,8 @@ export function AgentApp() {
 
       <footer className="composer-area">
         <div className="composer-wrap">
+          {aiAvailable === false && <div className="mode-disclaimer" role="alert"><span className="disclaimer-dot" />AI is not connected. Enable Lovable's built-in AI connector so the deployment receives its server-side LOVABLE_API_KEY. <a href="https://docs.lovable.dev/features/ai" target="_blank" rel="noopener noreferrer">Setup guide</a></div>}
+          {capabilitiesFailed && <div className="mode-disclaimer" role="alert"><span className="disclaimer-dot" />Could not check the AI connection. Check that the backend is running, then reload.</div>}
           {mode !== 'chat' && <div className="mode-disclaimer"><span className="disclaimer-dot" />{mode === 'research' ? (researchAvailable ? 'Live research enabled · sources from Perplexity Search' : 'Research planning only · search provider not configured') : 'Agent planning only · open Mission Control to run tasks'}<button type="button" onClick={() => mode === 'agent' ? setView('missions') : setSheet('connections')}>{mode === 'agent' ? 'Missions' : 'Details'} <ChevronRight size={12}/></button></div>}
           <div className={`composer ${loading ? 'composer-loading' : ''}`}>
             <textarea ref={textRef} value={draft} rows={1} maxLength={8000} onChange={(e) => setDraft(e.target.value)} onKeyDown={handleKey} placeholder={mode === 'research' ? 'What do you want to investigate?' : mode === 'agent' ? 'What should we plan?' : 'Message Astra...'} aria-label="Message Astra" />
@@ -406,7 +425,7 @@ export function AgentApp() {
               </div>
               <div className="composer-send">
                 {loading ? <button type="button" className="send-button stop-button" onClick={stop} aria-label="Stop response"><Square size={16} fill="currentColor" /></button>
-                  : <button type="button" className="send-button" onClick={() => void sendMessage()} aria-label="Send message" disabled={!draft.trim() || !hydrated}><ArrowUp size={20} strokeWidth={2.6}/></button>}
+                  : <button type="button" className="send-button" onClick={() => void sendMessage()} aria-label="Send message" disabled={!draft.trim() || !hydrated || aiAvailable !== true}><ArrowUp size={20} strokeWidth={2.6}/></button>}
               </div>
             </div>
           </div>
