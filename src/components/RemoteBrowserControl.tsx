@@ -139,6 +139,7 @@ export function RemoteBrowserControl() {
   function runPrompt() {
     if (!connected || running || !prompt.trim() || prompt.length > 5000) return;
     send({ type: 'prompt', text: prompt.trim() });
+    setRunning(true);
     setRunStatus('Submitting prompt…');
   }
 
