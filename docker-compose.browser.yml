@@ -1,0 +1,21 @@
+services:
+  remote-browser:
+    build:
+      context: ./integrations/remote-browser
+    init: true
+    shm_size: "1gb"
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      PORT: "8787"
+      BROWSER_ALLOWED_ORIGIN: "${BROWSER_ALLOWED_ORIGIN:?Set your Astra app origin, e.g. http://localhost:3000}"
+      BROWSER_BRIDGE_SECRET: "${BROWSER_BRIDGE_SECRET:?Set the same random secret as the app server}"
+      BROWSER_PROFILE_DIR: /home/pwuser/profiles
+    volumes:
+      - browser_profiles:/home/pwuser/profiles
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+volumes:
+  browser_profiles:

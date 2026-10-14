@@ -89,3 +89,31 @@ When `LOVABLE_API_KEY` is configured, Astra **fails closed** until **both** serv
 ## Local data backup
 
 Settings → Privacy offers **Export workspace backup** and **Import workspace backup** for portable JSON copies of chats and Mission Control history. Imports are validated and require explicit confirmation before replacing local data. Backups contain conversation contents, so store them privately. Cloud sync remains a separate future feature.
+
+
+## Live remote ChatGPT browser (self-hosted opt-in)
+
+The **ChatGPT Bridge** view now optionally supports an interactive Chromium browser controlled through a low-latency CDP screencast over WebSocket. It includes manual ChatGPT login/CAPTCHA handling, persistent session profiles, pointer/keyboard/paste input, prompt submission, and streaming DOM-based reply snapshots. The original external ChatGPT handoff remains available without a browser server.
+
+**Do not expect this to work on the standard Lovable-hosted frontend without additional infrastructure.** The browser worker needs a host with Docker, disk persistence, and a WebSocket route, and ChatGPT's website can change its UI or restrict automated access. This is not an official OpenAI API integration, nor guaranteed to work for every account or login provider.
+
+### Local setup
+
+1. Install Docker. Configure `ASTRA_ACCESS_CODE` (12+ characters), `ASTRA_SESSION_SECRET` (32+ characters), and an **independent** `BROWSER_BRIDGE_SECRET` (32+ random characters) in server-only environment settings. The latter must be identical for Astra's server and the worker. Never expose it as a `VITE_` variable.
+2. Set `BROWSER_ALLOWED_ORIGIN=http://localhost:3000` (or the exact actual app origin; comma-separated origins are supported). The worker rejects WebSocket requests from other origins.
+3. Run `docker compose -f docker-compose.browser.yml up --build -d`; this creates an isolated Chromium worker on `127.0.0.1:8787` with a persistent Docker profile volume.
+4. Run `npm install && npm run dev`; Vite proxies `/browser-api` WebSockets to the local worker. Sign in to Astra, open ChatGPT Bridge, click **Connect browser**, and complete ChatGPT login manually inside the streamed browser.
+5. Type a prompt and select **Run in ChatGPT**. The worker fills ChatGPT's composer, sends it, and streams response text back. **Stop** halts the active job.
+
+The server route `GET /api/browser/token` only issues 90-second, signed tickets to authenticated Astra beta sessions. Tickets are sent as a WebSocket subprotocol, not URL query parameters. The worker accepts one control connection per Astra session, isolates profiles by signed-session identifier, rate-limits prompts, and deletes no browser cookies or profile files on disconnect. The browser process shuts down after 90 seconds of idle time; its profile persists across container restarts.
+
+### Deployment / security
+
+- Deploy the browser container **privately** behind a TLS reverse proxy supporting WebSockets. Proxy `/browser-api/*` to port 8787 on the worker, or set public `VITE_BROWSER_BRIDGE_URL=https://browser.example.com` in the frontend build. Only the backend may hold `BROWSER_BRIDGE_SECRET`.
+- Configure `BROWSER_ALLOWED_ORIGIN` to exactly the HTTPS Astra app origin; never `*`. Restrict worker networking at the firewall; do **not** expose its port directly to the internet. Use individual user auth, durable quotas, auditing, and more restrictive container isolation before multi-tenant production.
+- Chromium profiles contain **sensitive logged-in ChatGPT cookies**. The named Docker volume must be encrypted/backed up privately, and not shared between organizations. Logging out of Astra does not log out of the remote ChatGPT account; clear the profile volume if you need to revoke it.
+- Manual login and CAPTCHA resolution happen in the visible browser. The worker does not bypass access checks or capture raw passwords as an API; browser input events are transmitted through the authenticated WebSocket.
+- The ChatGPT DOM is not a stable integration contract. If selectors change, execution reports an error. A reply timeout is not treated as a completed answer. Do not rely on this for unattended, safety-critical, or mass automation.
+- The existing Astra access code is a **shared private beta gate**, not secure per-user account management. Do not deploy shared browser profiles for untrusted users. Short-lived worker tickets are only an additional guard.
+
+Validation: `npm run test:security`, `npx tsc --noEmit`, `npm run lint`, `npm run build`. A browser end-to-end smoke test additionally requires the Docker service and a real ChatGPT login.
