@@ -252,7 +252,7 @@ export function AgentApp() {
 
   const sendMessage = async () => {
     const content = draft.trim();
-    if (!content || requestLock.current || content.length > 8000) return;
+    if (!content || requestLock.current || content.length > 8000 || !capabilities?.ai) return;
     const now = Date.now();
     const convoId = current?.id || makeId();
     const userMessage: ChatMessage = { id: makeId(), role: 'user', content, createdAt: now, status: 'done' };
@@ -273,7 +273,7 @@ export function AgentApp() {
   };
 
   const retry = async () => {
-    if (!current || requestLock.current || current.messages.length < 2) return;
+    if (!current || requestLock.current || current.messages.length < 2 || !capabilities?.ai) return;
     const last = current.messages.at(-1);
     if (last?.role !== 'assistant') return;
     const turns = current.messages.slice(0, -1).filter((m) => m.content && m.status !== 'error');
@@ -357,7 +357,7 @@ export function AgentApp() {
           </div>)}</section>) : <p className="empty-history">{historySearch ? 'No matching conversations' : 'Your conversations will appear here.'}</p>}
       </div>
       <div className="sidebar-bottom">
-        <div className="workspace-note"><div className="status-light" /><div><strong>Lovable AI Gateway</strong><small>Usage billed by Lovable AI</small></div></div>
+        <div className="workspace-note"><div className="status-light" /><div><strong>{capabilities?.ai ? 'Lovable AI Gateway' : capabilities ? 'AI setup required' : 'Checking AI connection'}</strong><small>{capabilities?.ai ? 'Usage billed by Lovable AI' : capabilities ? 'Chat and missions unavailable' : 'Awaiting server status'}</small></div></div>
         <button type="button" className="sidebar-nav" onClick={() => { setDrawerOpen(false); setSheet('connections'); }}><Layers3 size={18} /> Connections <ChevronRight size={16} className="nav-end" /></button>
         <button type="button" className="sidebar-nav" onClick={() => openSettings()}><Settings2 size={18} /> Settings <ChevronRight size={16} className="nav-end" /></button>
       </div>
@@ -432,7 +432,7 @@ export function AgentApp() {
               </div>
               <div className="composer-send">
                 {loading ? <button type="button" className="send-button stop-button" onClick={stop} aria-label="Stop response"><Square size={16} fill="currentColor" /></button>
-                  : <button type="button" className="send-button" onClick={() => void sendMessage()} aria-label="Send message" disabled={!draft.trim() || !hydrated}><ArrowUp size={20} strokeWidth={2.6}/></button>}
+                  : <button type="button" className="send-button" onClick={() => void sendMessage()} aria-label="Send message" disabled={!draft.trim() || !hydrated || !capabilities?.ai}><ArrowUp size={20} strokeWidth={2.6}/></button>}
               </div>
             </div>
           </div>
