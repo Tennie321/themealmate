@@ -118,8 +118,8 @@ export function RemoteBrowser() {
   }
   function key(event: KeyboardEvent<HTMLDivElement>) {
     if (!connected || ['Control', 'Shift', 'Alt', 'Meta'].includes(event.key)) return;
-    event.preventDefault();
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'v') return;
+    event.preventDefault();
     if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
       send({ type: 'insert', text: event.key });
       return;
