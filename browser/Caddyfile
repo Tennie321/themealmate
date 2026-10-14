@@ -1,0 +1,9 @@
+:80 {
+  @browser path /browser/ws
+  handle @browser {
+    reverse_proxy browser:8787
+  }
+  handle {
+    reverse_proxy app:3000
+  }
+}

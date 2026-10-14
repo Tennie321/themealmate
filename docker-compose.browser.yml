@@ -1,0 +1,41 @@
+# Self-host only. Chromium is NOT published directly to the host.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      LOVABLE_API_KEY: ${LOVABLE_API_KEY:-}
+      ASTRA_ACCESS_CODE: ${ASTRA_ACCESS_CODE:?Set a private beta access code}
+      ASTRA_SESSION_SECRET: ${ASTRA_SESSION_SECRET:?Set a 32-character session secret}
+      ASTRA_BROWSER_SECRET: ${ASTRA_BROWSER_SECRET:?Set a separate 32-character browser secret}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY:-}
+    restart: unless-stopped
+  browser:
+    build:
+      context: .
+      dockerfile: browser/Dockerfile
+    environment:
+      PORT: 8787
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:8080}
+      ASTRA_BROWSER_SECRET: ${ASTRA_BROWSER_SECRET:?Set the same browser secret}
+      BROWSER_PROFILE_DIR: /profiles/owner
+    volumes:
+      - browser-profile:/profiles
+    shm_size: '1gb'
+    restart: unless-stopped
+  gateway:
+    image: caddy:2.10-alpine
+    ports:
+      - '8080:80'
+    volumes:
+      - ./browser/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - app
+      - browser
+    restart: unless-stopped
+volumes:
+  browser-profile:
