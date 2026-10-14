@@ -9,7 +9,7 @@ services:
       PORT: "8787"
       ASTRA_BROWSER_SECRET: ${ASTRA_BROWSER_SECRET:?Set a random shared secret of at least 32 characters}
       ASTRA_BROWSER_ORIGIN: ${ASTRA_BROWSER_ORIGIN:?Set the Astra app origin, e.g. https://your-app.example}
-      BROWSER_PROFILE_DIR: /home/pwuser/astra-browser
+      BROWSER_PROFILE_DIR: /home/pwuser/astra-browser/profile
     volumes:
       - browser-profile:/home/pwuser/astra-browser
     shm_size: 1gb
