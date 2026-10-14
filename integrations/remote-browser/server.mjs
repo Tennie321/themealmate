@@ -65,13 +65,33 @@ async function createSession(session) {
   session.context = context;
   const pages = context.pages();
   session.page = pages.at(-1) || await context.newPage();
-  context.on('page', page => {
-    // OAuth login can open a popup. Switch the remotely controlled tab.
+  const activatedPages = new WeakSet();
+  function activatePage(page) {
     session.page = page;
+    if (activatedPages.has(page)) {
+      if (session.client?.readyState === WebSocket.OPEN) {
+        void startCast(session, session.client).catch(err => error(session.client, 'Browser view: ' + err.message));
+      }
+      return;
+    }
+    activatedPages.add(page);
+    page.on('framenavigated', frame => {
+      if (frame === page.mainFrame() && session.page === page) {
+        send(session.client, { type: 'status', state: 'connected', url: page.url() });
+      }
+    });
+    page.on('close', () => {
+      if (session.page !== page) return;
+      const fallback = context.pages().filter(candidate => !candidate.isClosed()).at(-1);
+      if (!fallback) return;
+      activatePage(fallback);
+    });
     if (session.client?.readyState === WebSocket.OPEN) {
       void startCast(session, session.client).catch(err => error(session.client, 'Browser view: ' + err.message));
     }
-  });
+  }
+  context.on('page', activatePage); // OAuth popups remain manually controllable.
+  activatePage(session.page);
   if (session.page.url() === 'about:blank') {
     await session.page.goto('https://chatgpt.com/', { waitUntil: 'domcontentloaded', timeout: 45_000 })
       .catch(() => {}); // The browser remains interactive even on network failures.
@@ -172,15 +192,16 @@ async function handleAction(session, client, command) {
     const stop = page.locator('button[data-testid="stop-button"], button[aria-label="Stop generating"]').first();
     if (await stop.isVisible().catch(() => false)) await stop.click({ timeout: 3000 }).catch(() => {});
   } else if (command.type === 'prompt') {
+    const id = typeof command.id === 'string' && /^[\w-]{1,64}$/.test(command.id) ? command.id : crypto.randomUUID();
+    const rejectPrompt = message => send(client, { type: 'response.error', id, message });
     if (typeof command.prompt !== 'string' || !command.prompt.trim() || command.prompt.length > PROMPT_LIMIT) {
-      error(client, 'Prompt must contain 1–8000 characters.'); return;
+      rejectPrompt('Prompt must contain 1–8000 characters.'); return;
     }
-    if (session.job) { error(client, 'A response is already in progress.'); return; }
+    if (session.job) { rejectPrompt('A response is already in progress.'); return; }
     const now = Date.now();
     session.requests = session.requests.filter(value => now - value < 10 * 60_000);
-    if (session.requests.length >= 12) { error(client, 'Prompt limit reached (12 per ten minutes).'); return; }
+    if (session.requests.length >= 12) { rejectPrompt('Prompt limit reached (12 per ten minutes).'); return; }
     session.requests.push(now);
-    const id = typeof command.id === 'string' && /^[\w-]{1,64}$/.test(command.id) ? command.id : crypto.randomUUID();
     const controller = new AbortController();
     session.abort = controller;
     session.job = id;
@@ -229,7 +250,7 @@ async function executePrompt(session, id, prompt, signal) {
         send(session.client, { type: 'response.snapshot', id, text });
       }
       const stableFor = Date.now() - changedAt;
-      if (text.trim() && !generating && stableFor > (seenGenerating ? 1400 : 3500)) {
+      if (text.trim() && !generating && stableFor > (seenGenerating ? 1400 : 7500)) {
         send(session.client, { type: 'response.complete', id, text });
         return;
       }
