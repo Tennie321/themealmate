@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { RemoteBrowserControl } from './RemoteBrowserControl';
 import { ArrowRight, ExternalLink, LockKeyhole, MessageSquare, ShieldCheck } from 'lucide-react';
 import { buildChatGPTHandoffURL, CHATGPT_HANDOFF_LIMIT } from '../lib/chatgpt-bridge';
 
@@ -50,9 +51,10 @@ export function ChatGPTBridge() {
         </span>
       </div>
       <p className="chatgpt-bridge-disclaimer">
-        This starts a new ChatGPT conversation. Astra cannot read your existing chats or replies.
+        This link-only handoff starts a new ChatGPT conversation and cannot read replies. The optional remote browser below can display and read the currently open ChatGPT tab.
         The message is included in the ChatGPT link and may appear in browser history; avoid passwords or secrets.
       </p>
     </div>
+    <RemoteBrowserControl />
   </main>;
 }
