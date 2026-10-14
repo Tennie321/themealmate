@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowRight, ExternalLink, LockKeyhole, MessageSquare, ShieldCheck } from 'lucide-react';
 import { buildChatGPTHandoffURL, CHATGPT_HANDOFF_LIMIT } from '../lib/chatgpt-bridge';
+import { RemoteChatGPT } from './RemoteChatGPT';
 
 /**
  * Launches the user's real ChatGPT browser session. We deliberately never
@@ -50,9 +51,10 @@ export function ChatGPTBridge() {
         </span>
       </div>
       <p className="chatgpt-bridge-disclaimer">
-        This starts a new ChatGPT conversation. Astra cannot read your existing chats or replies.
+        This link starts a new ChatGPT conversation and does not read existing chats or replies.
         The message is included in the ChatGPT link and may appear in browser history; avoid passwords or secrets.
       </p>
     </div>
+    <RemoteChatGPT />
   </main>;
 }
