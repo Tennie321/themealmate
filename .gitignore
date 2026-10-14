@@ -35,3 +35,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Persistent remote Chromium session data, credentials and screenshots
+services/remote-browser/data/
+services/remote-browser/node_modules/
+services/remote-browser/.env

@@ -27,3 +27,9 @@ jobs:
         run: npx tsc --noEmit
       - name: Security regression tests
         run: npm run test:security
+      - name: Browser-service unit tests
+        run: node --test services/remote-browser/tests/*.test.mjs
+      - name: Validate browser-service JavaScript syntax
+        run: |
+          node --check services/remote-browser/src/server.mjs
+          node --check services/remote-browser/src/browser.mjs
