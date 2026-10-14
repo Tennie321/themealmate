@@ -3,10 +3,7 @@ import { RemoteBrowserControl } from './RemoteBrowserControl';
 import { ArrowRight, ExternalLink, LockKeyhole, MessageSquare, ShieldCheck } from 'lucide-react';
 import { buildChatGPTHandoffURL, CHATGPT_HANDOFF_LIMIT } from '../lib/chatgpt-bridge';
 
-/**
- * Launches the user's real ChatGPT browser session. We deliberately never
- * embed the login page, request cookies, or treat ChatGPT as an API.
- */
+/** Link-only handoff plus optional isolated, user-controlled browser worker. */
 export function ChatGPTBridge() {
   const [prompt, setPrompt] = useState('');
   const trimmed = prompt.trim();
@@ -45,7 +42,7 @@ export function ChatGPTBridge() {
       </div>
       <div className="chatgpt-bridge-note"><ShieldCheck size={17} />
         <span>
-          <strong>No passwords or tokens shared with Astra.</strong> Without the optional Astra Safari
+          <strong>Link handoff never requests passwords or tokens.</strong> Without the optional Astra Safari
           extension, review the prefilled message and tap Send in ChatGPT. With the extension installed
           and enabled, Astra's handoff can submit it automatically.
         </span>
