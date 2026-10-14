@@ -73,10 +73,16 @@ async function startScreen(ws) {
   await connection.send('Page.startScreencast', { format: 'jpeg', quality: 65, maxWidth: VIEWPORT.width, maxHeight: VIEWPORT.height, everyNthFrame: 2 });
   send(ws, { type: 'ready', url: page.url(), width: VIEWPORT.width, height: VIEWPORT.height });
 }
-context.on('page', next => {
+function activate(next) {
   page = next;
+  next.once('close', () => {
+    if (page !== next) return;
+    const fallback = context.pages().find(other => !other.isClosed() && other !== next);
+    if (fallback) activate(fallback);
+  });
   if (owner) void startScreen(owner).catch(() => send(owner, { type: 'error', message: 'Could not display the active tab.' }));
-});
+}
+context.on('page', activate);
 context.on('close', () => send(owner, { type: 'error', message: 'Browser exited. Restart the service.' }));
 
 async function handle(ws, raw) {
