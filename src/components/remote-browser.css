@@ -1,0 +1,44 @@
+.remote-browser-panel {
+  width: min(100%, 1050px);
+  margin: 0 auto 28px;
+  padding: clamp(16px, 3vw, 26px);
+  border: 1px solid var(--border, rgba(140, 150, 180, .2));
+  border-radius: 24px;
+  background: var(--surface, rgba(18, 23, 36, .82));
+  color: var(--text-primary, inherit);
+}
+.remote-browser-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.remote-browser-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: .1em; opacity: .75; }
+.remote-browser-heading h2 { font-size: clamp(20px, 3vw, 28px); line-height: 1.2; letter-spacing: -.025em; margin: 12px 0 6px; }
+.remote-browser-heading p { opacity: .75; font-size: 13px; line-height: 1.5; max-width: 650px; }
+.remote-browser-status { display: inline-flex; align-items: center; flex-shrink: 0; gap: 7px; border: 1px solid currentColor; border-radius: 30px; padding: 6px 10px; font-size: 11px; opacity: .7; }
+.remote-browser-status span { background: currentColor; height: 7px; width: 7px; border-radius: 50%; }
+.remote-browser-status.ready { color: #34c795; opacity: 1; }
+.remote-browser-status.connecting { color: #eab866; opacity: 1; }
+.remote-browser-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 12px; }
+.remote-browser-toolbar button, .remote-browser-paste button, .remote-browser-compose button, .remote-browser-reply-heading button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid rgba(130, 140, 170, .25); background: rgba(130, 140, 170, .1); color: inherit; border-radius: 10px; padding: 9px 12px; font: inherit; font-size: 12px; cursor: pointer; }
+.remote-browser-toolbar button:disabled, .remote-browser-paste button:disabled, .remote-browser-compose button:disabled, .remote-browser-reply-heading button:disabled { opacity: .4; cursor: not-allowed; }
+.remote-browser-screen { position: relative; width: 100%; aspect-ratio: 8 / 5; border: 1px solid rgba(130, 140, 170, .32); border-radius: 14px; background: #121722; overflow: hidden; outline-offset: 3px; touch-action: none; cursor: default; }
+.remote-browser-screen img { display: block; width: 100%; height: 100%; object-fit: fill; pointer-events: none; user-select: none; }
+.remote-browser-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; text-align: center; padding: 20px; color: #c5cada; font-size: 13px; }
+.remote-browser-placeholder strong { font-size: 16px; }
+.remote-browser-placeholder span { max-width: 330px; opacity: .7; }
+.remote-browser-paste { display: flex; gap: 8px; margin-top: 12px; }
+.remote-browser-paste input, .remote-browser-compose textarea { min-width: 0; width: 100%; box-sizing: border-box; padding: 11px 12px; color: inherit; background: rgba(130, 140, 170, .07); border: 1px solid rgba(130, 140, 170, .25); border-radius: 11px; font: inherit; font-size: 13px; }
+.remote-browser-compose { display: grid; gap: 10px; margin-top: 24px; }
+.remote-browser-compose label { font-weight: 700; font-size: 13px; }
+.remote-browser-compose textarea { resize: vertical; min-height: 85px; }
+.remote-browser-compose-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.remote-browser-compose-actions small { font-size: 11px; opacity: .65; }
+.remote-browser-compose-actions button[type="submit"] { background: #6c73e8; border-color: transparent; color: white; }
+.remote-browser-reply { margin-top: 20px; padding: 16px; border: 1px solid rgba(130, 140, 170, .2); border-radius: 12px; background: rgba(130, 140, 170, .05); }
+.remote-browser-reply-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
+.remote-browser-reply pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.6; font-size: 13px; max-height: 420px; overflow-y: auto; margin: 14px 0 0; opacity: .92; }
+.remote-browser-error { color: #ef8989; font-size: 12px; margin-top: 14px; }
+.remote-browser-privacy { font-size: 11px; line-height: 1.5; opacity: .65; margin-top: 18px; }
+@media (max-width: 600px) {
+  .remote-browser-panel { border-radius: 15px; padding: 13px; }
+  .remote-browser-heading { flex-direction: column; gap: 8px; }
+  .remote-browser-toolbar button { flex: 1; min-width: 110px; }
+  .remote-browser-screen { border-radius: 8px; }
+}

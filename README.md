@@ -18,13 +18,31 @@ for instructions and limitations. The browser interface is not an official
 ChatGPT messaging API; it can change or fail. No existing ChatGPT chats,
 memory, or replies are synchronized with Astra.
 
+## Optional remote ChatGPT browser (self-hosted)
+
+Astra's ChatGPT Bridge now has an optional **interactive remote Chromium view**.
+With a separately deployed Playwright service, the user can log in manually,
+interact with the live screen, send prompts to the active chat and watch reply
+text stream into Astra. The original prefilled-link handoff still works if the
+browser service is not configured. ChatGPT login credentials are never requested
+by Astra, but typed inputs and visible page pixels necessarily transit the
+self-hosted browser service. The private browser profile contains session cookies.
+
+**This does not run in Lovable Cloud alone.** You must deploy the separate
+container with a persistent volume and TLS reverse proxy and configure the
+Astra server's private access gate. See
+[services/remote-browser/README.md](services/remote-browser/README.md) for
+commands, required secrets, threat model and operation. It uses ChatGPT's
+user interface, not an official API, so UI changes or site restrictions can
+break the automation. Handle login challenges manually; no bypass is attempted.
+
 ## Features
 
 - Native-feeling responsive mobile chat, PWA install, model picker, local chat history and settings.
 - **Mission Control (beta):** propose plans through Lovable AI, run genuine AI analysis and critique steps, pause for review, resume interrupted runs, and display actual outputs/timestamps. Autopilot advances through model steps while the tab is open. User confirmation is required between steps in Review/Manual modes.
 - **Live research (optional):** search via Perplexity Search API, then synthesize with the selected Lovable AI model, preserving clickable real source links and numbered citations. Clearly displays unavailable state when not configured.
 - Chat, Research and Agent planning modes; research chat switches to live research when a search key is present.
-- Safe default: no computer control, no account writes, no fake connectors, no uncontrolled payments.
+- Safe default: no computer control unless the optional, authenticated, self-hosted remote browser is explicitly enabled; no uncontrolled payments.
 
 ## Set up the backend
 

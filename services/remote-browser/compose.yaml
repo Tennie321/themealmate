@@ -1,0 +1,18 @@
+services:
+  browser:
+    build: .
+    restart: unless-stopped
+    shm_size: "1gb"
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      PORT: "8787"
+      ASTRA_BROWSER_SHARED_SECRET: "${ASTRA_BROWSER_SHARED_SECRET:?set a shared secret}"
+      ASTRA_BROWSER_ALLOWED_ORIGINS: "${ASTRA_BROWSER_ALLOWED_ORIGINS:?set the Astra web origin}"
+      ASTRA_BROWSER_PROFILE_DIR: /data/profile
+    volumes:
+      - browser-profiles:/data/profile
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  browser-profiles:
