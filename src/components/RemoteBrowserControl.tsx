@@ -167,12 +167,12 @@ export function RemoteBrowserControl() {
       aria-label="Interactive remote browser viewport" role="application">
       {frame && connected
         ? <img src={'data:image/jpeg;base64,' + frame} alt="Live remote Chromium screen" draggable={false}
-            onClick={click} onMouseMove={move} onContextMenu={event => { event.preventDefault(); send({ type: 'click', ...coordinates(event), button: 'right' }); }} />
+            tabIndex={0} onClick={click} onMouseMove={move} onContextMenu={event => { event.preventDefault(); send({ type: 'click', ...coordinates(event), button: 'right' }); }} />
         : <div className="remote-browser-placeholder"><LockKeyhole size={26}/><span>Connect to show the remote browser</span></div>}
     </div>
     {connected && <div className="remote-browser-type">
       <label htmlFor="remote-browser-typing">Type into the focused browser field (mobile keyboard)</label>
-      <div><input id="remote-browser-typing" type="text" value={typed} autoComplete="off" onChange={event => setTyped(event.target.value)}
+      <div><input id="remote-browser-typing" type="text" maxLength={2048} value={typed} autoComplete="off" onChange={event => setTyped(event.target.value)}
         placeholder="Text to enter in the remote browser" disabled={busy} />
         <button type="button" disabled={!typed || busy} onClick={() => { send({ type: 'type', text: typed }); setTyped(''); }}>Type</button>
         <button type="button" disabled={busy} onClick={() => send({ type: 'key', key: 'Enter' })}>Enter</button>
