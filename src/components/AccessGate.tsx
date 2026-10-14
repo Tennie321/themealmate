@@ -22,7 +22,7 @@ export function AccessGate({ children }: { children: ReactNode }) {
       if (!response.ok) throw new Error('Could not confirm access.');
       return await response.json() as Status;
     }).then(result => { if (mounted) setStatus(result); })
-      .catch(() => { if (mounted) setError('Unable to reach the access service. Check your connection.'); });
+      .catch(() => { if (mounted) setError('Astra could not reach its server API. Check that Lovable Cloud is enabled and this project is deployed with its server routes.'); });
     return () => { mounted = false; };
   }, []);
 
@@ -48,8 +48,8 @@ export function AccessGate({ children }: { children: ReactNode }) {
     <div className="access-card">
       <div className="access-mark"><Sparkles size={24}/></div>
       <span className="access-eyebrow">ASTRA PRIVATE BETA</span>
-      <h1>{status?.misconfigured ? 'Setup required' : 'A secure place to work.'}</h1>
-      <p>{status?.misconfigured ? 'This deployment needs a valid server-side access code and signing secret.' :
+      <h1>{status?.misconfigured ? 'Setup required' : (!status && error ? 'Backend unavailable' : 'A secure place to work.')}</h1>
+      <p>{status?.misconfigured ? 'This deployment needs a valid server-side access code and signing secret.' : !status && error ? 'The app needs a working backend deployment to verify private access and run AI features.' :
         'Enter your beta access code to use this workspace. Your AI usage is billed through the connected Lovable project.'}</p>
       {status && !status.misconfigured && <form onSubmit={unlock}>
         <label htmlFor="access-code">Access code</label>
