@@ -2,6 +2,61 @@
 
 Astra is a mobile AI workspace using Lovable AI credits for inference. **Development happens through GitHub commits**, not Lovable's AI builder chat.
 
+## Remote ChatGPT browser (experimental, self-hosted only)
+
+Astra's **ChatGPT Bridge** now supports a **real browser control panel** when the
+optional Playwright service is deployed. The service launches persistent Chromium
+inside a separate container, streams Chrome DevTools Protocol JPEG screencast
+frames via a same-origin WebSocket, and accepts mouse, keyboard and scroll input.
+Sign in **on the live remote browser screen** (including any permitted manual
+verification); Astra does not bypass CAPTCHAs, ask for account cookies, or use a
+ChatGPT API token. Your profile survives service restarts in a Docker volume.
+
+When signed in, enter an **Automated prompt** and select **Send prompt**.
+The service fills ChatGPT's composer, submits the message, and streams the visible
+assistant text back as incremental WebSocket events. Use **Stop** or reconnect
+when needed. The original link-only handoff below remains available if this
+optional service is unavailable.
+
+### Self-hosted browser setup
+
+The existing Lovable Cloud deployment does **not** automatically run Docker or
+WebSocket browser containers. This option needs a host running Docker Compose
+(or an equivalent deployment with the same-origin `/browser/ws` reverse proxy).
+
+1. Create a local, gitignored `.env` with `ASTRA_ACCESS_CODE` (12+ chars),
+   `ASTRA_SESSION_SECRET` (32+ random chars), and **independent**
+   `ASTRA_BROWSER_SECRET` (32+ random chars). If using Lovable AI, also
+   configure `LOVABLE_API_KEY`. Never put real values in the repo or client
+   `VITE_` variables.
+2. Set `PUBLIC_ORIGIN=http://localhost:8080` for local Docker access.
+   For Internet use put HTTPS termination in front of Caddy, set
+   `PUBLIC_ORIGIN` to the precise HTTPS origin and secure firewall access.
+3. Run `docker compose -f docker-compose.browser.yml up --build -d`.
+   Open `http://localhost:8080`, unlock Astra, and select **ChatGPT Bridge**.
+
+The browser service listens only inside Docker on port 8787; Caddy routes
+`/browser/ws` to it. For local app development you can run the browser
+container independently on localhost:8787 and `npm run dev` on localhost:5173,
+setting `PUBLIC_ORIGIN=http://localhost:5173`; the Vite dev proxy forwards
+`/browser/ws` to the service. An unlocked Astra beta session issues a
+two-minute, HMAC-authenticated browser ticket, passed in a WebSocket subprotocol;
+the browser validates both the ticket and exact WebSocket origin. Connections
+expire after 30 minutes and can be re-established from the UI.
+
+**Security and service limits:** This is **single-owner** access tied to
+Astra's existing private beta gate, **not multi-user isolation or production
+OAuth**. Anyone with the beta code can access the **same** browser profile,
+ChatGPT conversations, login session and streamed screen. Do not share that
+code. The remote browser can see typed login content; treat its host and
+persistent volume as sensitive, restrict access and use TLS. Browser screen
+frames are not archived by Astra. No credential capture, CAPTCHA solving,
+automated MFA bypass, or proxy that exposes Chromium publicly is included.
+ChatGPT's website is not a supported automation API, so DOM changes, login
+security measures, usage policies or rate limits may interrupt the flow.
+The tool only reports content the browser actually sees; it does not fabricate
+replies or sync historic ChatGPT chats to local Astra history.
+
 ## ChatGPT browser bridge (experimental)
 
 Open **ChatGPT Bridge** in the Astra sidebar to compose a prompt and hand it to
