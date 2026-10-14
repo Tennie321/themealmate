@@ -172,7 +172,7 @@ export function RemoteBrowserPanel() {
       </div>
       {isConnected && <div className="remote-browser-keyboard">
         <label htmlFor="remote-browser-type">Remote keyboard</label>
-        <input id="remote-browser-type" value={inputText} autoComplete="off"
+        <input id="remote-browser-type" value={inputText} maxLength={1000} autoComplete="off"
           onChange={e => setInputText(e.target.value)} placeholder="Text to type into the focused page field"
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send({ type: 'text', text: inputText }); setInputText(''); } }} />
         <button type="button" onClick={() => { if (inputText) send({ type: 'text', text: inputText.slice(0, 1000) }); setInputText(''); }} disabled={!inputText}>Type</button>

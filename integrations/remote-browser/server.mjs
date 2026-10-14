@@ -33,10 +33,10 @@ async function getPage() {
         headless: true, viewport: VIEWPORT, acceptDownloads: false,
         args: ['--disable-dev-shm-usage'],
       });
-      const page = browserContext.pages()[0] || await browserContext.newPage();
+      const page = browserContext.pages().at(-1) || await browserContext.newPage();
+      browserPage = page; // Preserve the context even if initial navigation fails.
       page.setDefaultTimeout(15_000);
-      if (page.url() === 'about:blank') await page.goto('https://chatgpt.com/', { waitUntil: 'domcontentloaded', timeout: 45_000 });
-      browserPage = page;
+      if (page.url() === 'about:blank') await page.goto('https://chatgpt.com/', { waitUntil: 'domcontentloaded', timeout: 45_000 }).catch(() => {});
       page.on('close', () => { if (browserPage === page) browserPage = null; });
       return page;
     })().finally(() => { browserStarting = null; });
@@ -48,7 +48,9 @@ async function streamPage(ws, page) {
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Page.enable');
   cdp.on('Page.screencastFrame', ({ data, sessionId }) => {
-    send(ws, { type: 'frame', jpeg: data, width: VIEWPORT.width, height: VIEWPORT.height });
+    if (ws.bufferedAmount < 2_000_000) {
+      send(ws, { type: 'frame', jpeg: data, width: VIEWPORT.width, height: VIEWPORT.height });
+    }
     void cdp.send('Page.screencastFrameAck', { sessionId }).catch(() => {});
   });
   await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 65, maxWidth: 1280, maxHeight: 800, everyNthFrame: 1 });
@@ -158,27 +160,61 @@ async function attach(ws) {
   if (active && active !== ws && active.readyState === WebSocket.OPEN) active.close(4001, 'Another controller connected');
   active = ws;
   const state = { job: null };
+  let page = null;
   let stopStream = null;
+  let navigationHandler = null;
+  let closed = false;
+
+  async function switchPage(target) {
+    if (closed || ws.readyState !== WebSocket.OPEN || target.isClosed() || page === target) return;
+    if (page && navigationHandler) page.off('framenavigated', navigationHandler);
+    if (stopStream) await stopStream();
+    page = target;
+    browserPage = target;
+    navigationHandler = frame => {
+      if (frame === target.mainFrame()) send(ws, { type: 'location', url: frame.url() });
+    };
+    target.on('framenavigated', navigationHandler);
+    target.once('close', () => {
+      if (page !== target || closed) return;
+      const fallback = browserContext.pages().filter(p => !p.isClosed()).at(-1);
+      if (fallback) void switchPage(fallback).catch(cause => error(ws, String(cause)));
+    });
+    const cleanupStream = await streamPage(ws, target);
+    if (closed || ws.readyState !== WebSocket.OPEN) {
+      await cleanupStream();
+      return;
+    }
+    stopStream = cleanupStream;
+    send(ws, { type: 'ready', url: target.url(), width: VIEWPORT.width, height: VIEWPORT.height });
+  }
+
+  const newPage = target => { void switchPage(target).catch(cause => error(ws, String(cause))); };
+  const cleanup = () => {
+    closed = true;
+    state.job?.abort();
+    browserContext?.off('page', newPage);
+    if (page && navigationHandler) page.off('framenavigated', navigationHandler);
+    void stopStream?.();
+    if (active === ws) active = null;
+  };
+  ws.once('close', cleanup);
   try {
-    const page = await getPage();
-    if (ws.readyState !== WebSocket.OPEN || active !== ws) return;
-    stopStream = await streamPage(ws, page);
-    send(ws, { type: 'ready', url: page.url(), width: VIEWPORT.width, height: VIEWPORT.height });
-    page.on('framenavigated', onNavigate);
-    function onNavigate(frame) { if (frame === page.mainFrame()) send(ws, { type: 'location', url: frame.url() }); }
+    const initial = await getPage();
+    if (closed) return;
+    browserContext.on('page', newPage);
+    await switchPage(initial);
     ws.on('message', (raw, binary) => {
       if (binary || raw.length > 20_000) return error(ws, 'Invalid browser message.');
       let message;
       try { message = JSON.parse(raw.toString('utf8')); } catch { return error(ws, 'Malformed browser message.'); }
-      if (!message || typeof message !== 'object') return;
+      if (!message || typeof message !== 'object' || !page) return;
       void control(ws, page, message, state);
     });
-    ws.on('close', () => { state.job?.abort(); page.off('framenavigated', onNavigate); void stopStream?.(); if (active === ws) active = null; });
   } catch (cause) {
     error(ws, cause instanceof Error ? cause.message : 'Browser could not start.');
     ws.close(1011, 'Browser unavailable');
-    if (active === ws) active = null;
-    if (stopStream) void stopStream();
+    cleanup();
   }
 }
 
