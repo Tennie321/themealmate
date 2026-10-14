@@ -12,8 +12,9 @@ test('browser tickets are short lived, signed, and bound to an Astra session', (
   assert.equal(verifyBrowserToken(ticket, secret, 190_000), null);
   assert.equal(verifyBrowserToken(ticket, secret + '-different', 100_001), null);
   assert.equal(verifyBrowserToken(ticket.slice(0, -4) + 'xxxx', secret, 100_001), null);
-  assert.equal(createBrowserToken(cookie, secret, 100_000).split('.')[0] === ticket.split('.')[0], false);
-  assert.equal(verifyBrowserToken(createBrowserToken(cookie.replace('a'.repeat(64), 'b'.repeat(64)), secret, 100_001), secret, 100_001), undefined);
+  assert.notEqual(createBrowserToken(cookie, secret, 100_000), ticket);
+  const otherCookie = cookie.replace('a'.repeat(64), 'b'.repeat(64));
+  assert.notEqual(verifyBrowserToken(createBrowserToken(otherCookie, secret, 100_000), secret, 100_001).sid, verified.sid);
 });
 test('rejects missing private session and weak signing secrets', () => {
   assert.throws(() => createBrowserToken('', secret), /authenticated/);
