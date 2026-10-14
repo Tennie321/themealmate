@@ -93,15 +93,59 @@ async function handleChat(request: Request): Promise<Response> {
         'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
       },
     });
+    let providerError: unknown = null;
     const result = streamText({
       model: gateway.chatModel(model),
       system: prompts[mode],
       messages,
       maxOutputTokens: tier === 'Premium' ? 1800 : 2400,
       abortSignal: request.signal,
-      onError: ({ error }) => { console.error('Lovable AI request failed', error); },
+      onError: ({ error }) => {
+        providerError = error;
+        console.error('Lovable AI request failed', error);
+      },
     });
-    return result.toTextStreamResponse({ headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
+
+    // Check that the provider can actually start responding BEFORE returning
+    // HTTP 200. Otherwise a rejected gateway key/model looks like an empty reply.
+    const iterator = result.textStream[Symbol.asyncIterator]();
+    let first: IteratorResult<string>;
+    try {
+      first = await iterator.next();
+    } catch (error) {
+      console.error('Lovable AI could not start streaming', error);
+      return Response.json({ error: 'AI gateway rejected the request. Check Lovable AI availability, model access, and usage credits.' }, { status: 502 });
+    }
+    if (first.done || providerError) {
+      return Response.json({ error: 'AI gateway returned no answer. Check Lovable AI configuration, model access, and usage credits.' }, { status: 502 });
+    }
+
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode(first.value));
+        void (async () => {
+          try {
+            for (;;) {
+              const part = await iterator.next();
+              if (part.done) break;
+              controller.enqueue(encoder.encode(part.value));
+            }
+            if (providerError) controller.error(new Error('AI gateway stopped responding.'));
+            else controller.close();
+          } catch (error) {
+            console.error('Lovable AI stream interrupted', error);
+            controller.error(error);
+          }
+        })();
+      },
+      cancel() { void iterator.return?.(); },
+    });
+    return new Response(body, { headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+    } });
   } catch (error) {
     console.error('Could not start AI stream', error);
     return Response.json({ error: 'Could not start an AI request. Check the model and Lovable AI usage balance.' }, { status: 502 });
