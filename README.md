@@ -4,19 +4,23 @@ Astra is a mobile AI workspace using Lovable AI credits for inference. **Develop
 
 ## ChatGPT browser bridge (experimental)
 
-Open **ChatGPT Bridge** in the Astra sidebar to compose a prompt and hand it to
-your real `chatgpt.com` session. Sign in on ChatGPT's own website; Astra does
-not request your ChatGPT login credentials or use the OpenAI API for this route.
-The link pre-fills a new ChatGPT chat for you to review and send.
+Open **ChatGPT Bridge** in the Astra sidebar for either (1) an optional
+self-hosted, interactive Chromium browser with live reply streaming, or (2)
+the original **Open ChatGPT** browser handoff, which needs no local worker.
+Remote mode streams a real browser screen to Astra, including whatever is
+visible in that browser, and reads new visible assistant replies after it
+submits a prompt. Login/CAPTCHA handling is manual within the streamed browser;
+Astra does not ask for account passwords in a separate login form. This is
+not the official OpenAI API, and it does not automatically synchronize ChatGPT
+conversation history or memory.
 
-An optional iPhone **Safari Web Extension** can attempt a one-shot Send click
-for an explicitly marked Astra handoff, without reading replies or account
-cookies. You must separately package and install the extension using Xcode and
-permit access to `chatgpt.com`; it is **not** bundled with the web app.
-See [the Safari integration guide](integrations/chatgpt-safari-extension/README.md)
-for instructions and limitations. The browser interface is not an official
-ChatGPT messaging API; it can change or fail. No existing ChatGPT chats,
-memory, or replies are synchronized with Astra.
+The link-only handoff pre-fills a new ChatGPT chat. An optional iPhone
+**Safari Web Extension** can attempt a one-shot Send click for an explicitly
+marked handoff, without reading replies or account cookies. You must
+separately package/install the extension using Xcode and permit access to
+`chatgpt.com`; it is **not** bundled with the web app.
+See [the Safari integration guide](integrations/chatgpt-safari-extension/README.md).
+Website selectors and login behavior can change or be restricted.
 
 ## Features
 
