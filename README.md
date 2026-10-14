@@ -18,6 +18,10 @@ for instructions and limitations. The browser interface is not an official
 ChatGPT messaging API; it can change or fail. No existing ChatGPT chats,
 memory, or replies are synchronized with Astra.
 
+## Remote browser control (optional)
+
+ChatGPT Bridge also offers **Remote browser control**: a separate Dockerized Playwright browser, live interactive screencast, manual sign-in/CAPTCHA and streamed assistant replies. This requires self-hosting a browser service and configuring a WebSocket proxy. It is **not** started by Lovable Cloud automatically, and is not a public multi-user service. See [remote browser deployment instructions](integrations/remote-browser/README.md) for setup and security requirements.
+
 ## Features
 
 - Native-feeling responsive mobile chat, PWA install, model picker, local chat history and settings.
