@@ -19,6 +19,12 @@ import {
 
 type Sheet = 'models' | 'settings' | 'connections' | null;
 type SettingsSection = 'general' | 'models' | 'privacy';
+type CapabilitySnapshot = {
+  ai: boolean;
+  research: boolean;
+  aiStatus?: 'ready' | 'missing_lovable_api_key' | 'access_setup_required' | 'unreachable';
+  researchStatus?: string;
+};
 
 const SUGGESTIONS = [
   { icon: Lightbulb, label: 'Explore an idea', sample: 'Help me pressure-test a new business idea and find the weaknesses.', tint: 'blue' },
@@ -75,7 +81,8 @@ export function AgentApp() {
   const [hydrated, setHydrated] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [view, setView] = useState<'chat' | 'missions' | 'chatgpt'>('chat');
-  const [researchAvailable, setResearchAvailable] = useState(false);
+  const [capabilities, setCapabilities] = useState<CapabilitySnapshot | null>(null);
+  const researchAvailable = Boolean(capabilities?.research);
   const [privateBetaProtected, setPrivateBetaProtected] = useState(false);
   const backupInputRef = useRef<HTMLInputElement | null>(null);
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -92,7 +99,15 @@ export function AgentApp() {
   const lastSavedRef = useRef('');
 
   useEffect(() => { setStore(loadStore()); setHydrated(true); }, []);
-  useEffect(() => { void fetch('/api/capabilities').then(r => r.json()).then((x: { research?: boolean }) => setResearchAvailable(Boolean(x.research))).catch(() => {}); }, []);
+  useEffect(() => {
+    void fetch('/api/capabilities', { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Unable to check AI service');
+        return await response.json() as CapabilitySnapshot;
+      })
+      .then(setCapabilities)
+      .catch(() => setCapabilities({ ai: false, research: false, aiStatus: 'unreachable' }));
+  }, []);
   useEffect(() => { void fetch('/api/access/status').then(r => r.json()).then((x: { protected?: boolean }) => setPrivateBetaProtected(Boolean(x.protected))).catch(() => {}); }, []);
   useEffect(() => {
     if (!hydrated) return;
@@ -365,6 +380,17 @@ export function AgentApp() {
       <MissionControl model={model} active={view === 'missions'} onBack={() => setView('chat')} />
       {view === 'chatgpt' && <ChatGPTBridge />}
       <div className="chat-workspace" style={view !== 'chat' ? { display: 'none' } : undefined}>
+      {capabilities && !capabilities.ai && (
+        <div className="mode-disclaimer" role="status" style={{ margin: '12px 20px', padding: '12px 14px', borderRadius: 12 }}>
+          <span className="disclaimer-dot" />
+          <span>{capabilities.aiStatus === 'missing_lovable_api_key'
+            ? 'AI chat needs Lovable AI enabled for this deployment (LOVABLE_API_KEY is missing).'
+            : capabilities.aiStatus === 'access_setup_required'
+              ? 'AI is locked until ASTRA_ACCESS_CODE and ASTRA_SESSION_SECRET are configured on the server.'
+              : 'Could not check AI service availability. Try reloading Astra.'}</span>
+          <button type="button" onClick={() => setView('chatgpt')}>Use ChatGPT Bridge <ChevronRight size={12}/></button>
+        </div>
+      )}
       <main className={`chat-main ${!current?.messages.length ? 'chat-is-empty' : ''}`}>
         {!current?.messages.length ? <div className="welcome">
           <div className="welcome-orbit"><div className="orbit-ring ring-one" /><div className="orbit-ring ring-two" /><AstraMark size="large" /></div>
