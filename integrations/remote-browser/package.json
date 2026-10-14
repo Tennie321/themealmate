@@ -1,0 +1,13 @@
+{
+  "name": "@astra/remote-browser",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test ../../tests/remote-browser.test.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.64.0",
+    "ws": "8.18.3"
+  }
+}

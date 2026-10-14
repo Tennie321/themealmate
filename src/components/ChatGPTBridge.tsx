@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { RemoteBrowserPanel } from './RemoteBrowserPanel';
 import { ArrowRight, ExternalLink, LockKeyhole, MessageSquare, ShieldCheck } from 'lucide-react';
 import { buildChatGPTHandoffURL, CHATGPT_HANDOFF_LIMIT } from '../lib/chatgpt-bridge';
 
 /**
- * Launches the user's real ChatGPT browser session. We deliberately never
- * embed the login page, request cookies, or treat ChatGPT as an API.
+ * Offers a remote browser viewer and a link-only fallback. Authentication
+ * happens inside ChatGPT and does not expose account cookies to this app.
  */
 export function ChatGPTBridge() {
   const [prompt, setPrompt] = useState('');
@@ -18,10 +19,12 @@ export function ChatGPTBridge() {
       <div className="chatgpt-bridge-eyebrow">YOUR CHATGPT ACCOUNT</div>
       <h1>Send from Astra<br /><em>to ChatGPT.</em></h1>
       <p className="chatgpt-bridge-intro">
-        Write a message here. Astra opens the real ChatGPT website, where you sign in normally.
-        Messages go to your ChatGPT account—not Astra's Lovable AI gateway.
+        Use the remote viewer to sign in and work inside ChatGPT, or send a prefilled link below.
+        Both use your ChatGPT account, not Astra's Lovable AI gateway.
       </p>
 
+      <RemoteBrowserPanel />
+      <div className="chatgpt-bridge-eyebrow">ALTERNATIVE · LINK HANDOFF</div>
       <label htmlFor="chatgpt-bridge-prompt" className="chatgpt-bridge-label">Message to ChatGPT</label>
       <textarea
         id="chatgpt-bridge-prompt"
@@ -50,7 +53,7 @@ export function ChatGPTBridge() {
         </span>
       </div>
       <p className="chatgpt-bridge-disclaimer">
-        This starts a new ChatGPT conversation. Astra cannot read your existing chats or replies.
+        This link starts a new ChatGPT conversation and does not read its replies. The optional remote browser above can stream replies while connected.
         The message is included in the ChatGPT link and may appear in browser history; avoid passwords or secrets.
       </p>
     </div>
