@@ -24,6 +24,8 @@ export function RemoteBrowserControl() {
   const [frame, setFrame] = useState('');
   const [address, setAddress] = useState('https://chatgpt.com/');
   const [prompt, setPrompt] = useState('');
+  const [typedText, setTypedText] = useState('');
+  const [hideTypedText, setHideTypedText] = useState(true);
   const [answer, setAnswer] = useState('');
   const [error, setError] = useState('');
 
@@ -161,7 +163,17 @@ export function RemoteBrowserControl() {
             onPointerCancel={onPointerUp} onKeyDown={onKeyDown} onWheel={onWheel} /> :
             <div className="remote-browser-loading">Starting Chromium and loading ChatGPT…</div>}
         </div>
-        <p className="remote-browser-hint">Click the browser preview to focus; type normally. All CAPTCHA and sign-in steps must be completed manually.</p>
+        <p className="remote-browser-hint">Click the browser preview to focus; type normally on desktop. All CAPTCHA and sign-in steps must be completed manually.</p>
+        <div className="remote-browser-typing">
+          <label htmlFor="remote-browser-typing-input">Type into the selected browser field (also works on phones)</label>
+          <div className="remote-browser-typing-row">
+            <input id="remote-browser-typing-input" type={hideTypedText ? 'password' : 'text'} value={typedText} autoComplete="off" autoCapitalize="off" spellCheck={false}
+              onChange={(event) => setTypedText(event.target.value)} maxLength={2000} placeholder="Select a field above, then type here" />
+            <button type="button" disabled={!typedText || state === 'running'} onClick={() => { send({ type: 'type', text: typedText }); setTypedText(''); }}>Type</button>
+            <button type="button" disabled={state === 'running'} onClick={() => send({ type: 'key', key: 'Enter' })}>Enter</button>
+          </div>
+          <label className="remote-browser-show-typing"><input type="checkbox" checked={!hideTypedText} onChange={(event) => setHideTypedText(!event.target.checked)} /> Show typed text</label>
+        </div>
       </div>}
       {connection === 'connected' && <div className="remote-browser-prompt">
         <label htmlFor="remote-automation-prompt">Automated prompt</label>
