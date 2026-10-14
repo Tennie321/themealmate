@@ -1,0 +1,60 @@
+.remote-browser-panel {
+  --rb-border: rgba(171, 181, 208, .2);
+  width: min(1140px, calc(100% - 32px));
+  padding: 27px;
+  margin: 24px auto;
+  color: #eaeef8;
+  background: radial-gradient(circle at 10% 0%, rgba(114, 106, 203, .12), transparent 38%), #151925;
+  border: 1px solid var(--rb-border);
+  border-radius: 24px;
+  box-shadow: 0 25px 70px rgba(0,0,0,.25);
+}
+.remote-browser-header, .remote-browser-heading, .remote-browser-connection, .remote-browser-toolbar,
+.remote-browser-type, .remote-browser-api-actions, .remote-browser-foot { display: flex; align-items: center; gap: 12px; }
+.remote-browser-header, .remote-browser-toolbar, .remote-browser-api-actions { justify-content: space-between; }
+.remote-browser-heading h2 { margin: 3px 0 0; font-size: 22px; letter-spacing: -.6px; font-weight: 670; }
+.remote-browser-icon { display: grid; place-items: center; height: 42px; width: 42px; border-radius: 14px; color: #ddd5ff; background: rgba(139, 112, 231, .2); }
+.remote-browser-eyebrow, .remote-browser-api-title span, .remote-browser-reply > span { font-size: 10px; letter-spacing: 1.7px; font-weight: 760; color: #a1acc6; }
+.remote-browser-description { font-size: 13px; line-height: 1.7; color: #aab2c6; max-width: 710px; margin: 18px 0 22px; }
+.remote-browser-connection { gap: 10px; }
+.remote-browser-state { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #aeb8ce; text-transform: capitalize; }
+.remote-browser-state.state-ready { color: #80dfb4; }
+.remote-browser-connect, .remote-browser-api-actions button { border: 0; color: #19182c; background: #dad4ff; font-weight: 750; border-radius: 10px; padding: 11px 15px; cursor: pointer; }
+.remote-browser-secondary { border: 1px solid var(--rb-border); background: transparent; padding: 10px 13px; border-radius: 10px; color: #e4e7f3; cursor: pointer; }
+.remote-browser-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(290px, 1fr); gap: 19px; align-items: start; }
+.remote-browser-view, .remote-browser-api { border: 1px solid var(--rb-border); border-radius: 16px; background: #10141e; min-width: 0; overflow: hidden; }
+.remote-browser-toolbar { height: 42px; padding: 0 13px; border-bottom: 1px solid var(--rb-border); }
+.remote-browser-address { font-size: 12px; color: #bdc6da; }
+.remote-browser-toolbar button, .remote-browser-toolbar a { background: transparent; color: #bfc9df; padding: 6px; border: none; cursor: pointer; }
+.remote-browser-screen { position: relative; background: #0b0d12; outline-offset: -3px; overflow: hidden; aspect-ratio: 16/10; }
+.remote-browser-screen img { display: block; width: 100%; height: 100%; object-fit: fill; cursor: crosshair; touch-action: none; user-select: none; }
+.remote-browser-empty { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; color: #77829c; text-align: center; padding: 25px; }
+.remote-browser-empty strong { color: #bdc6dc; font-size: 14px; }
+.remote-browser-empty span { font-size: 12px; }
+.remote-browser-type { padding: 10px; border-top: 1px solid var(--rb-border); color: #a7b2c9; gap: 7px; }
+.remote-browser-type input { min-width: 0; flex: 1; color: #ebeffa; background: transparent; border: 0; outline: none; font-size: 12px; }
+.remote-browser-type button { background: #252c3d; border: 1px solid var(--rb-border); border-radius: 8px; color: #e6eafa; padding: 8px 10px; cursor: pointer; }
+.remote-browser-api { padding: 19px; }
+.remote-browser-api-title { display: flex; flex-direction: column; gap: 6px; }
+.remote-browser-api-title strong { font-size: 19px; letter-spacing: -.3px; }
+.remote-browser-api p { color: #a6afc3; font-size: 12px; line-height: 1.65; margin: 16px 0 18px; }
+.remote-browser-api p strong { color: #dbe2f0; font-weight: 600; }
+.remote-browser-api label { display: block; margin-bottom: 9px; font-size: 12px; color: #c6cfe3; font-weight: 700; }
+.remote-browser-api textarea { display: block; width: 100%; min-height: 127px; box-sizing: border-box; resize: vertical; border: 1px solid #32394a; border-radius: 11px; padding: 12px; color: #eef1ff; background: #181e2a; line-height: 1.55; outline: none; font: inherit; font-size: 13px; }
+.remote-browser-api textarea:focus { border-color: #b0a5f1; }
+.remote-browser-api-actions { margin: 11px 0 18px; }
+.remote-browser-api-actions small { color: #838da5; font-size: 11px; }
+.remote-browser-api-actions button { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.remote-browser-api-actions button:disabled, .remote-browser-type button:disabled, .remote-browser-toolbar button:disabled { cursor: not-allowed; opacity: .43; }
+.remote-browser-reply { border-top: 1px solid var(--rb-border); padding-top: 17px; }
+.remote-browser-reply > div { color: #e4e9f5; font-size: 13px; line-height: 1.7; margin-top: 10px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; min-height: 48px; }
+.remote-browser-alert { margin: 16px 0 0; color: #ffb8b8; border: 1px solid rgba(254,153,153,.3); background: rgba(254,153,153,.06); padding: 11px 13px; border-radius: 10px; font-size: 12px; }
+.remote-browser-foot { margin: 19px 0 0; color: #9da9bf; font-size: 11px; line-height: 1.6; }
+.remote-browser-panel button:focus-visible, .remote-browser-panel a:focus-visible, .remote-browser-screen:focus-visible { outline: 2px solid #cab7ff; outline-offset: 2px; }
+@media (max-width: 820px) {
+  .remote-browser-panel { padding: 17px; border-radius: 18px; width: calc(100% - 20px); box-sizing: border-box; }
+  .remote-browser-layout { grid-template-columns: 1fr; }
+  .remote-browser-header { align-items: flex-start; flex-direction: column; }
+  .remote-browser-type { flex-wrap: wrap; }
+  .remote-browser-type input { flex-basis: calc(100% - 35px); }
+}
