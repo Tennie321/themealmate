@@ -25,7 +25,7 @@ ChatGPT messaging API; it can change or fail. The link-only handoff does not syn
 - **Mission Control (beta):** propose plans through Lovable AI, run genuine AI analysis and critique steps, pause for review, resume interrupted runs, and display actual outputs/timestamps. Autopilot advances through model steps while the tab is open. User confirmation is required between steps in Review/Manual modes.
 - **Live research (optional):** search via Perplexity Search API, then synthesize with the selected Lovable AI model, preserving clickable real source links and numbered citations. Clearly displays unavailable state when not configured.
 - Chat, Research and Agent planning modes; research chat switches to live research when a search key is present.
-- Safe default: no computer control, no account writes, no fake connectors, no uncontrolled payments.
+- Safe default: no general computer control, no fake connectors and no uncontrolled payments. The optional self-hosted ChatGPT browser worker can control only its dedicated browser after an explicit private-session connection.
 
 ## Set up the backend
 
