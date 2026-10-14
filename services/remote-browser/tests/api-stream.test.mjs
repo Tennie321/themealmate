@@ -30,6 +30,7 @@ test('passes only the server-side API key to the OpenAI endpoint', async () => {
   assert.equal(call.url, 'https://api.openai.com/v1/responses');
   assert.equal(call.options.headers.Authorization, 'Bearer server-only-test');
   assert.equal(JSON.parse(call.options.body).input, 'hello');
+  assert.equal(JSON.parse(call.options.body).max_output_tokens, 1600);
 });
 
 test('accepts CRLF SSE delimiters split across chunks', async () => {
