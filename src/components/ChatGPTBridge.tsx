@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { RemoteBrowserPanel } from './RemoteBrowserPanel';
 import { ArrowRight, ExternalLink, LockKeyhole, MessageSquare, ShieldCheck } from 'lucide-react';
 import { buildChatGPTHandoffURL, CHATGPT_HANDOFF_LIMIT } from '../lib/chatgpt-bridge';
 
@@ -22,6 +23,8 @@ export function ChatGPTBridge() {
         Messages go to your ChatGPT account—not Astra's Lovable AI gateway.
       </p>
 
+      <RemoteBrowserPanel />
+      <div className="chatgpt-bridge-eyebrow">ALTERNATIVE · LINK HANDOFF</div>
       <label htmlFor="chatgpt-bridge-prompt" className="chatgpt-bridge-label">Message to ChatGPT</label>
       <textarea
         id="chatgpt-bridge-prompt"
@@ -50,7 +53,7 @@ export function ChatGPTBridge() {
         </span>
       </div>
       <p className="chatgpt-bridge-disclaimer">
-        This starts a new ChatGPT conversation. Astra cannot read your existing chats or replies.
+        This link starts a new ChatGPT conversation and does not read its replies. The optional remote browser above can stream replies while connected.
         The message is included in the ChatGPT link and may appear in browser history; avoid passwords or secrets.
       </p>
     </div>

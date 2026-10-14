@@ -2,9 +2,9 @@
 
 Astra is a mobile AI workspace using Lovable AI credits for inference. **Development happens through GitHub commits**, not Lovable's AI builder chat.
 
-## ChatGPT browser bridge (experimental)
+## ChatGPT browser bridge and remote control (experimental)
 
-Open **ChatGPT Bridge** in the Astra sidebar to compose a prompt and hand it to
+Open **ChatGPT Bridge** in the Astra sidebar. With the optional remote browser worker\nconfigured, you can see and interact with a persistent ChatGPT browser, sign in\nthere, issue prompts over a WebSocket, and stream the assistant response back to Astra.\nThis is a separate container deployment and is **not enabled by Lovable Cloud alone**.\nSee [remote browser setup](integrations/remote-browser/README.md).\n\nWithout the worker, compose a prompt and hand it to
 your real `chatgpt.com` session. Sign in on ChatGPT's own website; Astra does
 not request your ChatGPT login credentials or use the OpenAI API for this route.
 The link pre-fills a new ChatGPT chat for you to review and send.
@@ -24,7 +24,7 @@ memory, or replies are synchronized with Astra.
 - **Mission Control (beta):** propose plans through Lovable AI, run genuine AI analysis and critique steps, pause for review, resume interrupted runs, and display actual outputs/timestamps. Autopilot advances through model steps while the tab is open. User confirmation is required between steps in Review/Manual modes.
 - **Live research (optional):** search via Perplexity Search API, then synthesize with the selected Lovable AI model, preserving clickable real source links and numbered citations. Clearly displays unavailable state when not configured.
 - Chat, Research and Agent planning modes; research chat switches to live research when a search key is present.
-- Safe default: no computer control, no account writes, no fake connectors, no uncontrolled payments.
+- Safe default: remote computer/browser control is disabled until explicitly deployed and protected. It is single-owner, browser-only and does not enable arbitrary autonomous account writes or payments.
 
 ## Set up the backend
 
@@ -55,7 +55,7 @@ npx tsc --noEmit
 - Mission execution is **foreground only**. It continues while the browser tab stays alive, but the iPhone may suspend it when locked. Runs persist only to this browser's localStorage; re-open and press Resume to continue interrupted missions. The browser does **not** have a background worker.
 - Chat and mission histories are local-device only; there are no authenticated per-user accounts or cross-device sync.
 - The AI analysis/verification steps call actual Lovable AI models but **do not browse the web or execute connector actions**. Research steps perform live searching only when Perplexity is configured.
-- Connectors listed in UI are informational, not user-OAuth connections. No Gmail, GitHub, Slack, desktop/phone control, or approval-based external actions are activated.
+- Connectors listed in UI are informational, not user-OAuth connections. The optional remote browser does not enable Gmail, GitHub, Slack or desktop/phone access.
 - Every billable AI endpoint requires the private beta code and signed session to be configured. A conservative **instance-local AI request fuse** covers chat, research, and mission calls (default 40 weighted units/hour, configurable via `ASTRA_AI_HOURLY_UNITS`). This is **not a currency cap** and is not durable or shared across replicas. Secure per-user authentication and centrally enforced monetary budgets are still required before public release.
 - The selected model must be supported/enabled by the Lovable project. Provider errors and quota exhaustion can still occur.
 

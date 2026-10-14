@@ -91,6 +91,6 @@ export function getCapabilityReadiness() {
     persistentMissions: false,
     backgroundExecution: false,
     oauthConnectors: false,
-    computerUse: false,
+    computerUse: Boolean((process.env.ASTRA_BROWSER_SECRET || '').length >= 32),
   };
 }
