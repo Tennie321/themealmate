@@ -1,0 +1,20 @@
+services:
+  remote-browser:
+    build: .
+    restart: unless-stopped
+    init: true
+    shm_size: "1gb"
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      REMOTE_BROWSER_TOKEN: ${REMOTE_BROWSER_TOKEN:?Set a random 32+ character token}
+      REMOTE_BROWSER_ALLOWED_ORIGINS: ${REMOTE_BROWSER_ALLOWED_ORIGINS:?Set the exact Astra origin}
+      REMOTE_BROWSER_PROFILE_DIR: /app/profiles
+      PORT: "8787"
+      BIND_HOST: 0.0.0.0
+    volumes:
+      - browser-profiles:/app/profiles
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  browser-profiles:
