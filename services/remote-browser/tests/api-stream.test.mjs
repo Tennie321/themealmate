@@ -31,3 +31,11 @@ test('passes only the server-side API key to the OpenAI endpoint', async () => {
   assert.equal(call.options.headers.Authorization, 'Bearer server-only-test');
   assert.equal(JSON.parse(call.options.body).input, 'hello');
 });
+
+test('accepts CRLF SSE delimiters split across chunks', async () => {
+  const sse = 'data: {"type":"response.output_text.delta","delta":"Hello"}\r\n\r\n' +
+    'data: {"type":"response.completed"}\r\n\r\n';
+  const deltas = [];
+  await consumeResponseEvents(pieces(sse, 1), delta => deltas.push(delta));
+  assert.deepEqual(deltas, ['Hello']);
+});
