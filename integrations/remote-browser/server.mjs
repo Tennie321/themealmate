@@ -27,6 +27,10 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function getPage() {
   if (browserPage && !browserPage.isClosed()) return browserPage;
+  if (browserContext && !browserStarting) {
+    browserPage = browserContext.pages().find(p => !p.isClosed()) || await browserContext.newPage();
+    return browserPage;
+  }
   if (!browserStarting) {
     browserStarting = (async () => {
       browserContext = await chromium.launchPersistentContext(profilePath, {
@@ -136,7 +140,7 @@ async function control(ws, page, message, state) {
         return;
       case 'key': {
         const allowed = ['Enter', 'Tab', 'Backspace', 'Delete', 'Escape', 'Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-        if (!allowed.includes(message.key)) return;
+        if (!allowed.includes(message.key) && !(message.key === 'a' && (message.control || message.meta))) return;
         const modifiers = ['Control', 'Meta', 'Alt', 'Shift'].filter(k => message[k.toLowerCase()] === true);
         await page.keyboard.press([...modifiers, message.key].join('+'));
         return;
