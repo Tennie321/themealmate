@@ -26,6 +26,26 @@ memory, or replies are synchronized with Astra.
 - Chat, Research and Agent planning modes; research chat switches to live research when a search key is present.
 - Safe default: no computer control, no account writes, no fake connectors, no uncontrolled payments.
 
+## Restore a deployment showing missing APIs
+
+The **Chat**, **Research**, and **Mission Control** screens use real server routes; this is not a browser-only application. A successful front-end deployment alone does not make the AI services available.
+
+1. Open the [Astra Lovable project](https://lovable.dev/projects/e5083802-363b-4e08-b0f4-d7d06d7f7082) and verify its Cloud AI integration and server-side environment. Lovable Cloud projects receive a `LOVABLE_API_KEY` for the AI gateway; the deployed server must actually have this variable available.
+2. Configure `ASTRA_ACCESS_CODE` (at least 12 characters) and `ASTRA_SESSION_SECRET` (a separate cryptographically random value, at least 32 characters) as **server-only secrets**. These are required by Astra's private beta gate when AI is on. Share the access code only with authorized users; never publish it in GitHub or a client-side `VITE_` setting.
+3. For **Live Research only**, configure `PERPLEXITY_API_KEY` as an additional server-side secret. Chat and ordinary mission analysis do not need this optional key.
+4. Redeploy from the intended branch. Open `/api/capabilities` on the **deployed app host**. The public response contains safe status codes in `setup.ai` and `setup.research`, not secret values. `setup.ai: "ready"` means the required environment values exist; it does **not** prove upstream authorization, workspace credits, or model entitlement. Test a real chat after setup.
+5. If chat still fails with a configured backend, verify Lovable AI workspace credits and supported models. A provider error, a 402/429, and a GitHub Actions runner failure are separate issues from missing environment values.
+
+| `setup.ai` | Meaning | Action |
+| --- | --- | --- |
+| `missing-ai-key` | Deployed server cannot see `LOVABLE_API_KEY` | Set up Lovable Cloud AI and the server environment |
+| `access-configuration-required` | Private beta protection is not fully configured | Supply valid access code and signing secret |
+| `ready` | Server has the required AI configuration | Unlock Astra and test a chat request |
+
+If `setup.research` is `missing-search-key`, add the optional Perplexity secret to enable live source-backed research. `ai-unavailable` means research must wait until the main AI setup works.
+
+**Never commit API keys or ask the frontend to hold them.** GitHub Actions build failure with no recorded job steps should be investigated in GitHub Actions runner/account settings; it does not demonstrate a TypeScript failure.
+
 ## Set up the backend
 
 The Lovable project must expose `LOVABLE_API_KEY` **only to the server**. Lovable AI requests consume AI usage credits, not Lovable builder/chat credits.

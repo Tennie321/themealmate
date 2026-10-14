@@ -76,6 +76,8 @@ export function AgentApp() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [view, setView] = useState<'chat' | 'missions' | 'chatgpt'>('chat');
   const [researchAvailable, setResearchAvailable] = useState(false);
+  const [aiReady, setAiReady] = useState<boolean | null>(null);
+  const [aiIssue, setAiIssue] = useState<string | null>(null);
   const [privateBetaProtected, setPrivateBetaProtected] = useState(false);
   const backupInputRef = useRef<HTMLInputElement | null>(null);
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -92,7 +94,31 @@ export function AgentApp() {
   const lastSavedRef = useRef('');
 
   useEffect(() => { setStore(loadStore()); setHydrated(true); }, []);
-  useEffect(() => { void fetch('/api/capabilities').then(r => r.json()).then((x: { research?: boolean }) => setResearchAvailable(Boolean(x.research))).catch(() => {}); }, []);
+  useEffect(() => {
+    void fetch('/api/capabilities', { cache: 'no-store' })
+      .then(async response => {
+        if (!response.ok) throw new Error('Backend readiness check failed');
+        return await response.json() as {
+          ai?: boolean;
+          research?: boolean;
+          setup?: { ai?: 'ready' | 'missing-ai-key' | 'access-configuration-required' };
+        };
+      })
+      .then(status => {
+        setAiReady(Boolean(status.ai));
+        setResearchAvailable(Boolean(status.research));
+        setAiIssue(status.ai ? null : status.setup?.ai === 'missing-ai-key'
+          ? 'AI is offline: LOVABLE_API_KEY is missing on the server. Enable Lovable AI for this project.'
+          : status.setup?.ai === 'access-configuration-required'
+          ? 'AI is locked: configure ASTRA_ACCESS_CODE and ASTRA_SESSION_SECRET in the server environment.'
+          : 'AI is unavailable. Check the deployment configuration.');
+      })
+      .catch(() => {
+        setAiReady(false);
+        setResearchAvailable(false);
+        setAiIssue('Unable to reach the Astra API service. Check the deployed backend.');
+      });
+  }, []);
   useEffect(() => { void fetch('/api/access/status').then(r => r.json()).then((x: { protected?: boolean }) => setPrivateBetaProtected(Boolean(x.protected))).catch(() => {}); }, []);
   useEffect(() => {
     if (!hydrated) return;
@@ -342,7 +368,7 @@ export function AgentApp() {
           </div>)}</section>) : <p className="empty-history">{historySearch ? 'No matching conversations' : 'Your conversations will appear here.'}</p>}
       </div>
       <div className="sidebar-bottom">
-        <div className="workspace-note"><div className="status-light" /><div><strong>Lovable AI Gateway</strong><small>Usage billed by Lovable AI</small></div></div>
+        <div className="workspace-note"><div className="status-light" /><div><strong>Lovable AI Gateway</strong><small>{aiReady === null ? 'Checking AI service...' : aiReady ? 'AI available · Lovable usage credits' : 'AI setup required'}</small></div></div>
         <button type="button" className="sidebar-nav" onClick={() => { setDrawerOpen(false); setSheet('connections'); }}><Layers3 size={18} /> Connections <ChevronRight size={16} className="nav-end" /></button>
         <button type="button" className="sidebar-nav" onClick={() => openSettings()}><Settings2 size={18} /> Settings <ChevronRight size={16} className="nav-end" /></button>
       </div>
@@ -395,6 +421,7 @@ export function AgentApp() {
 
       <footer className="composer-area">
         <div className="composer-wrap">
+          {aiIssue && <div className="mode-disclaimer" role="alert"><span className="disclaimer-dot" />{aiIssue}<button type="button" onClick={() => setSheet('connections')}>Details <ChevronRight size={12}/></button></div>}
           {mode !== 'chat' && <div className="mode-disclaimer"><span className="disclaimer-dot" />{mode === 'research' ? (researchAvailable ? 'Live research enabled · sources from Perplexity Search' : 'Research planning only · search provider not configured') : 'Agent planning only · open Mission Control to run tasks'}<button type="button" onClick={() => mode === 'agent' ? setView('missions') : setSheet('connections')}>{mode === 'agent' ? 'Missions' : 'Details'} <ChevronRight size={12}/></button></div>}
           <div className={`composer ${loading ? 'composer-loading' : ''}`}>
             <textarea ref={textRef} value={draft} rows={1} maxLength={8000} onChange={(e) => setDraft(e.target.value)} onKeyDown={handleKey} placeholder={mode === 'research' ? 'What do you want to investigate?' : mode === 'agent' ? 'What should we plan?' : 'Message Astra...'} aria-label="Message Astra" />
@@ -450,7 +477,7 @@ export function AgentApp() {
             <p className="setting-copy">For multi-user access, per-user connector permissions and cross-device sync, account authentication and a secured database must be configured before launch.</p>
           </div>}
         </div>}
-        {sheet === 'connections' && <div className="connections-content"><div className="sheet-intro">The app is ready for integrations. Each connector requires explicit server-side authentication and permissions before it can access your data.</div>
+        {sheet === 'connections' && <div className="connections-content"><div className="connector-callout"><Cloud size={19}/><div><strong>AI backend</strong><p>{aiReady === null ? 'Checking server availability...' : aiIssue || 'Lovable AI is configured on this deployment.'} API keys must be configured in the Lovable server environment, never in the browser or this repository.</p></div></div><div className="sheet-intro">The app is ready for integrations. Each connector requires explicit server-side authentication and permissions before it can access your data.</div>
           <div className="connector-list">{CONNECTORS.map((c) => <div className="connector-row" key={c.name}><div className={`connector-logo logo-${c.shade}`}>{c.mark}</div><div className="connector-text"><strong>{c.name}</strong><small>{c.detail}</small></div><span className="connector-status">Not connected</span></div>)}</div>
           <div className="connector-callout"><ShieldCheck size={19}/><div><strong>Connections are not active yet</strong><p>Lovable workspace/build-time connectors do not automatically authorize end users of this app. Live research works when the server has a Perplexity Search API key. User-scoped OAuth and background workers are still pending.</p></div></div>
           <a href="https://docs.lovable.dev/integrations/introduction" rel="noopener noreferrer" target="_blank" className="doc-link">Lovable integration documentation <ExternalLink size={15}/></a>
