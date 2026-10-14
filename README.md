@@ -2,9 +2,16 @@
 
 Astra is a mobile AI workspace using Lovable AI credits for inference. **Development happens through GitHub commits**, not Lovable's AI builder chat.
 
-## ChatGPT browser bridge (experimental)
+## ChatGPT browser bridge and remote browser control (experimental)
 
-Open **ChatGPT Bridge** in the Astra sidebar to compose a prompt and hand it to
+Open **ChatGPT Bridge** in the Astra sidebar. The optional **Remote Browser** panel
+runs a containerized persistent Chromium session, streams a live interactive view,
+lets you log into ChatGPT manually, sends prompts and streams new assistant replies.
+It requires a separately deployed Docker service, a private controller token, and a
+WebSocket address configured for the frontend. See
+[remote browser setup](services/browser-control/README.md).
+
+The original link-handoff mode still lets you compose a prompt and hand it to
 your real `chatgpt.com` session. Sign in on ChatGPT's own website; Astra does
 not request your ChatGPT login credentials or use the OpenAI API for this route.
 The link pre-fills a new ChatGPT chat for you to review and send.
@@ -15,8 +22,8 @@ cookies. You must separately package and install the extension using Xcode and
 permit access to `chatgpt.com`; it is **not** bundled with the web app.
 See [the Safari integration guide](integrations/chatgpt-safari-extension/README.md)
 for instructions and limitations. The browser interface is not an official
-ChatGPT messaging API; it can change or fail. No existing ChatGPT chats,
-memory, or replies are synchronized with Astra.
+ChatGPT messaging API; it can change or fail. The optional remote browser streams only newly generated replies; it does not
+synchronize account history or memory.
 
 ## Features
 
@@ -24,7 +31,7 @@ memory, or replies are synchronized with Astra.
 - **Mission Control (beta):** propose plans through Lovable AI, run genuine AI analysis and critique steps, pause for review, resume interrupted runs, and display actual outputs/timestamps. Autopilot advances through model steps while the tab is open. User confirmation is required between steps in Review/Manual modes.
 - **Live research (optional):** search via Perplexity Search API, then synthesize with the selected Lovable AI model, preserving clickable real source links and numbered citations. Clearly displays unavailable state when not configured.
 - Chat, Research and Agent planning modes; research chat switches to live research when a search key is present.
-- Safe default: no computer control, no account writes, no fake connectors, no uncontrolled payments.
+- Safe default: the remote browser controller is not enabled or exposed without an independently deployed service and its separate authentication.
 
 ## Set up the backend
 
@@ -61,6 +68,8 @@ npx tsc --noEmit
 
 ## Architecture
 
+- `src/components/RemoteBrowserControl.tsx`: optional authenticated WebSocket controller, live screencast and prompt stream.
+- `services/browser-control/`: persistent Playwright service, Docker deployment and protocol tests.
 - `src/components/AgentApp.tsx`: chat experience, model chooser, settings, history and research source rendering.
 - `src/components/MissionControl.tsx`: mission planning and step-run UI (foreground-only execution).
 - `src/routes/api.chat.ts`: streamed Lovable AI chat.

@@ -1,0 +1,22 @@
+services:
+  browser-control:
+    build:
+      context: .
+      dockerfile: services/browser-control/Dockerfile
+    init: true
+    restart: unless-stopped
+    environment:
+      BROWSER_CONTROL_TOKEN: ${BROWSER_CONTROL_TOKEN:?Set a 32+ character secret in your environment}
+      BROWSER_ALLOWED_ORIGINS: ${BROWSER_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      BROWSER_PROFILE_ID: default
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - browser_profiles:/data/profiles
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    shm_size: "512mb"
+volumes:
+  browser_profiles:

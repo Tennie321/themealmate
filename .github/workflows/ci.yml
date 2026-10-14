@@ -27,3 +27,8 @@ jobs:
         run: npx tsc --noEmit
       - name: Security regression tests
         run: npm run test:security
+
+      - name: Browser controller protocol tests
+        run: |
+          node --check services/browser-control/server.mjs
+          node --test services/browser-control/tests/*.test.mjs
