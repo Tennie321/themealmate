@@ -27,3 +27,7 @@ jobs:
         run: npx tsc --noEmit
       - name: Security regression tests
         run: npm run test:security
+      - name: Browser worker syntax
+        run: node --check services/browser-bridge/server.mjs && node --check services/browser-bridge/security.mjs
+      - name: Browser worker security tests
+        run: node --test services/browser-bridge/test/*.test.mjs
