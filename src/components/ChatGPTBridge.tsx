@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { ArrowRight, ExternalLink, LockKeyhole, MessageSquare, ShieldCheck } from 'lucide-react';
 import { buildChatGPTHandoffURL, CHATGPT_HANDOFF_LIMIT } from '../lib/chatgpt-bridge';
+import { RemoteBrowserPanel } from './RemoteBrowserPanel';
 
-/**
- * Launches the user's real ChatGPT browser session. We deliberately never
- * embed the login page, request cookies, or treat ChatGPT as an API.
- */
+/** Manual ChatGPT handoff plus separately hosted, user-controlled remote browser. */
 export function ChatGPTBridge() {
   const [prompt, setPrompt] = useState('');
   const trimmed = prompt.trim();
@@ -13,12 +11,13 @@ export function ChatGPTBridge() {
   const handoff = ready ? buildChatGPTHandoffURL(prompt) : undefined;
 
   return <main className="chatgpt-bridge" aria-label="ChatGPT bridge">
+    <RemoteBrowserPanel />
     <div className="chatgpt-bridge-card">
       <div className="chatgpt-bridge-mark"><MessageSquare size={22} /></div>
       <div className="chatgpt-bridge-eyebrow">YOUR CHATGPT ACCOUNT</div>
       <h1>Send from Astra<br /><em>to ChatGPT.</em></h1>
       <p className="chatgpt-bridge-intro">
-        Write a message here. Astra opens the real ChatGPT website, where you sign in normally.
+        Or use this simple link handoff to open ChatGPT directly without the remote browser service. Astra opens the real ChatGPT website, where you sign in normally.
         Messages go to your ChatGPT account—not Astra's Lovable AI gateway.
       </p>
 
@@ -50,7 +49,7 @@ export function ChatGPTBridge() {
         </span>
       </div>
       <p className="chatgpt-bridge-disclaimer">
-        This starts a new ChatGPT conversation. Astra cannot read your existing chats or replies.
+        This link handoff starts a new ChatGPT conversation; no replies are synced back. The separate remote viewer displays browser pixels without scraping ChatGPT output.
         The message is included in the ChatGPT link and may appear in browser history; avoid passwords or secrets.
       </p>
     </div>
