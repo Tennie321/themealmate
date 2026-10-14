@@ -16,6 +16,11 @@ dist-ssr
 .nitro
 *.local
 
+# Keep server API keys and local runtime values out of Git
+.env
+.env.*
+!.env.example
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
