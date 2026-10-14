@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { accessSetupError, checkAccessCode, createAccessCookie, denyIfPrivate, isAccessGranted, privateBetaEnabled } from '../src/lib/private-access.server.ts';
+import { accessSetupError, checkAccessCode, createAccessCookie, denyIfPrivate, getCapabilityReadiness, isAccessGranted, privateBetaEnabled } from '../src/lib/private-access.server.ts';
 import { denyAIUnitBudget, readValidatedBody } from '../src/lib/request-safety.server.ts';
 
 const original = {
   LOVABLE_API_KEY: process.env.LOVABLE_API_KEY,
+  PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY,
   ASTRA_ACCESS_CODE: process.env.ASTRA_ACCESS_CODE,
   ASTRA_SESSION_SECRET: process.env.ASTRA_SESSION_SECRET,
   ASTRA_AI_HOURLY_UNITS: process.env.ASTRA_AI_HOURLY_UNITS,
@@ -85,4 +86,38 @@ test('hourly instance fuse blocks requests and resets after the window', () => {
 
 test('request parser enforces actual UTF-8 bytes without calling a provider', async () => {
   await assert.rejects(readValidatedBody(new Request('https://astra.example/api/chat', { method: 'POST', body: JSON.stringify({ message: 'é'.repeat(40) }) }), 50), /too large/);
+});
+
+test('capabilities distinguish unconfigured services from protected and ready AI', () => {
+  delete process.env.LOVABLE_API_KEY;
+  delete process.env.PERPLEXITY_API_KEY;
+  delete process.env.ASTRA_ACCESS_CODE;
+  delete process.env.ASTRA_SESSION_SECRET;
+  try {
+    let status = getCapabilityReadiness();
+    assert.equal(status.ai, false);
+    assert.equal(status.research, false);
+    assert.equal(status.aiStatus, 'missing_lovable_api_key');
+    assert.equal(status.researchStatus, 'missing_lovable_api_key');
+
+    process.env.LOVABLE_API_KEY = 'test-only-not-a-real-key';
+    status = getCapabilityReadiness();
+    assert.equal(status.ai, false);
+    assert.equal(status.aiStatus, 'access_setup_required');
+
+    process.env.ASTRA_ACCESS_CODE = 'long-test-only-access-code';
+    process.env.ASTRA_SESSION_SECRET = 'test-only-secret-with-at-least-thirty-two-characters';
+    status = getCapabilityReadiness();
+    assert.equal(status.ai, true);
+    assert.equal(status.research, false);
+    assert.equal(status.researchStatus, 'missing_perplexity_api_key');
+
+    process.env.PERPLEXITY_API_KEY = 'test-only-search-key';
+    status = getCapabilityReadiness();
+    assert.equal(status.ai, true);
+    assert.equal(status.research, true);
+    assert.equal(status.aiStatus, 'ready');
+    assert.equal(status.researchStatus, 'ready');
+    assert.equal('key' in status, false);
+  } finally { resetEnv(); }
 });
