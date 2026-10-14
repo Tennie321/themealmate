@@ -39,6 +39,37 @@ npm run build
 npx tsc --noEmit
 ```
 
+## Troubleshooting "missing API" / AI unavailable
+
+Astra requires **server routes**, not a static-only frontend. Check the published
+site's `/api/access/status` and `/api/capabilities` URLs (and the Lovable
+project's server-side deployment logs).
+
+- If an API URL returns 404 or HTML instead of JSON, deploy the TanStack Start
+  project with its server handlers and Lovable Cloud enabled. A static Vite
+  deployment will not run Astra's API routes.
+- If `/api/capabilities` returns `ai: false`, read `aiStatusMessage`.
+  Enable Lovable's built-in **AI** connector for the project and ensure the
+  project-scoped `LOVABLE_API_KEY` is available **server-side**. Lovable
+  normally generates and manages this key: do not create a public browser key
+  and do not commit it.
+- Set private-beta server secrets `ASTRA_ACCESS_CODE` (at least 12
+  characters) and `ASTRA_SESSION_SECRET` (at least 32 random characters).
+  Both are mandatory when the AI connector is enabled. Keep the app private
+  until server access control and budgeting are in place.
+- `research: false` with `ai: true` is **not** a chat outage.
+  Live web research is optional and requires a separate server-only
+  `PERPLEXITY_API_KEY`. Without that key, Astra continues with non-live
+  research planning.
+- If `ai: true` but a model fails, verify that the selected model is enabled
+  for the project, AI usage credits remain, and the Lovable AI gateway is
+  reachable. The chat endpoint now reports a 502 instead of an empty 200
+  when the provider fails before generating its first text chunk.
+
+The GitHub integration can change code, but **cannot create, view, or replace
+Lovable deployment secrets**. Configure them in the hosting environment,
+republish, then reload Astra. Never paste API keys into issue reports or chat.
+
 ## Limitations, by design
 
 - Mission execution is **foreground only**. It continues while the browser tab stays alive, but the iPhone may suspend it when locked. Runs persist only to this browser's localStorage; re-open and press Resume to continue interrupted missions. The browser does **not** have a background worker.
