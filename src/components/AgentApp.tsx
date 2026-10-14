@@ -76,6 +76,7 @@ export function AgentApp() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [view, setView] = useState<'chat' | 'missions' | 'chatgpt'>('chat');
   const [researchAvailable, setResearchAvailable] = useState(false);
+  const [aiSetupIssue, setAiSetupIssue] = useState<string | null>(null);
   const [privateBetaProtected, setPrivateBetaProtected] = useState(false);
   const backupInputRef = useRef<HTMLInputElement | null>(null);
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -92,7 +93,19 @@ export function AgentApp() {
   const lastSavedRef = useRef('');
 
   useEffect(() => { setStore(loadStore()); setHydrated(true); }, []);
-  useEffect(() => { void fetch('/api/capabilities').then(r => r.json()).then((x: { research?: boolean }) => setResearchAvailable(Boolean(x.research))).catch(() => {}); }, []);
+  useEffect(() => {
+    void fetch('/api/capabilities', { cache: 'no-store' })
+      .then(async response => {
+        if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
+          throw new Error('The Astra backend API is unavailable.');
+        }
+        const status = await response.json() as { ai?: boolean; research?: boolean; aiStatusMessage?: string | null };
+        if (typeof status.ai !== 'boolean') throw new Error('Invalid backend status response.');
+        setResearchAvailable(Boolean(status.research));
+        setAiSetupIssue(status.ai ? null : status.aiStatusMessage || 'The AI service has not been configured on this deployment.');
+      })
+      .catch(() => setAiSetupIssue('The Astra backend API is unreachable. Publish this project as a full-stack TanStack Start app through Lovable, not a static-only website.'));
+  }, []);
   useEffect(() => { void fetch('/api/access/status').then(r => r.json()).then((x: { protected?: boolean }) => setPrivateBetaProtected(Boolean(x.protected))).catch(() => {}); }, []);
   useEffect(() => {
     if (!hydrated) return;
@@ -395,6 +408,11 @@ export function AgentApp() {
 
       <footer className="composer-area">
         <div className="composer-wrap">
+          {aiSetupIssue && <div role="alert" className="astra-setup-alert">
+            <strong>AI setup required</strong>
+            <span>{aiSetupIssue}</span>
+            <a href="https://lovable.dev/projects/e5083802-363b-4e08-b0f4-d7d06d7f7082" target="_blank" rel="noopener noreferrer">Open Lovable project <ExternalLink size={12}/></a>
+          </div>}
           {mode !== 'chat' && <div className="mode-disclaimer"><span className="disclaimer-dot" />{mode === 'research' ? (researchAvailable ? 'Live research enabled · sources from Perplexity Search' : 'Research planning only · search provider not configured') : 'Agent planning only · open Mission Control to run tasks'}<button type="button" onClick={() => mode === 'agent' ? setView('missions') : setSheet('connections')}>{mode === 'agent' ? 'Missions' : 'Details'} <ChevronRight size={12}/></button></div>}
           <div className={`composer ${loading ? 'composer-loading' : ''}`}>
             <textarea ref={textRef} value={draft} rows={1} maxLength={8000} onChange={(e) => setDraft(e.target.value)} onKeyDown={handleKey} placeholder={mode === 'research' ? 'What do you want to investigate?' : mode === 'agent' ? 'What should we plan?' : 'Message Astra...'} aria-label="Message Astra" />
