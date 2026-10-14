@@ -11,11 +11,11 @@ This is an **optional, self-hosted** Playwright worker for Astra's existing Chat
 
 ## Deploy locally
 
-1. Configure the main Astra server's secret variables ASTRA_ACCESS_CODE (12+ chars) and ASTRA_SESSION_SECRET (32+ chars), along with its other application settings. **Both the Astra server and worker must use exactly the same ASTRA_SESSION_SECRET**. Do not use any VITE_ variables for secrets.
+1. Configure the main Astra server's ASTRA_ACCESS_CODE (12+ chars) and ASTRA_SESSION_SECRET (32+ chars), and generate a **separate**, random BROWSER_BRIDGE_SECRET (32+ chars) shared only with the worker. **Both the Astra server and worker must use exactly the same independent BROWSER_BRIDGE_SECRET**. Do not use any VITE_ variables for secrets.
 2. From services/browser-bridge, set APP_ORIGIN to the **exact web app origin**, for example http://localhost:3000 or https://astra.example.com. Run docker compose up --build -d. Port 8787 binds to localhost by default, not the public network. Check curl http://127.0.0.1:8787/healthz.
 3. Set BROWSER_BRIDGE_WS_URL on the **Astra server** to ws://localhost:8787/v1/control for local development *if the web app itself is opened from that same machine*. For a hosted web app, put a TLS reverse proxy in front of the worker and use wss://browser.example.com/v1/control. The proxy must forward WebSocket upgrade headers and Origin, and must not rewrite the Origin. A browser on an HTTPS app will not connect to insecure ws://.
 4. Sign in to Astra with its beta access code. Open **ChatGPT Bridge → Connect browser**. In the browser screen, complete ChatGPT login, MFA or CAPTCHAs yourself. Enter a test prompt and monitor response text below the viewport.
-5. To run outside Docker for development, from services/browser-bridge run npm install, npx playwright install chromium and npm start. Set PORT, PROFILE_ROOT, APP_ORIGIN and ASTRA_SESSION_SECRET; make sure PROFILE_ROOT is a private directory.
+5. To run outside Docker for development, from services/browser-bridge run npm install, npx playwright install chromium and npm start. Set PORT, PROFILE_ROOT, APP_ORIGIN and BROWSER_BRIDGE_SECRET; make sure PROFILE_ROOT is a private directory.
 
 ### Example Nginx reverse proxy
 
