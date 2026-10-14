@@ -37,7 +37,7 @@ export async function streamPrompt({ prompt, signal, onDelta, fetchImpl = fetch,
   const result = await fetchImpl(ENDPOINT, {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: process.env.OPENAI_MODEL || 'gpt-5-mini', input: prompt, stream: true }),
+    body: JSON.stringify({ model: process.env.OPENAI_MODEL || 'gpt-5-mini', input: prompt, stream: true, max_output_tokens: 1600 }),
     signal,
   });
   if (!result.ok || !result.body) {
