@@ -1,0 +1,11 @@
+# Template for a SAME-ORIGIN TLS reverse proxy deployed on the host.
+# Replace the hostname and Astra upstream before use. WebSocket upgrade
+# is handled by Caddy's reverse_proxy automatically.
+astra.example.com {
+  handle /browser/* {
+    reverse_proxy 127.0.0.1:3100
+  }
+  handle {
+    reverse_proxy 127.0.0.1:3000
+  }
+}
