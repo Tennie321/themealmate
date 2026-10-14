@@ -18,7 +18,9 @@ export async function consumeResponseEvents(chunks, onDelta) {
     }
   };
   for await (const chunk of chunks) {
-    buffer += decoder.decode(chunk, { stream: true }).replace(/\r\n/g, '\n');
+    buffer += decoder.decode(chunk, { stream: true });
+    // Normalize the accumulated buffer so CR and LF may arrive in separate chunks.
+    buffer = buffer.replace(/\r\n/g, '\n');
     if (buffer.length > 256_000) throw new Error('Upstream response event is too large.');
     let boundary;
     while ((boundary = buffer.indexOf('\n\n')) !== -1) {
