@@ -6,11 +6,11 @@ import { WebSocket, WebSocketServer } from 'ws';
 import { parseMessage, profilePath, verifyTicket, VIEWPORT } from './security.mjs';
 
 const PORT = Number(process.env.PORT || 8787);
-const SECRET = process.env.ASTRA_SESSION_SECRET || '';
+const SECRET = process.env.BROWSER_BRIDGE_SECRET || '';
 const ORIGIN = process.env.APP_ORIGIN || '';
 const PROFILE_ROOT = process.env.PROFILE_ROOT || '/data/profiles';
 if (SECRET.length < 32 || !/^https?:\/\/[^/]+$/.test(ORIGIN)) {
-  throw new Error('Set ASTRA_SESSION_SECRET (32+ chars) and APP_ORIGIN (exact Astra origin).');
+  throw new Error('Set BROWSER_BRIDGE_SECRET (32+ chars) and APP_ORIGIN (exact Astra origin).');
 }
 const server = http.createServer((request, response) => {
   if (request.url === '/healthz' && request.method === 'GET') {
