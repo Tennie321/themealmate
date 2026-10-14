@@ -32,3 +32,10 @@
   .remote-browser-connect { flex-direction:column; }
   .remote-browser-toolbar button { padding:8px 10px; }
 }
+
+.remote-browser-typing { margin:12px 0 4px; border-radius:12px; padding:12px; background:var(--surface-2); }
+.remote-browser-typing > label:first-child { display:block; margin-bottom:9px; color:var(--soft); font-size:12px; }
+.remote-browser-typing-row { display:flex; gap:8px; }
+.remote-browser-typing-row input { min-width:0; flex:1; color:var(--text); border:1px solid var(--stroke); border-radius:9px; background:var(--surface); padding:10px; }
+.remote-browser-typing .remote-browser-show-typing { display:flex; gap:6px; align-items:center; margin-top:9px; color:var(--muted); font-size:11px; cursor:pointer; }
+@media(max-width:550px) { .remote-browser-typing-row { flex-wrap:wrap; } .remote-browser-typing-row input { flex-basis:100%; } }
