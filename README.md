@@ -18,13 +18,69 @@ for instructions and limitations. The browser interface is not an official
 ChatGPT messaging API; it can change or fail. No existing ChatGPT chats,
 memory, or replies are synchronized with Astra.
 
+## Remote ChatGPT browser (optional self-hosted worker)
+
+Astra's ChatGPT Bridge has an interactive remote Chromium view alongside the
+original external-link handoff. The separate worker uses Playwright persistent
+browser profiles and Chromium DevTools screencast. JPEG frames travel over
+WebSocket; pointer, keyboard, and scroll events return over the same socket.
+
+Sign in **manually**, including MFA or CAPTCHA. Then submit a prompt in Astra's
+remote panel: the worker fills the visible ChatGPT composer, clicks Send,
+watches the new assistant message, and streams evolving rendered-text snapshots
+to Astra. No CAPTCHA bypass, cookie scraping, or unofficial ChatGPT API calls.
+
+### Deploy
+
+**A long-running container host is required.** Lovable's hosted web app alone
+does not run persistent Playwright/WebSocket containers.
+
+1. Generate a strong random secret of at least 32 characters.
+2. On the worker, set ASTRA_BROWSER_SHARED_SECRET and
+   ASTRA_BROWSER_ALLOWED_ORIGIN to the exact Astra frontend origin
+   (for example https://astra.example.com).
+3. Run: cd services/browser-worker && docker compose up -d --build.
+   The default bind is 127.0.0.1:8787. Put an HTTPS/WSS reverse proxy
+   in front of the worker, pointing the /ws route to port 8787.
+4. Set Astra server-only ASTRA_BROWSER_SHARED_SECRET to the SAME secret,
+   and ASTRA_BROWSER_WS_URL=wss://browser.example.com/ws.
+5. Configure ASTRA_ACCESS_CODE and ASTRA_SESSION_SECRET, unlock Astra,
+   open ChatGPT Bridge, then click Connect browser.
+
+For localhost development only, ws://localhost:8787/ws is accepted. Use
+wss:// in production. ASTRA_BROWSER_ALLOWED_ORIGIN must match the frontend
+Origin header, including the port in development.
+
+### Protocol and security
+
+POST /api/browser/session checks Astra's signed private-beta access cookie,
+returns a 2-minute HMAC ticket and the WS URL, and never exposes the worker
+secret. The worker validates both ticket and Origin before launching Chromium.
+Each authenticated access session has a hashed persistent disk profile. Only
+one tab controls each profile. Idle processes close after 20 minutes; the
+Docker volume retains login state.
+
+WebSocket client commands: auth (ticket), mouse, wheel, key, and prompt (text,
+up to 8000 characters). Server events: ready, prompt-sent, response (complete
+boolean, full text snapshot), error, plus binary JPEG screencast frames.
+Response snapshots track rendered HTML, not a model-token API stream.
+ChatGPT UI updates may require selector changes.
+
+Use this only for a trusted single-owner environment; keep browser profiles
+private and encrypted at rest. Do not publish port 8787 directly or place
+ASTRA_BROWSER_SHARED_SECRET in a VITE_ variable. Password keystrokes traverse
+the authenticated WSS channel to your own worker during manual login. Respect
+the site's terms. Browser automation may fail if ChatGPT changes its interface.
+
+Test ticket validation: npm --prefix services/browser-worker test.
+
 ## Features
 
 - Native-feeling responsive mobile chat, PWA install, model picker, local chat history and settings.
 - **Mission Control (beta):** propose plans through Lovable AI, run genuine AI analysis and critique steps, pause for review, resume interrupted runs, and display actual outputs/timestamps. Autopilot advances through model steps while the tab is open. User confirmation is required between steps in Review/Manual modes.
 - **Live research (optional):** search via Perplexity Search API, then synthesize with the selected Lovable AI model, preserving clickable real source links and numbered citations. Clearly displays unavailable state when not configured.
 - Chat, Research and Agent planning modes; research chat switches to live research when a search key is present.
-- Safe default: no computer control, no account writes, no fake connectors, no uncontrolled payments.
+- Safe default: no uncontrolled computer control or account writes; optional authenticated remote browser requires a separate container.
 
 ## Set up the backend
 

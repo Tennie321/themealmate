@@ -1,0 +1,19 @@
+services:
+  browser:
+    build: .
+    restart: unless-stopped
+    init: true
+    ipc: host
+    environment:
+      ASTRA_BROWSER_SHARED_SECRET: ${ASTRA_BROWSER_SHARED_SECRET:?Set a 32+ character secret}
+      ASTRA_BROWSER_ALLOWED_ORIGIN: ${ASTRA_BROWSER_ALLOWED_ORIGIN:?Set the exact Astra app origin}
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - browser_profiles:/profiles
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 2g
+volumes:
+  browser_profiles:

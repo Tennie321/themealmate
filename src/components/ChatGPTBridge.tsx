@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { RemoteBrowser } from './RemoteBrowser';
 import { ArrowRight, ExternalLink, LockKeyhole, MessageSquare, ShieldCheck } from 'lucide-react';
 import { buildChatGPTHandoffURL, CHATGPT_HANDOFF_LIMIT } from '../lib/chatgpt-bridge';
 
 /**
- * Launches the user's real ChatGPT browser session. We deliberately never
- * embed the login page, request cookies, or treat ChatGPT as an API.
+ * Preserves the external-link handoff and offers an optional private
+ * Playwright remote browser managed by a separately deployed worker.
  */
 export function ChatGPTBridge() {
   const [prompt, setPrompt] = useState('');
@@ -13,6 +14,7 @@ export function ChatGPTBridge() {
   const handoff = ready ? buildChatGPTHandoffURL(prompt) : undefined;
 
   return <main className="chatgpt-bridge" aria-label="ChatGPT bridge">
+    <RemoteBrowser />
     <div className="chatgpt-bridge-card">
       <div className="chatgpt-bridge-mark"><MessageSquare size={22} /></div>
       <div className="chatgpt-bridge-eyebrow">YOUR CHATGPT ACCOUNT</div>
@@ -50,7 +52,7 @@ export function ChatGPTBridge() {
         </span>
       </div>
       <p className="chatgpt-bridge-disclaimer">
-        This starts a new ChatGPT conversation. Astra cannot read your existing chats or replies.
+        This external handoff starts a new ChatGPT conversation and does not sync its replies. Connected remote browser mode shows replies inside Astra.
         The message is included in the ChatGPT link and may appear in browser history; avoid passwords or secrets.
       </p>
     </div>
