@@ -1,0 +1,10 @@
+node_modules
+.git
+.env
+.env.*
+!.env.example
+.output
+dist
+browser-service/node_modules
+browser-service/profile
+coverage

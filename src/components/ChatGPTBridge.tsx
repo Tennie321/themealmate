@@ -1,19 +1,22 @@
 import { useState } from 'react';
+import { RemoteBrowser } from './RemoteBrowser';
 import { ArrowRight, ExternalLink, LockKeyhole, MessageSquare, ShieldCheck } from 'lucide-react';
 import { buildChatGPTHandoffURL, CHATGPT_HANDOFF_LIMIT } from '../lib/chatgpt-bridge';
 
-/**
- * Launches the user's real ChatGPT browser session. We deliberately never
- * embed the login page, request cookies, or treat ChatGPT as an API.
- */
+/** ChatGPT handoff plus the optional self-hosted remote browser control. */
 export function ChatGPTBridge() {
   const [prompt, setPrompt] = useState('');
+  const [mode, setMode] = useState<'handoff' | 'remote'>('remote');
   const trimmed = prompt.trim();
   const ready = trimmed.length > 0 && trimmed.length <= CHATGPT_HANDOFF_LIMIT;
   const handoff = ready ? buildChatGPTHandoffURL(prompt) : undefined;
 
   return <main className="chatgpt-bridge" aria-label="ChatGPT bridge">
-    <div className="chatgpt-bridge-card">
+    <div className="chatgpt-bridge-switch" role="group" aria-label="ChatGPT connection mode">
+      <button type="button" aria-pressed={mode === "remote"} className={mode === "remote" ? "selected" : ""} onClick={() => setMode("remote")}>Remote browser</button>
+      <button type="button" aria-pressed={mode === "handoff"} className={mode === "handoff" ? "selected" : ""} onClick={() => setMode("handoff")}>Open ChatGPT link</button>
+    </div>
+    {mode === "remote" ? <RemoteBrowser /> : <div className="chatgpt-bridge-card">
       <div className="chatgpt-bridge-mark"><MessageSquare size={22} /></div>
       <div className="chatgpt-bridge-eyebrow">YOUR CHATGPT ACCOUNT</div>
       <h1>Send from Astra<br /><em>to ChatGPT.</em></h1>
@@ -53,6 +56,6 @@ export function ChatGPTBridge() {
         This starts a new ChatGPT conversation. Astra cannot read your existing chats or replies.
         The message is included in the ChatGPT link and may appear in browser history; avoid passwords or secrets.
       </p>
-    </div>
+    </div>}
   </main>;
 }

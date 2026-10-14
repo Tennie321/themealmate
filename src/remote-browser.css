@@ -1,0 +1,47 @@
+.chatgpt-bridge-switch{display:flex;gap:6px;width:max-content;max-width:100%;margin:12px auto 24px;padding:5px;border:1px solid var(--border,#29313f);border-radius:13px;background:var(--card,#101722)}
+.chatgpt-bridge-switch button{border:0;border-radius:9px;background:transparent;color:var(--muted-foreground,#a7afbd);font:inherit;font-size:13px;font-weight:650;padding:11px 16px;cursor:pointer}
+.chatgpt-bridge-switch button.selected{background:var(--accent,#293242);color:var(--foreground,#f4f6fa)}
+.remote-browser{width:min(1120px,100%);margin:0 auto 45px;border:1px solid var(--border,#273142);border-radius:20px;background:var(--card,#121823);color:var(--foreground,#f4f6fa);overflow:hidden;box-shadow:0 20px 70px #0002}
+.remote-browser button,.remote-browser input,.remote-browser textarea{font:inherit}
+.remote-browser button{cursor:pointer}
+.remote-browser button:disabled{opacity:.5;cursor:not-allowed}
+.remote-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:26px 28px 22px;border-bottom:1px solid var(--border,#273142)}
+.remote-eyebrow{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.12em;font-weight:800;color:#aebdea}
+.remote-head h2{font-size:clamp(22px,3vw,30px);font-weight:700;line-height:1.2;letter-spacing:-.035em;margin:12px 0 8px}
+.remote-head p{font-size:14px;line-height:1.55;color:var(--muted-foreground,#a8b0c1);max-width:600px;margin:0}
+.remote-state{flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border,#29313f);border-radius:100px;padding:8px 10px;font-size:12px;color:var(--muted-foreground,#a8b0c1)}
+.remote-state svg{color:#81c9b4}
+.remote-empty,.remote-unlock{margin:24px;padding:35px 22px;border-radius:14px;border:1px dashed var(--border,#364151);text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.remote-empty strong,.remote-unlock strong{font-size:17px}
+.remote-empty p,.remote-unlock p{margin:0;max-width:540px;line-height:1.6;font-size:13px;color:var(--muted-foreground,#a9b2c0)}
+.remote-unlock label{align-self:stretch;max-width:370px;text-align:left;font-size:12px;font-weight:650;margin-top:12px}
+.remote-unlock input{width:100%;max-width:370px;min-height:45px;border:1px solid var(--border,#364151);border-radius:9px;background:var(--background,#0a1019);color:var(--foreground,#fff);padding:10px 13px}
+.remote-unlock button,.remote-empty button{display:flex;align-items:center;justify-content:center;gap:8px;border:0;background:#8d9deb;color:#111727;padding:12px 19px;font-weight:700;border-radius:10px}
+.remote-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 18px;background:var(--background,#0a1019);font-size:12px;color:var(--muted-foreground,#a8b0c1)}
+.remote-toolbar>span{display:flex;align-items:center;gap:8px}
+.remote-dot{width:8px;height:8px;border-radius:50%;background:#6cd3a5;display:inline-block}
+.remote-toolbar>div{display:flex;gap:8px}
+.remote-toolbar button{border:1px solid var(--border,#334053);border-radius:9px;color:var(--foreground,#e9eefa);background:transparent;padding:8px 10px;display:inline-flex;align-items:center;gap:5px}
+.remote-screen{width:100%;aspect-ratio:8/5;background:#05070c;display:flex;align-items:center;justify-content:center;position:relative;outline-offset:-3px;overflow:hidden;cursor:crosshair;touch-action:pan-y}
+.remote-screen:focus-visible{outline:2px solid #95a6ff}
+.remote-screen img{display:block;width:100%;height:100%;object-fit:fill;user-select:none;pointer-events:none}
+.remote-screen-wait{display:flex;align-items:center;gap:12px;color:#a8b5ce;font-size:14px}
+.remote-help{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted-foreground,#9da9b9);padding:11px 20px;margin:0;border-bottom:1px solid var(--border,#283142)}
+.remote-prompt{padding:22px 24px 24px;display:flex;flex-direction:column;gap:12px}
+.remote-prompt label{font-size:15px;font-weight:700}
+.remote-prompt textarea{width:100%;min-height:92px;resize:vertical;padding:13px 15px;border-radius:12px;border:1px solid var(--border,#344052);background:var(--background,#080e16);color:var(--foreground,#fff);line-height:1.5}
+.remote-prompt textarea:focus,.remote-unlock input:focus{outline:2px solid #95a6ff;outline-offset:1px}
+.remote-prompt-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.remote-prompt-actions span{font-size:12px;color:var(--muted-foreground,#9ba7b8)}
+.remote-prompt-actions button{display:flex;align-items:center;gap:8px;background:#8d9deb;color:#0c1320;font-size:13px;font-weight:750;border:0;border-radius:10px;padding:11px 16px}
+.remote-output{border-top:1px solid var(--border,#2b3544);padding:18px 24px 26px}
+.remote-output>div{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:10px}
+.remote-output>div span{text-transform:capitalize;color:#a9b7d8;font-size:12px}
+.remote-output pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto;background:var(--background,#070d14);border-radius:12px;border:1px solid var(--border,#2b3544);padding:16px;font:inherit;font-size:14px;line-height:1.6;margin:0}
+.remote-output p,.remote-error{font-size:13px;color:#e7a4a4;margin:12px 0}
+.remote-error{padding:0 24px}
+.remote-foot{display:flex;gap:5px;flex-wrap:wrap;align-items:center;color:var(--muted-foreground,#8995a9);font-size:11px;padding:0 24px 20px;margin:0;line-height:1.55}
+.remote-foot a{color:inherit;display:inline-flex;align-items:center;gap:4px;text-decoration:underline}
+.remote-spin{animation:remote-spin 1s linear infinite}
+@keyframes remote-spin{to{transform:rotate(360deg)}}
+@media(max-width:700px){.remote-browser{border-radius:12px}.remote-head{padding:19px 16px;flex-direction:column;gap:12px}.remote-toolbar{padding:10px 12px;gap:8px;flex-wrap:wrap}.remote-help{padding:11px 12px}.remote-prompt{padding:16px 12px}.remote-output{padding:18px 12px}.remote-unlock{margin:14px;padding:20px 14px}.remote-foot{padding:0 12px 15px}.chatgpt-bridge-switch button{padding:10px 11px;font-size:12px}}

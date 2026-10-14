@@ -1,0 +1,14 @@
+{
+  "name": "astra-remote-browser",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js",
+    "check": "node --check server.js && node --check automation.js && node --check security.js"
+  },
+  "dependencies": {
+    "playwright": "1.56.1",
+    "ws": "^8.18.3"
+  }
+}

@@ -2,6 +2,20 @@
 
 Astra is a mobile AI workspace using Lovable AI credits for inference. **Development happens through GitHub commits**, not Lovable's AI builder chat.
 
+## Remote ChatGPT browser control (opt-in, self-hosted)
+
+The **ChatGPT Bridge** screen now has an optional **Remote browser** mode:
+containerized persistent Chromium, live CDP screencast, remote mouse and
+keyboard control for manually signing in to ChatGPT, and an authenticated
+WebSocket prompt controller that streams the assistant's response back into
+Astra. This mode requires a separate browser service and reverse proxy; it
+**does not run on Lovable Cloud automatically**. Follow the
+[deployment and security guide](browser-service/README.md) and run
+`docker compose -f compose.yml up --build -d` to try it locally.
+
+The original link handoff is still available under **Open ChatGPT link**.
+Neither mode is an official ChatGPT API, and site UI changes may break automation.
+
 ## ChatGPT browser bridge (experimental)
 
 Open **ChatGPT Bridge** in the Astra sidebar to compose a prompt and hand it to
