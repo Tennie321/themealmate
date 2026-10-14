@@ -1,6 +1,6 @@
 # Astra remote ChatGPT browser controller
 
-This is an **optional, separate backend** for the existing Astra/Meal Mate ChatGPT Bridge. It runs a persistent Playwright Chromium profile and streams JPEG screencast frames over an authenticated WebSocket. The user controls login/2FA/CAPTCHAs manually. The controller types a prompt into the visible ChatGPT composer, observes the displayed assistant reply, and streams updates to Astra. It uses **no private ChatGPT API or password collection**.
+This is an **optional, separate backend** for the existing Astra/Meal Mate ChatGPT Bridge. It runs a persistent Playwright Chromium profile and streams JPEG screencast frames over an authenticated WebSocket. The user controls login/2FA/CAPTCHAs manually. The controller types a prompt into the visible ChatGPT composer, observes the displayed assistant reply, and streams updates to Astra. It uses **no private ChatGPT API**. Login input necessarily travels through your self-hosted browser controller, so treat that service as sensitive infrastructure.
 
 ## Run locally
 
@@ -25,7 +25,7 @@ There is also `POST /api/browser/prompt` with `Authorization: Bearer <BROWSER_CO
 
 ## Security and limitations
 
-- Chromium profile persists in the Docker volume `browser_profiles`; **it contains login sessions**. Keep the volume private and protect backups. The frontend does not retain the controller token or ChatGPT cookies; it never collects credentials itself.
+- Chromium profile persists in the Docker volume `browser_profiles`; **it contains login sessions**. Keep the volume private and protect backups. The frontend does not retain the controller token or ChatGPT cookies. Any login text typed through the remote controls passes through the frontend and browser controller transiently, so only deploy this on a host you trust.
 - One active interactive controller. Reconnecting replaces the old controller. Explicit origin check plus per-connection token authentication; token must be 32+ characters. Server only listens on loopback by default; the Compose port is loopback-bound.
 - Browser top-level navigation is restricted to ChatGPT and selected identity providers; requests to local network addresses are blocked. Google, Apple, Microsoft login pages are available for manual interaction. Extra SSO providers require a reviewed allowlist change.
 - Dynamic ChatGPT DOM selectors can change. The service reports errors rather than silently switching to another API. Response extraction is from the **active generated reply**, not existing conversation history.
