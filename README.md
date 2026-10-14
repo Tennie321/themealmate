@@ -28,7 +28,7 @@ memory, or replies are synchronized with Astra.
 
 ## Set up the backend
 
-The Lovable project must expose `LOVABLE_API_KEY` **only to the server**. Lovable AI requests consume AI usage credits, not Lovable builder/chat credits.
+**Having missing-API or setup-required errors?** Follow the [Astra deployment and API setup guide](docs/DEPLOYMENT_SETUP.md) before using AI features. Lovable's built-in AI connector provisions the project's server-only `LOVABLE_API_KEY`; it is not an OpenAI key and must never be placed in the browser. Lovable AI requests consume AI usage credits, not Lovable builder/chat credits.
 
 To turn on live research, configure `PERPLEXITY_API_KEY` as a **server-side secret** in the deployment platform. Perplexity Search requests are billed separately by that provider; Lovable AI is used for the final synthesis. Do not put these secrets in any `VITE_` variable, public file or GitHub commit.
 
