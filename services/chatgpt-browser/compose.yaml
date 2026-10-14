@@ -1,0 +1,17 @@
+services:
+  chatgpt-browser:
+    build: .
+    restart: unless-stopped
+    init: true
+    environment:
+      PORT: "8788"
+      BROWSER_PROFILE_DIR: /profiles/owner
+      ASTRA_BROWSER_TOKEN_SECRET: ${ASTRA_BROWSER_TOKEN_SECRET:?set shared token secret}
+      ASTRA_BROWSER_ALLOWED_ORIGIN: ${ASTRA_BROWSER_ALLOWED_ORIGIN:?set exact Astra origin}
+    volumes:
+      - chatgpt_browser_profile:/profiles
+    ports:
+      - "127.0.0.1:8788:8788"
+    shm_size: "1gb"
+volumes:
+  chatgpt_browser_profile:

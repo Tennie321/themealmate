@@ -18,6 +18,12 @@ for instructions and limitations. The browser interface is not an official
 ChatGPT messaging API; it can change or fail. No existing ChatGPT chats,
 memory, or replies are synchronized with Astra.
 
+## Remote ChatGPT browser control (self-hosted, experimental)
+
+**New:** The ChatGPT Bridge screen also offers a live remote Chromium browser view, clickable screen, keyboard input, and prompt automation with incremental reply updates. Browser state lives in a persistent Docker volume. This is separate from the link-based Safari bridge, which still works without a sidecar.
+
+This feature requires a self-hosted [browser sidecar](services/chatgpt-browser/README.md) plus private beta authentication. Lovable Cloud cannot run the container inside the frontend app by itself. Configure a TLS-terminated WebSocket endpoint, shared server-only ticket secret, and owner-only access before enabling. The UI returns an explicit setup error if the service is missing. **Do not deploy this single-profile browser publicly or share one Astra access code among unrelated users:** all authorized viewers control the same signed-in browser.
+
 ## Features
 
 - Native-feeling responsive mobile chat, PWA install, model picker, local chat history and settings.

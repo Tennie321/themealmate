@@ -27,3 +27,5 @@ jobs:
         run: npx tsc --noEmit
       - name: Security regression tests
         run: npm run test:security
+      - name: Remote browser authentication tests
+        run: node --test services/chatgpt-browser/*.test.mjs
