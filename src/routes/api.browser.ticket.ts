@@ -17,7 +17,7 @@ async function ticket(request: Request): Promise<Response> {
   const limited = denyExpensiveRequest(request, 'browser-ticket', 120);
   if (limited) return limited;
 
-  const secret = process.env.ASTRA_SESSION_SECRET;
+  const secret = process.env.BROWSER_BRIDGE_SECRET;
   const configuredURL = process.env.BROWSER_BRIDGE_WS_URL;
   if (!secret || secret.length < 32 || !configuredURL) {
     return Response.json({ error: 'The remote browser worker is not configured.' }, { status: 503 });
