@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { mkdir } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { WebSocket, WebSocketServer } from 'ws';
 import { parseMessage, profilePath, verifyTicket, VIEWPORT } from './security.mjs';
@@ -23,6 +23,7 @@ const server = http.createServer((request, response) => {
 });
 const wss = new WebSocketServer({ noServer: true, maxPayload: 12_000, perMessageDeflate: false });
 const owners = new Map();
+const usedTickets = new Map(); // Bound replay prevention for short-lived session tickets.
 
 function send(ws, payload) {
   if (ws.readyState === WebSocket.OPEN && ws.bufferedAmount < 2_000_000) {
@@ -41,7 +42,8 @@ async function automate(session, text) {
   send(session.ws, { type: 'run', status: 'started', runId: run.id });
   try {
     if (!page || page.isClosed()) throw new Error('Browser page is unavailable.');
-    if (!new URL(page.url()).hostname.endsWith('chatgpt.com')) {
+    const hostname = new URL(page.url()).hostname;
+    if (!(hostname === 'chatgpt.com' || hostname.endsWith('.chatgpt.com'))) {
       throw new Error('Open ChatGPT in the browser and sign in first.');
     }
     const assistantSelector = '[data-message-author-role="assistant"]';
@@ -166,6 +168,11 @@ wss.on('connection', ws => {
         try { auth = JSON.parse(data.toString()); } catch { throw new Error('Invalid authentication'); }
         if (!auth || auth.type !== 'auth') throw new Error('Authentication required');
         const subject = verifyTicket(auth.ticket, { secret: SECRET, origin: ORIGIN });
+        const key = createHash('sha256').update(auth.ticket).digest('hex');
+        const now = Date.now();
+        for (const [ticketKey, expiry] of usedTickets) if (expiry < now) usedTickets.delete(ticketKey);
+        if (usedTickets.has(key)) throw new Error('Connection ticket was already used. Reconnect from Astra.');
+        usedTickets.set(key, now + 90_000);
         if (owners.has(subject)) throw new Error('This browser is already open in another window.');
         session.subject = subject;
         owners.set(subject, session);
@@ -197,8 +204,12 @@ wss.on('connection', ws => {
     clearTimeout(loginTimer);
     clearTimeout(lifetime);
     if (session.run) session.run.cancelled = true;
-    if (session.subject && owners.get(session.subject) === session) owners.delete(session.subject);
-    void session.context?.close().catch(() => {});
+    // Hold the owner lock until Chromium releases its persistent profile directory.
+    const release = async () => {
+      await session.context?.close().catch(() => {});
+      if (session.subject && owners.get(session.subject) === session) owners.delete(session.subject);
+    };
+    void release();
   });
 });
 
