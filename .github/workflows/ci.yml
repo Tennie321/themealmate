@@ -27,3 +27,6 @@ jobs:
         run: npx tsc --noEmit
       - name: Security regression tests
         run: npm run test:security
+
+      - name: Remote browser security tests
+        run: npm --prefix services/browser-worker test

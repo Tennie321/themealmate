@@ -1,0 +1,22 @@
+.astra-remote { max-width: 900px; margin: 0 auto 46px; border: 1px solid var(--stroke); background: var(--surface); border-radius: 18px; padding: clamp(16px, 3vw, 26px); color: var(--text); }
+.astra-remote-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
+.astra-remote-eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: .11em; }
+.astra-remote h2 { margin: 11px 0 7px; font-size: clamp(22px, 3vw, 28px); letter-spacing: -.04em; }
+.astra-remote-heading p, .astra-remote-security { color: var(--soft); font-size: 12px; line-height: 1.6; margin: 0; }
+.astra-remote-buttons button, .astra-remote-composer button { display: inline-flex; align-items: center; gap: 8px; justify-content: center; background: var(--accent); color: white; border: none; border-radius: 11px; cursor: pointer; padding: 11px 15px; font: inherit; font-size: 12px; font-weight: 700; }
+.astra-remote button:disabled { opacity: .5; cursor: not-allowed; }
+.astra-remote-viewport { margin-top: 20px; width: 100%; min-height: 250px; background: #161a24; border-radius: 12px; overflow: hidden; display: grid; place-items: center; color: #bcc3d1; font-size: 13px; outline-offset: 3px; touch-action: none; }
+.astra-remote-viewport:focus-visible { outline: 2px solid var(--accent); }
+.astra-remote-viewport img { display: block; width: 100%; height: auto; aspect-ratio: 8 / 5; user-select: none; pointer-events: none; }
+.astra-remote-composer { margin-top: 20px; display: grid; gap: 10px; }
+.astra-remote-composer label { font-size: 12px; font-weight: 700; }
+.astra-remote-composer textarea { width: 100%; box-sizing: border-box; resize: vertical; background: var(--surface-2); color: var(--text); border: 1px solid var(--stroke); padding: 12px; border-radius: 12px; font: inherit; font-size: 13px; }
+.astra-remote-composer button { justify-self: start; }
+.astra-remote-reply { margin-top: 18px; padding: 15px; border: 1px solid var(--stroke); border-radius: 12px; background: var(--surface-2); font-size: 12px; }
+.astra-remote-reply pre { font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 280px; overflow: auto; }
+.astra-remote-error { border: 1px solid #d35868; padding: 12px; border-radius: 10px; color: #d35868; font-size: 12px; }
+.astra-remote-security { display: flex; align-items: flex-start; gap: 8px; margin-top: 16px; }
+.astra-remote-security svg { flex-shrink: 0; margin-top: 2px; }
+.astra-remote-spin { animation: astraRemoteSpin 1s linear infinite; }
+@keyframes astraRemoteSpin { to { transform: rotate(360deg); } }
+@media(max-width:600px) { .astra-remote { padding: 14px; } .astra-remote-viewport { min-height: 170px; } }
