@@ -49,7 +49,7 @@ export function AccessGate({ children }: { children: ReactNode }) {
       <div className="access-mark"><Sparkles size={24}/></div>
       <span className="access-eyebrow">ASTRA PRIVATE BETA</span>
       <h1>{status?.misconfigured ? 'Setup required' : 'A secure place to work.'}</h1>
-      <p>{status?.misconfigured ? 'This deployment needs a valid server-side access code and signing secret.' :
+      <p>{status?.misconfigured ? 'This deployment needs ASTRA_ACCESS_CODE (at least 12 characters) and ASTRA_SESSION_SECRET (at least 32 characters) in the Lovable Cloud server secrets. Configure them there, then reload. Never put them in GitHub.' :
         'Enter your beta access code to use this workspace. Your AI usage is billed through the connected Lovable project.'}</p>
       {status && !status.misconfigured && <form onSubmit={unlock}>
         <label htmlFor="access-code">Access code</label>
