@@ -1,0 +1,36 @@
+.remote-browser { max-width:1000px; margin:48px auto 0; padding:25px; background:var(--surface); border:1px solid var(--stroke); border-radius:20px; }
+.remote-browser-heading { display:flex; align-items:flex-start; gap:15px; margin-bottom:25px; }
+.remote-browser-icon { flex:none; display:grid; place-items:center; width:42px; height:42px; border-radius:12px; color:var(--accent); background:var(--accent-wash); }
+.remote-browser-heading h2 { font-size:20px; font-weight:650; letter-spacing:-.5px; margin:0 0 7px; }
+.remote-browser-heading p { color:var(--soft); font-size:13px; line-height:1.55; margin:0; }
+.remote-browser-connect { display:grid; grid-template-columns:minmax(0,1fr) minmax(120px,180px) auto; align-items:end; gap:12px; }
+.remote-browser-connect label { display:flex; flex-direction:column; gap:7px; color:var(--soft); font-size:12px; font-weight:600; }
+.remote-browser input,.remote-browser textarea { border:1px solid var(--stroke); border-radius:10px; background:var(--surface-2); color:var(--text); padding:11px 12px; outline-offset:2px; min-width:0; width:100%; }
+.remote-browser button { display:inline-flex; align-items:center; justify-content:center; gap:7px; border:1px solid var(--stroke); background:var(--surface-3); color:var(--text); padding:10px 15px; border-radius:10px; font-size:12px; font-weight:600; white-space:nowrap; }
+.remote-browser button:hover:not(:disabled) { border-color:var(--accent); }
+.remote-browser-status { font-size:11px; color:var(--soft); margin:12px 0; }
+.remote-browser-error { font-size:12px; color:#ff9b9b; margin:8px 0; }
+.remote-browser-controls { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 10px; }
+.remote-browser-stage { width:100%; background:#101216; border:1px solid var(--stroke); border-radius:12px; overflow:hidden; line-height:0; outline-offset:3px; }
+.remote-browser-stage img { width:100%; aspect-ratio:3/2; height:auto; display:block; object-fit:contain; cursor:crosshair; user-select:none; }
+.remote-browser-placeholder { aspect-ratio:3/2; color:#8993a6; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:15px; font-size:13px; line-height:1.4; }
+.remote-browser-type { margin:15px 0 24px; }
+.remote-browser-type label { display:block; font-size:12px; color:var(--soft); margin-bottom:8px; }
+.remote-browser-type > div { display:flex; gap:8px; }
+.remote-browser-type input { flex:1; }
+.remote-browser-prompt-label { display:block; margin-top:23px; color:var(--soft); font-size:12px; font-weight:650; margin-bottom:9px; }
+.remote-browser textarea { display:block; resize:vertical; line-height:1.55; }
+.remote-browser-prompt-actions { display:flex; align-items:center; gap:10px; margin:12px 0 18px; }
+.remote-browser-prompt-actions span { margin-right:auto; color:var(--muted); font-size:11px; }
+.remote-browser-prompt-actions button:first-of-type { background:var(--accent); color:white; border-color:transparent; }
+.remote-browser-reply { border:1px solid var(--stroke); border-radius:12px; background:var(--surface-2); padding:16px; }
+.remote-browser-reply strong { font-size:12px; }
+.remote-browser-reply pre { white-space:pre-wrap; overflow-wrap:anywhere; color:var(--soft); font:inherit; font-size:13px; line-height:1.65; margin:10px 0 0; min-height:60px; }
+.remote-browser-disclaimer { font-size:11px; line-height:1.6; color:var(--muted); margin:18px 0 0; }
+@media(max-width:700px) {
+  .remote-browser { padding:15px; margin-top:32px; border-radius:14px; }
+  .remote-browser-connect { display:flex; flex-direction:column; align-items:stretch; }
+  .remote-browser-type > div { flex-wrap:wrap; }
+  .remote-browser-type input { flex-basis:100%; }
+  .remote-browser button { padding:10px 11px; }
+}

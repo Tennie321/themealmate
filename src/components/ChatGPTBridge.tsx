@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { RemoteBrowserControl } from './RemoteBrowserControl';
 import { ArrowRight, ExternalLink, LockKeyhole, MessageSquare, ShieldCheck } from 'lucide-react';
 import { buildChatGPTHandoffURL, CHATGPT_HANDOFF_LIMIT } from '../lib/chatgpt-bridge';
 
@@ -54,5 +55,6 @@ export function ChatGPTBridge() {
         The message is included in the ChatGPT link and may appear in browser history; avoid passwords or secrets.
       </p>
     </div>
+    <RemoteBrowserControl />
   </main>;
 }
