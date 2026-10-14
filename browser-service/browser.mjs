@@ -19,8 +19,9 @@ export class BrowserController {
   }
 
   async start() {
-    if (this.context) return;
+    // A context may already exist while login navigation/CDP setup is pending.
     if (this.boot) return this.boot;
+    if (this.context && this.cdp) return;
     this.boot = this.launch();
     try { await this.boot; } finally { this.boot = null; }
   }
