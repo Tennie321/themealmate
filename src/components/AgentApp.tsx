@@ -375,6 +375,12 @@ export function AgentApp() {
         </div>
       </header>
 
+      {aiSetupIssue && <div role="alert" className="astra-setup-alert">
+        <strong>AI setup required</strong>
+        <span>{aiSetupIssue}</span>
+        <a href="https://lovable.dev/projects/e5083802-363b-4e08-b0f4-d7d06d7f7082" target="_blank" rel="noopener noreferrer">Open Lovable project <ExternalLink size={12}/></a>
+      </div>}
+
       <MissionControl model={model} active={view === 'missions'} onBack={() => setView('chat')} />
       {view === 'chatgpt' && <ChatGPTBridge />}
       <div className="chat-workspace" style={view !== 'chat' ? { display: 'none' } : undefined}>
@@ -408,11 +414,7 @@ export function AgentApp() {
 
       <footer className="composer-area">
         <div className="composer-wrap">
-          {aiSetupIssue && <div role="alert" className="astra-setup-alert">
-            <strong>AI setup required</strong>
-            <span>{aiSetupIssue}</span>
-            <a href="https://lovable.dev/projects/e5083802-363b-4e08-b0f4-d7d06d7f7082" target="_blank" rel="noopener noreferrer">Open Lovable project <ExternalLink size={12}/></a>
-          </div>}
+
           {mode !== 'chat' && <div className="mode-disclaimer"><span className="disclaimer-dot" />{mode === 'research' ? (researchAvailable ? 'Live research enabled · sources from Perplexity Search' : 'Research planning only · search provider not configured') : 'Agent planning only · open Mission Control to run tasks'}<button type="button" onClick={() => mode === 'agent' ? setView('missions') : setSheet('connections')}>{mode === 'agent' ? 'Missions' : 'Details'} <ChevronRight size={12}/></button></div>}
           <div className={`composer ${loading ? 'composer-loading' : ''}`}>
             <textarea ref={textRef} value={draft} rows={1} maxLength={8000} onChange={(e) => setDraft(e.target.value)} onKeyDown={handleKey} placeholder={mode === 'research' ? 'What do you want to investigate?' : mode === 'agent' ? 'What should we plan?' : 'Message Astra...'} aria-label="Message Astra" />
