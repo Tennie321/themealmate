@@ -17,7 +17,7 @@ export function parseAction(raw) {
   let m;
   try { m = JSON.parse(raw); } catch { throw new Error('Invalid JSON.'); }
   if (!m || typeof m !== 'object' || Array.isArray(m)) throw new Error('Invalid action.');
-  if (m.type === 'click' || m.type === 'move') {
+  if (['click', 'move', 'down', 'up'].includes(m.type)) {
     if (![m.x, m.y].every(n => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 5000)) throw new Error('Invalid coordinates.');
     return { type: m.type, x: m.x, y: m.y };
   }

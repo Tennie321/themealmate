@@ -88,6 +88,8 @@ async function handle(ws, raw) {
   if (busy) return send(ws, { type: 'error', message: 'A prompt is running. Cancel monitoring before taking control.' });
   try {
     if (action.type === 'click') await page.mouse.click(action.x, action.y);
+    else if (action.type === 'down') { await page.mouse.move(action.x, action.y); await page.mouse.down(); }
+    else if (action.type === 'up') { await page.mouse.move(action.x, action.y); await page.mouse.up(); }
     else if (action.type === 'move') await page.mouse.move(action.x, action.y);
     else if (action.type === 'scroll') await page.mouse.wheel(action.deltaX, action.deltaY);
     else if (action.type === 'type') await page.keyboard.insertText(action.text);

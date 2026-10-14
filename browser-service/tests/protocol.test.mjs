@@ -22,6 +22,8 @@ test('origin check is exact', () => {
 });
 test('action parser denies unsupported and oversized actions', () => {
   assert.deepEqual(parseAction('{"type":"click","x":2,"y":3}'), { type: 'click', x: 2, y: 3 });
+  assert.deepEqual(parseAction('{"type":"down","x":2,"y":3}'), { type: 'down', x: 2, y: 3 });
+  assert.deepEqual(parseAction('{"type":"up","x":2,"y":3}'), { type: 'up', x: 2, y: 3 });
   assert.throws(() => parseAction('{"type":"click","x":-2,"y":3}'), /coordinates/);
   assert.throws(() => parseAction(JSON.stringify({ type: 'run_prompt', requestId: 'x', prompt: 'p'.repeat(10001) })), /too large|10,000/);
   assert.throws(() => parseAction('{"type":"navigate","url":"http://localhost"}'), /Unsupported/);
