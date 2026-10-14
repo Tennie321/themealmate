@@ -65,8 +65,9 @@ export class RemoteBrowser {
       const px = Math.max(0, Math.min(VIEWPORT.width - 1, x));
       const py = Math.max(0, Math.min(VIEWPORT.height - 1, y));
       const button = ['left', 'middle', 'right'].includes(message.button) ? message.button : 'left';
-      if (message.action === 'move') await page.mouse.move(px, py);
-      else if (message.action === 'down') await page.mouse.down({ button });
+      // A touch tap may have no preceding move event. Position before every click.
+      await page.mouse.move(px, py);
+      if (message.action === 'down') await page.mouse.down({ button });
       else if (message.action === 'up') await page.mouse.up({ button });
     } else if (message.event === 'wheel') {
       const dx = Math.max(-1000, Math.min(1000, Number(message.dx) || 0));
@@ -150,7 +151,7 @@ export class RemoteBrowser {
           stable = 0;
         } else if (observedReply) stable++;
         // The Stop control is authoritative when present; stable fallback covers UI changes.
-        if (observedReply && !stopVisible && stable >= 9 && Date.now() - startedAt >= 3000) {
+        if (observedReply && !stopVisible && stable >= 16 && Date.now() - startedAt >= 6000) {
           emit({ type: 'response_done', text: lastText });
           return;
         }
