@@ -86,7 +86,7 @@ export function MissionControl({ model, active, onBack }: Props) {
 
   const plan = async () => {
     const text = goal.trim();
-    if (text.length < 8 || text.length > 1500 || working.current) return;
+    if (text.length < 8 || text.length > 1500 || working.current || capabilities?.ai !== true) return;
     const id = uid();
     const controller = new AbortController();
     working.current = true; controllerRef.current = controller;
@@ -116,7 +116,7 @@ export function MissionControl({ model, active, onBack }: Props) {
 
   const run = async (missionId: string) => {
     const mission = missionsRef.current.find(m => m.id === missionId);
-    if (!mission || working.current || !mission.steps.length || mission.status === 'complete') return;
+    if (!mission || working.current || capabilities?.ai !== true || !mission.steps.length || mission.status === 'complete') return;
     const controller = new AbortController();
     controllerRef.current = controller;
     working.current = true;
@@ -213,6 +213,7 @@ export function MissionControl({ model, active, onBack }: Props) {
       </div>
       <button className="mission-back" type="button" onClick={onBack}><X size={17} /> Close</button>
     </div>
+    {capabilities?.ai === false && <div className="mode-disclaimer" role="alert">AI missions are unavailable until the Lovable built-in AI connector provisions LOVABLE_API_KEY for this deployment. <a href="https://docs.lovable.dev/features/ai" target="_blank" rel="noopener noreferrer">Setup guide</a></div>}
     <div className="missions-stats">
       <div><strong>{missions.length}</strong><span>Total missions</span></div>
       <div><strong>{counts.active}</strong><span>Working now</span></div>
@@ -232,7 +233,7 @@ export function MissionControl({ model, active, onBack }: Props) {
               <button type="button" key={a} className={autonomy === a ? 'chosen' : ''} onClick={() => setAutonomy(a)}>{a === 'assist' ? 'Manual' : a === 'supervised' ? 'Review' : 'Auto'}</button>)}
           </div>
           <p className="mission-mode-note">{modeNotes[autonomy]}</p>
-          <button type="button" className="mission-primary" disabled={goal.trim().length < 8 || live || !hydrated}
+          <button type="button" className="mission-primary" disabled={goal.trim().length < 8 || live || !hydrated || capabilities?.ai !== true}
             onClick={() => void plan()}><Plus size={17} /> Create AI mission <ArrowRight size={16} /></button>
           <p className="mission-tiny"><ShieldCheck size={13} /> No external account actions. AI calls use Lovable credits. Research requires a separate search API key.</p>
           {!missions.length && <div className="mission-starters"><span>START WITH A GOAL</span>
