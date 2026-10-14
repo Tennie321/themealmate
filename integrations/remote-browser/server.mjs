@@ -66,10 +66,10 @@ async function createSession(session) {
   const pages = context.pages();
   session.page = pages.at(-1) || await context.newPage();
   const activatedPages = new WeakSet();
-  function activatePage(page) {
+  function activatePage(page, refreshCast = true) {
     session.page = page;
     if (activatedPages.has(page)) {
-      if (session.client?.readyState === WebSocket.OPEN) {
+      if (refreshCast && session.client?.readyState === WebSocket.OPEN) {
         void startCast(session, session.client).catch(err => error(session.client, 'Browser view: ' + err.message));
       }
       return;
@@ -86,12 +86,12 @@ async function createSession(session) {
       if (!fallback) return;
       activatePage(fallback);
     });
-    if (session.client?.readyState === WebSocket.OPEN) {
+    if (refreshCast && session.client?.readyState === WebSocket.OPEN) {
       void startCast(session, session.client).catch(err => error(session.client, 'Browser view: ' + err.message));
     }
   }
   context.on('page', activatePage); // OAuth popups remain manually controllable.
-  activatePage(session.page);
+  activatePage(session.page, false);
   if (session.page.url() === 'about:blank') {
     await session.page.goto('https://chatgpt.com/', { waitUntil: 'domcontentloaded', timeout: 45_000 })
       .catch(() => {}); // The browser remains interactive even on network failures.
