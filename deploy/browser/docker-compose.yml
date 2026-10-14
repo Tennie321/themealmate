@@ -1,0 +1,43 @@
+name: astra-remote-browser
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: deploy/browser/Dockerfile.app
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      ASTRA_ACCESS_CODE: ${ASTRA_ACCESS_CODE:?Set ASTRA_ACCESS_CODE in .env}
+      ASTRA_SESSION_SECRET: ${ASTRA_SESSION_SECRET:?Set ASTRA_SESSION_SECRET in .env}
+      LOVABLE_API_KEY: ${LOVABLE_API_KEY:-}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY:-}
+      ASTRA_AI_HOURLY_UNITS: ${ASTRA_AI_HOURLY_UNITS:-40}
+    restart: unless-stopped
+
+  browser:
+    build:
+      context: ../../browser-service
+    environment:
+      ASTRA_ACCESS_CODE: ${ASTRA_ACCESS_CODE:?Set ASTRA_ACCESS_CODE in .env}
+      ASTRA_SESSION_SECRET: ${ASTRA_SESSION_SECRET:?Set ASTRA_SESSION_SECRET in .env}
+      ASTRA_PUBLIC_ORIGIN: ${ASTRA_PUBLIC_ORIGIN:?Set ASTRA_PUBLIC_ORIGIN in .env}
+      BROWSER_PROFILE_DIR: /data/profiles/owner
+    volumes:
+      - browser-profiles:/data/profiles
+    shm_size: '1gb'
+    restart: unless-stopped
+
+  gateway:
+    image: nginx:1.27-alpine
+    depends_on:
+      - app
+      - browser
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - '127.0.0.1:8080:80'
+    restart: unless-stopped
+
+volumes:
+  browser-profiles:

@@ -430,3 +430,31 @@ a { color:var(--accent); }
   .chatgpt-bridge-send, .chatgpt-bridge-open { width:100%; justify-content:center; }
   .chatgpt-bridge-input { min-height:135px; }
 }
+
+/* Remote ChatGPT browser control. Same-origin WS, no API credentials in the client. */
+.remote-browser-panel { max-width:980px; margin:0 auto 48px; padding:22px; border:1px solid var(--stroke); border-radius:18px; background:var(--surface); }
+.remote-browser-header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+.remote-browser-header h2 { margin:0; font-size:21px; letter-spacing:-.5px; }
+.remote-browser-state { color:var(--soft); font-size:12px; padding:7px 11px; background:var(--surface-2); border-radius:100px; }
+.remote-browser-help { color:var(--muted); line-height:1.6; font-size:12px; margin:0 0 15px; }
+.remote-browser-screen { position:relative; background:#101219; border:1px solid var(--stroke); min-height:230px; border-radius:12px; overflow:hidden; line-height:0; cursor:pointer; outline:none; }
+.remote-browser-screen:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.remote-browser-screen img { display:block; width:100%; height:auto; user-select:none; }
+.remote-browser-empty { min-height:250px; display:grid; place-items:center; color:#c0c3cd; line-height:1.6; text-align:center; padding:24px; font-size:13px; }
+.remote-browser-controls { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+.remote-browser-controls button, .remote-browser-typing button { padding:9px 13px; border-radius:9px; border:1px solid var(--stroke); background:var(--surface-2); color:var(--text); font-size:12px; }
+.remote-browser-controls button:disabled, .remote-browser-typing button:disabled { opacity:.45; }
+.remote-browser-typing { display:flex; gap:9px; margin:12px 0; }
+.remote-browser-typing input { flex:1; min-width:0; background:var(--surface-2); color:var(--text); border:1px solid var(--stroke); border-radius:9px; padding:10px; font:inherit; font-size:12px; }
+.remote-browser-prompt { display:block; margin-top:22px; color:var(--text); font-size:13px; font-weight:650; }
+.remote-browser-panel textarea { display:block; width:100%; resize:vertical; min-height:95px; padding:14px; margin:9px 0 10px; border:1px solid var(--stroke); border-radius:12px; background:var(--surface-2); color:var(--text); font:inherit; font-size:13px; }
+.remote-browser-run { padding:11px 17px; border:0; background:var(--accent-strong); color:white; border-radius:10px; font-weight:650; font-size:12px; }
+.remote-browser-run:disabled { opacity:.45; cursor:not-allowed; }
+.remote-browser-result { margin-top:18px; padding:15px; background:var(--surface-2); border:1px solid var(--stroke); border-radius:12px; }
+.remote-browser-result strong { display:block; font-size:12px; margin-bottom:9px; }
+.remote-browser-result pre { margin:0; font:inherit; font-size:13px; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; max-height:400px; overflow-y:auto; }
+.remote-browser-error { color:#eaa6a6; font-size:12px; line-height:1.5; }
+@media(max-width:600px) {
+  .remote-browser-panel { padding:14px; }
+  .remote-browser-typing { flex-direction:column; }
+}
