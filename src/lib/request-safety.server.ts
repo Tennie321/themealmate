@@ -22,11 +22,37 @@ export function denyExpensiveRequest(request: Request, scope: string, maximum: n
   requests.set(key, current);
   return null;
 }
+/** Bound memory before parsing even when Content-Length is absent or wrong. */
 export async function readValidatedBody(request: Request, maxBytes = 12_000): Promise<unknown> {
-  if (Number(request.headers.get('content-length') || 0) > maxBytes) throw new Error('Request is too large.');
-  const body = await request.text();
-  if (new TextEncoder().encode(body).byteLength > maxBytes) throw new Error('Request is too large.');
-  try { return JSON.parse(body) as unknown; } catch { throw new Error('Invalid JSON request.'); }
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 1) throw new Error('Invalid request size limit.');
+  const declared = request.headers.get('content-length');
+  if (declared !== null && (!/^\d+$/.test(declared) || !Number.isSafeInteger(Number(declared)) || Number(declared) > maxBytes)) {
+    throw new Error('Request is too large.');
+  }
+  if (!request.body) throw new Error('Invalid JSON request.');
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > maxBytes) {
+        await reader.cancel();
+        throw new Error('Request is too large.');
+      }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  const bytes = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  let body: string;
+  try { body = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+  catch { throw new Error('Invalid UTF-8 request.'); }
+  try { return JSON.parse(body) as unknown; }
+  catch { throw new Error('Invalid JSON request.'); }
 }
 
 /**
