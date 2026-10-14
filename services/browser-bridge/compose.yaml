@@ -9,7 +9,7 @@ services:
       - PORT=8787
       - PROFILE_ROOT=/data/profiles
       - APP_ORIGIN
-      - ASTRA_SESSION_SECRET
+      - BROWSER_BRIDGE_SECRET
     volumes:
       - browser-profiles:/data/profiles
     shm_size: "1gb"
