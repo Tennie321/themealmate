@@ -51,6 +51,7 @@ export function AccessGate({ children }: { children: ReactNode }) {
       <h1>{status?.misconfigured ? 'Setup required' : 'A secure place to work.'}</h1>
       <p>{status?.misconfigured ? 'This deployment needs a valid server-side access code and signing secret.' :
         'Enter your beta access code to use this workspace. Your AI usage is billed through the connected Lovable project.'}</p>
+      {status?.misconfigured && <p role="alert">The deployment owner must configure ASTRA_ACCESS_CODE (12 or more characters) and ASTRA_SESSION_SECRET (32 or more characters) as private server secrets. Never add those secrets to frontend code or GitHub.</p>}
       {status && !status.misconfigured && <form onSubmit={unlock}>
         <label htmlFor="access-code">Access code</label>
         <input id="access-code" type="password" autoComplete="current-password" required
@@ -58,6 +59,7 @@ export function AccessGate({ children }: { children: ReactNode }) {
         <button type="submit" disabled={loading || !code}><LockKeyhole size={16}/>{loading ? 'Checking...' : 'Unlock Astra'}<ArrowRight size={16}/></button>
       </form>}
       {error && <div role="alert" className="access-error">{error}</div>}
+      {!status && error && <button type="button" onClick={() => window.location.reload()}>Retry connection</button>
       {!status && !error && <p>Checking access...</p>}
       <div className="access-foot"><ShieldCheck size={14}/> Protected server-side. No API keys in your browser.</div>
     </div>
