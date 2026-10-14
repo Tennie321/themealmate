@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { RemoteBrowserControl } from './RemoteBrowserControl';
 import { ArrowRight, ExternalLink, LockKeyhole, MessageSquare, ShieldCheck } from 'lucide-react';
 import { buildChatGPTHandoffURL, CHATGPT_HANDOFF_LIMIT } from '../lib/chatgpt-bridge';
 
 /**
- * Launches the user's real ChatGPT browser session. We deliberately never
- * embed the login page, request cookies, or treat ChatGPT as an API.
+ * Offers the local handoff alongside an optional independently hosted browser controller.
+ * Link handoff stays in the user's browser; remote mode forwards typing to the\n * user's separately hosted browser controller, which owns the login profile.
  */
 export function ChatGPTBridge() {
   const [prompt, setPrompt] = useState('');
@@ -13,12 +14,13 @@ export function ChatGPTBridge() {
   const handoff = ready ? buildChatGPTHandoffURL(prompt) : undefined;
 
   return <main className="chatgpt-bridge" aria-label="ChatGPT bridge">
+    <RemoteBrowserControl />
     <div className="chatgpt-bridge-card">
       <div className="chatgpt-bridge-mark"><MessageSquare size={22} /></div>
       <div className="chatgpt-bridge-eyebrow">YOUR CHATGPT ACCOUNT</div>
       <h1>Send from Astra<br /><em>to ChatGPT.</em></h1>
       <p className="chatgpt-bridge-intro">
-        Write a message here. Astra opens the real ChatGPT website, where you sign in normally.
+        Alternatively, open ChatGPT in your own browser with a prefilled message.
         Messages go to your ChatGPT account—not Astra's Lovable AI gateway.
       </p>
 
@@ -44,13 +46,13 @@ export function ChatGPTBridge() {
       </div>
       <div className="chatgpt-bridge-note"><ShieldCheck size={17} />
         <span>
-          <strong>No passwords or tokens shared with Astra.</strong> Without the optional Astra Safari
+          <strong>Link handoff does not receive login credentials.</strong> Remote mode relays input to your self-hosted browser service and stores session cookies in its private Chrome profile. Without the optional Astra Safari
           extension, review the prefilled message and tap Send in ChatGPT. With the extension installed
           and enabled, Astra's handoff can submit it automatically.
         </span>
       </div>
       <p className="chatgpt-bridge-disclaimer">
-        This starts a new ChatGPT conversation. Astra cannot read your existing chats or replies.
+        This link handoff starts a new ChatGPT conversation. The optional remote browser above can stream new replies while connected.
         The message is included in the ChatGPT link and may appear in browser history; avoid passwords or secrets.
       </p>
     </div>
