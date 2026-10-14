@@ -4,8 +4,8 @@ import { ArrowRight, ExternalLink, LockKeyhole, MessageSquare, ShieldCheck } fro
 import { buildChatGPTHandoffURL, CHATGPT_HANDOFF_LIMIT } from '../lib/chatgpt-bridge';
 
 /**
- * Launches the user's real ChatGPT browser session. We deliberately never
- * embed the login page, request cookies, or treat ChatGPT as an API.
+ * Offers a remote browser viewer and a link-only fallback. Authentication
+ * happens inside ChatGPT and does not expose account cookies to this app.
  */
 export function ChatGPTBridge() {
   const [prompt, setPrompt] = useState('');
@@ -19,8 +19,8 @@ export function ChatGPTBridge() {
       <div className="chatgpt-bridge-eyebrow">YOUR CHATGPT ACCOUNT</div>
       <h1>Send from Astra<br /><em>to ChatGPT.</em></h1>
       <p className="chatgpt-bridge-intro">
-        Write a message here. Astra opens the real ChatGPT website, where you sign in normally.
-        Messages go to your ChatGPT account—not Astra's Lovable AI gateway.
+        Use the remote viewer to sign in and work inside ChatGPT, or send a prefilled link below.
+        Both use your ChatGPT account, not Astra's Lovable AI gateway.
       </p>
 
       <RemoteBrowserPanel />

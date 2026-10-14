@@ -4,7 +4,13 @@ Astra is a mobile AI workspace using Lovable AI credits for inference. **Develop
 
 ## ChatGPT browser bridge and remote control (experimental)
 
-Open **ChatGPT Bridge** in the Astra sidebar. With the optional remote browser worker\nconfigured, you can see and interact with a persistent ChatGPT browser, sign in\nthere, issue prompts over a WebSocket, and stream the assistant response back to Astra.\nThis is a separate container deployment and is **not enabled by Lovable Cloud alone**.\nSee [remote browser setup](integrations/remote-browser/README.md).\n\nWithout the worker, compose a prompt and hand it to
+Open **ChatGPT Bridge** in the Astra sidebar. With the optional remote browser worker
+configured, you can see and interact with a persistent ChatGPT browser, sign in
+there, issue prompts over a WebSocket, and stream the assistant response back to Astra.
+This is a separate container deployment and is **not enabled by Lovable Cloud alone**.
+See [remote browser setup](integrations/remote-browser/README.md).
+
+Without the worker, compose a prompt and hand it to
 your real `chatgpt.com` session. Sign in on ChatGPT's own website; Astra does
 not request your ChatGPT login credentials or use the OpenAI API for this route.
 The link pre-fills a new ChatGPT chat for you to review and send.
