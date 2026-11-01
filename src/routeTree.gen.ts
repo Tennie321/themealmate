@@ -17,9 +17,6 @@ import { Route as ApiMarketRouteImport } from './routes/api.market'
 import { Route as ApiExecutionRouteImport } from './routes/api.execution'
 import { Route as ApiSeriesMarketsRouteImport } from './routes/api.series.markets'
 import { Route as ApiMarketsPageRouteImport } from './routes/api.markets.page'
-import { Route as ApiAccessStatusRouteImport } from './routes/api.access.status'
-import { Route as ApiAccessLogoutRouteImport } from './routes/api.access.logout'
-import { Route as ApiAccessLoginRouteImport } from './routes/api.access.login'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -61,21 +58,6 @@ const ApiMarketsPageRoute = ApiMarketsPageRouteImport.update({
   path: '/page',
   getParentRoute: () => ApiMarketsRoute,
 } as any)
-const ApiAccessStatusRoute = ApiAccessStatusRouteImport.update({
-  id: '/api/access/status',
-  path: '/api/access/status',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAccessLogoutRoute = ApiAccessLogoutRouteImport.update({
-  id: '/api/access/logout',
-  path: '/api/access/logout',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAccessLoginRoute = ApiAccessLoginRouteImport.update({
-  id: '/api/access/login',
-  path: '/api/access/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -84,9 +66,6 @@ export interface FileRoutesByFullPath {
   '/api/markets': typeof ApiMarketsRouteWithChildren
   '/api/research': typeof ApiResearchRoute
   '/api/series': typeof ApiSeriesRouteWithChildren
-  '/api/access/login': typeof ApiAccessLoginRoute
-  '/api/access/logout': typeof ApiAccessLogoutRoute
-  '/api/access/status': typeof ApiAccessStatusRoute
   '/api/markets/page': typeof ApiMarketsPageRoute
   '/api/series/markets': typeof ApiSeriesMarketsRoute
 }
@@ -97,9 +76,6 @@ export interface FileRoutesByTo {
   '/api/markets': typeof ApiMarketsRouteWithChildren
   '/api/research': typeof ApiResearchRoute
   '/api/series': typeof ApiSeriesRouteWithChildren
-  '/api/access/login': typeof ApiAccessLoginRoute
-  '/api/access/logout': typeof ApiAccessLogoutRoute
-  '/api/access/status': typeof ApiAccessStatusRoute
   '/api/markets/page': typeof ApiMarketsPageRoute
   '/api/series/markets': typeof ApiSeriesMarketsRoute
 }
@@ -111,9 +87,6 @@ export interface FileRoutesById {
   '/api/markets': typeof ApiMarketsRouteWithChildren
   '/api/research': typeof ApiResearchRoute
   '/api/series': typeof ApiSeriesRouteWithChildren
-  '/api/access/login': typeof ApiAccessLoginRoute
-  '/api/access/logout': typeof ApiAccessLogoutRoute
-  '/api/access/status': typeof ApiAccessStatusRoute
   '/api/markets/page': typeof ApiMarketsPageRoute
   '/api/series/markets': typeof ApiSeriesMarketsRoute
 }
@@ -126,9 +99,6 @@ export interface FileRouteTypes {
     | '/api/markets'
     | '/api/research'
     | '/api/series'
-    | '/api/access/login'
-    | '/api/access/logout'
-    | '/api/access/status'
     | '/api/markets/page'
     | '/api/series/markets'
   fileRoutesByTo: FileRoutesByTo
@@ -139,9 +109,6 @@ export interface FileRouteTypes {
     | '/api/markets'
     | '/api/research'
     | '/api/series'
-    | '/api/access/login'
-    | '/api/access/logout'
-    | '/api/access/status'
     | '/api/markets/page'
     | '/api/series/markets'
   id:
@@ -152,9 +119,6 @@ export interface FileRouteTypes {
     | '/api/markets'
     | '/api/research'
     | '/api/series'
-    | '/api/access/login'
-    | '/api/access/logout'
-    | '/api/access/status'
     | '/api/markets/page'
     | '/api/series/markets'
   fileRoutesById: FileRoutesById
@@ -166,9 +130,6 @@ export interface RootRouteChildren {
   ApiMarketsRoute: typeof ApiMarketsRouteWithChildren
   ApiResearchRoute: typeof ApiResearchRoute
   ApiSeriesRoute: typeof ApiSeriesRouteWithChildren
-  ApiAccessLoginRoute: typeof ApiAccessLoginRoute
-  ApiAccessLogoutRoute: typeof ApiAccessLogoutRoute
-  ApiAccessStatusRoute: typeof ApiAccessStatusRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -229,27 +190,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMarketsPageRouteImport
       parentRoute: typeof ApiMarketsRoute
     }
-    '/api/access/status': {
-      id: '/api/access/status'
-      path: '/api/access/status'
-      fullPath: '/api/access/status'
-      preLoaderRoute: typeof ApiAccessStatusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/access/logout': {
-      id: '/api/access/logout'
-      path: '/api/access/logout'
-      fullPath: '/api/access/logout'
-      preLoaderRoute: typeof ApiAccessLogoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/access/login': {
-      id: '/api/access/login'
-      path: '/api/access/login'
-      fullPath: '/api/access/login'
-      preLoaderRoute: typeof ApiAccessLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -284,9 +224,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMarketsRoute: ApiMarketsRouteWithChildren,
   ApiResearchRoute: ApiResearchRoute,
   ApiSeriesRoute: ApiSeriesRouteWithChildren,
-  ApiAccessLoginRoute: ApiAccessLoginRoute,
-  ApiAccessLogoutRoute: ApiAccessLogoutRoute,
-  ApiAccessStatusRoute: ApiAccessStatusRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

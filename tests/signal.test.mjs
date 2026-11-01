@@ -1,7 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseNewsRss, parseForecast, citedSources } from '../src/lib/signal-search.server.ts';
-import { accessSetupError, denyIfPrivate } from '../src/lib/private-access.server.ts';
 import kalshi from '../src/lib/kalshi-server.mjs';
 
 test('RSS parsing limits sources to search URLs and decodes headlines', () => {
@@ -12,9 +11,6 @@ test('forecast validates probability and source citations', () => {
   let p=parseForecast('{"probability_yes":0.7,"probability_low":0.5,"probability_high":0.8,"analysis":"Evidence [1]"}'); assert.equal(p.probability_yes,.7); assert.equal(p.probability_low,.5);
   assert.equal(parseForecast('{"probability_yes":0.7,"probability_low":0.9,"probability_high":1}').probability_low,null); assert.equal(parseForecast('not json').probability_yes,null);
   assert.deepEqual(citedSources('Evidence [2] and [99]',[{id:1,title:'A',url:'https://a.example',snippet:''},{id:2,title:'B',url:'https://b.example',snippet:''}]).map(x=>x.id),[2]);
-});
-test('AI access fails closed without server access secrets', async () => {
-  const previous={...process.env}; try {process.env.LOVABLE_API_KEY='test-only'; delete process.env.ASTRA_ACCESS_CODE;delete process.env.ASTRA_SESSION_SECRET;assert.match(accessSetupError(),/ASTRA_ACCESS_CODE/);assert.equal((await denyIfPrivate(new Request('https://example.test/api/research'))).status,503);} finally {process.env=previous;}
 });
 test('Kalshi proxy rejects bad ticker without contacting network', async () => {
   let response=await kalshi.fetch(new Request('https://example.test/api/market?ticker=%2Fbad')); assert.equal(response.status,400);
