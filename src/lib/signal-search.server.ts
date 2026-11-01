@@ -45,3 +45,8 @@ export function citedSources(text: string, sources: ResearchSource[]) {
   const ids = new Set(Array.from(text.matchAll(/\[(\d{1,3})\]/g), m => Number(m[1])));
   return sources.filter(source => ids.has(source.id)).map(source => ({ id: source.id, title: source.title, url: source.url }));
 }
+
+/** Headlines alone cannot support a numerical forecast. */
+export function gateForecast<T extends { probability_yes: number | null; probability_low: number | null; probability_high: number | null }>(forecast: T, sufficientExcerpts: boolean): T {
+  return sufficientExcerpts ? forecast : { ...forecast, probability_yes: null, probability_low: null, probability_high: null };
+}
