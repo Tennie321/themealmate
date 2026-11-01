@@ -10,11 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiSeriesRouteImport } from './routes/api.series'
 import { Route as ApiResearchRouteImport } from './routes/api.research'
-import { Route as ApiChatRouteImport } from './routes/api.chat'
-import { Route as ApiCapabilitiesRouteImport } from './routes/api.capabilities'
-import { Route as ApiMissionsStepRouteImport } from './routes/api.missions.step'
-import { Route as ApiMissionsPlanRouteImport } from './routes/api.missions.plan'
+import { Route as ApiMarketsRouteImport } from './routes/api.markets'
+import { Route as ApiMarketRouteImport } from './routes/api.market'
+import { Route as ApiExecutionRouteImport } from './routes/api.execution'
+import { Route as ApiSeriesMarketsRouteImport } from './routes/api.series.markets'
+import { Route as ApiMarketsPageRouteImport } from './routes/api.markets.page'
 import { Route as ApiAccessStatusRouteImport } from './routes/api.access.status'
 import { Route as ApiAccessLogoutRouteImport } from './routes/api.access.logout'
 import { Route as ApiAccessLoginRouteImport } from './routes/api.access.login'
@@ -24,30 +26,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSeriesRoute = ApiSeriesRouteImport.update({
+  id: '/api/series',
+  path: '/api/series',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiResearchRoute = ApiResearchRouteImport.update({
   id: '/api/research',
   path: '/api/research',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
+const ApiMarketsRoute = ApiMarketsRouteImport.update({
+  id: '/api/markets',
+  path: '/api/markets',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiCapabilitiesRoute = ApiCapabilitiesRouteImport.update({
-  id: '/api/capabilities',
-  path: '/api/capabilities',
+const ApiMarketRoute = ApiMarketRouteImport.update({
+  id: '/api/market',
+  path: '/api/market',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiMissionsStepRoute = ApiMissionsStepRouteImport.update({
-  id: '/api/missions/step',
-  path: '/api/missions/step',
+const ApiExecutionRoute = ApiExecutionRouteImport.update({
+  id: '/api/execution',
+  path: '/api/execution',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiMissionsPlanRoute = ApiMissionsPlanRouteImport.update({
-  id: '/api/missions/plan',
-  path: '/api/missions/plan',
-  getParentRoute: () => rootRouteImport,
+const ApiSeriesMarketsRoute = ApiSeriesMarketsRouteImport.update({
+  id: '/markets',
+  path: '/markets',
+  getParentRoute: () => ApiSeriesRoute,
+} as any)
+const ApiMarketsPageRoute = ApiMarketsPageRouteImport.update({
+  id: '/page',
+  path: '/page',
+  getParentRoute: () => ApiMarketsRoute,
 } as any)
 const ApiAccessStatusRoute = ApiAccessStatusRouteImport.update({
   id: '/api/access/status',
@@ -67,84 +79,96 @@ const ApiAccessLoginRoute = ApiAccessLoginRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/api/capabilities': typeof ApiCapabilitiesRoute
-  '/api/chat': typeof ApiChatRoute
+  '/api/execution': typeof ApiExecutionRoute
+  '/api/market': typeof ApiMarketRoute
+  '/api/markets': typeof ApiMarketsRouteWithChildren
   '/api/research': typeof ApiResearchRoute
+  '/api/series': typeof ApiSeriesRouteWithChildren
   '/api/access/login': typeof ApiAccessLoginRoute
   '/api/access/logout': typeof ApiAccessLogoutRoute
   '/api/access/status': typeof ApiAccessStatusRoute
-  '/api/missions/plan': typeof ApiMissionsPlanRoute
-  '/api/missions/step': typeof ApiMissionsStepRoute
+  '/api/markets/page': typeof ApiMarketsPageRoute
+  '/api/series/markets': typeof ApiSeriesMarketsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api/capabilities': typeof ApiCapabilitiesRoute
-  '/api/chat': typeof ApiChatRoute
+  '/api/execution': typeof ApiExecutionRoute
+  '/api/market': typeof ApiMarketRoute
+  '/api/markets': typeof ApiMarketsRouteWithChildren
   '/api/research': typeof ApiResearchRoute
+  '/api/series': typeof ApiSeriesRouteWithChildren
   '/api/access/login': typeof ApiAccessLoginRoute
   '/api/access/logout': typeof ApiAccessLogoutRoute
   '/api/access/status': typeof ApiAccessStatusRoute
-  '/api/missions/plan': typeof ApiMissionsPlanRoute
-  '/api/missions/step': typeof ApiMissionsStepRoute
+  '/api/markets/page': typeof ApiMarketsPageRoute
+  '/api/series/markets': typeof ApiSeriesMarketsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/api/capabilities': typeof ApiCapabilitiesRoute
-  '/api/chat': typeof ApiChatRoute
+  '/api/execution': typeof ApiExecutionRoute
+  '/api/market': typeof ApiMarketRoute
+  '/api/markets': typeof ApiMarketsRouteWithChildren
   '/api/research': typeof ApiResearchRoute
+  '/api/series': typeof ApiSeriesRouteWithChildren
   '/api/access/login': typeof ApiAccessLoginRoute
   '/api/access/logout': typeof ApiAccessLogoutRoute
   '/api/access/status': typeof ApiAccessStatusRoute
-  '/api/missions/plan': typeof ApiMissionsPlanRoute
-  '/api/missions/step': typeof ApiMissionsStepRoute
+  '/api/markets/page': typeof ApiMarketsPageRoute
+  '/api/series/markets': typeof ApiSeriesMarketsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/api/capabilities'
-    | '/api/chat'
+    | '/api/execution'
+    | '/api/market'
+    | '/api/markets'
     | '/api/research'
+    | '/api/series'
     | '/api/access/login'
     | '/api/access/logout'
     | '/api/access/status'
-    | '/api/missions/plan'
-    | '/api/missions/step'
+    | '/api/markets/page'
+    | '/api/series/markets'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/api/capabilities'
-    | '/api/chat'
+    | '/api/execution'
+    | '/api/market'
+    | '/api/markets'
     | '/api/research'
+    | '/api/series'
     | '/api/access/login'
     | '/api/access/logout'
     | '/api/access/status'
-    | '/api/missions/plan'
-    | '/api/missions/step'
+    | '/api/markets/page'
+    | '/api/series/markets'
   id:
     | '__root__'
     | '/'
-    | '/api/capabilities'
-    | '/api/chat'
+    | '/api/execution'
+    | '/api/market'
+    | '/api/markets'
     | '/api/research'
+    | '/api/series'
     | '/api/access/login'
     | '/api/access/logout'
     | '/api/access/status'
-    | '/api/missions/plan'
-    | '/api/missions/step'
+    | '/api/markets/page'
+    | '/api/series/markets'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ApiCapabilitiesRoute: typeof ApiCapabilitiesRoute
-  ApiChatRoute: typeof ApiChatRoute
+  ApiExecutionRoute: typeof ApiExecutionRoute
+  ApiMarketRoute: typeof ApiMarketRoute
+  ApiMarketsRoute: typeof ApiMarketsRouteWithChildren
   ApiResearchRoute: typeof ApiResearchRoute
+  ApiSeriesRoute: typeof ApiSeriesRouteWithChildren
   ApiAccessLoginRoute: typeof ApiAccessLoginRoute
   ApiAccessLogoutRoute: typeof ApiAccessLogoutRoute
   ApiAccessStatusRoute: typeof ApiAccessStatusRoute
-  ApiMissionsPlanRoute: typeof ApiMissionsPlanRoute
-  ApiMissionsStepRoute: typeof ApiMissionsStepRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -156,6 +180,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/series': {
+      id: '/api/series'
+      path: '/api/series'
+      fullPath: '/api/series'
+      preLoaderRoute: typeof ApiSeriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/research': {
       id: '/api/research'
       path: '/api/research'
@@ -163,33 +194,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiResearchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
+    '/api/markets': {
+      id: '/api/markets'
+      path: '/api/markets'
+      fullPath: '/api/markets'
+      preLoaderRoute: typeof ApiMarketsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/capabilities': {
-      id: '/api/capabilities'
-      path: '/api/capabilities'
-      fullPath: '/api/capabilities'
-      preLoaderRoute: typeof ApiCapabilitiesRouteImport
+    '/api/market': {
+      id: '/api/market'
+      path: '/api/market'
+      fullPath: '/api/market'
+      preLoaderRoute: typeof ApiMarketRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/missions/step': {
-      id: '/api/missions/step'
-      path: '/api/missions/step'
-      fullPath: '/api/missions/step'
-      preLoaderRoute: typeof ApiMissionsStepRouteImport
+    '/api/execution': {
+      id: '/api/execution'
+      path: '/api/execution'
+      fullPath: '/api/execution'
+      preLoaderRoute: typeof ApiExecutionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/missions/plan': {
-      id: '/api/missions/plan'
-      path: '/api/missions/plan'
-      fullPath: '/api/missions/plan'
-      preLoaderRoute: typeof ApiMissionsPlanRouteImport
-      parentRoute: typeof rootRouteImport
+    '/api/series/markets': {
+      id: '/api/series/markets'
+      path: '/markets'
+      fullPath: '/api/series/markets'
+      preLoaderRoute: typeof ApiSeriesMarketsRouteImport
+      parentRoute: typeof ApiSeriesRoute
+    }
+    '/api/markets/page': {
+      id: '/api/markets/page'
+      path: '/page'
+      fullPath: '/api/markets/page'
+      preLoaderRoute: typeof ApiMarketsPageRouteImport
+      parentRoute: typeof ApiMarketsRoute
     }
     '/api/access/status': {
       id: '/api/access/status'
@@ -215,16 +253,40 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ApiMarketsRouteChildren {
+  ApiMarketsPageRoute: typeof ApiMarketsPageRoute
+}
+
+const ApiMarketsRouteChildren: ApiMarketsRouteChildren = {
+  ApiMarketsPageRoute: ApiMarketsPageRoute,
+}
+
+const ApiMarketsRouteWithChildren = ApiMarketsRoute._addFileChildren(
+  ApiMarketsRouteChildren,
+)
+
+interface ApiSeriesRouteChildren {
+  ApiSeriesMarketsRoute: typeof ApiSeriesMarketsRoute
+}
+
+const ApiSeriesRouteChildren: ApiSeriesRouteChildren = {
+  ApiSeriesMarketsRoute: ApiSeriesMarketsRoute,
+}
+
+const ApiSeriesRouteWithChildren = ApiSeriesRoute._addFileChildren(
+  ApiSeriesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ApiCapabilitiesRoute: ApiCapabilitiesRoute,
-  ApiChatRoute: ApiChatRoute,
+  ApiExecutionRoute: ApiExecutionRoute,
+  ApiMarketRoute: ApiMarketRoute,
+  ApiMarketsRoute: ApiMarketsRouteWithChildren,
   ApiResearchRoute: ApiResearchRoute,
+  ApiSeriesRoute: ApiSeriesRouteWithChildren,
   ApiAccessLoginRoute: ApiAccessLoginRoute,
   ApiAccessLogoutRoute: ApiAccessLogoutRoute,
   ApiAccessStatusRoute: ApiAccessStatusRoute,
-  ApiMissionsPlanRoute: ApiMissionsPlanRoute,
-  ApiMissionsStepRoute: ApiMissionsStepRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

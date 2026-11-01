@@ -47,15 +47,15 @@ export function AccessGate({ children }: { children: ReactNode }) {
   return <main className="access-page">
     <div className="access-card">
       <div className="access-mark"><Sparkles size={24}/></div>
-      <span className="access-eyebrow">ASTRA PRIVATE BETA</span>
-      <h1>{status?.misconfigured ? 'Setup required' : 'A secure place to work.'}</h1>
+      <span className="access-eyebrow">SIGNAL PRIVATE RESEARCH</span>
+      <h1>{status?.misconfigured ? 'Setup required' : 'Your private research desk.'}</h1>
       <p>{status?.misconfigured ? 'This deployment needs ASTRA_ACCESS_CODE (at least 12 characters) and ASTRA_SESSION_SECRET (at least 32 characters) in the Lovable Cloud server secrets. Configure them there, then reload. Never put them in GitHub.' :
-        'Enter your beta access code to use this workspace. Your AI usage is billed through the connected Lovable project.'}</p>
+        'Enter your beta access code to use this research desk. Your AI usage is billed through the connected Lovable project.'}</p>
       {status && !status.misconfigured && <form onSubmit={unlock}>
         <label htmlFor="access-code">Access code</label>
         <input id="access-code" type="password" autoComplete="current-password" required
           value={code} onChange={e => setCode(e.target.value)} placeholder="Enter access code" />
-        <button type="submit" disabled={loading || !code}><LockKeyhole size={16}/>{loading ? 'Checking...' : 'Unlock Astra'}<ArrowRight size={16}/></button>
+        <button type="submit" disabled={loading || !code}><LockKeyhole size={16}/>{loading ? 'Checking...' : 'Unlock Signal'}<ArrowRight size={16}/></button>
       </form>}
       {error && <div role="alert" className="access-error">{error}</div>}
       {!status && !error && <p>Checking access...</p>}
