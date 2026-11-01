@@ -10,37 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiSeriesRouteImport } from './routes/api.series'
-import { Route as ApiResearchRouteImport } from './routes/api.research'
-import { Route as ApiMarketsRouteImport } from './routes/api.markets'
-import { Route as ApiMarketRouteImport } from './routes/api.market'
 import { Route as ApiExecutionRouteImport } from './routes/api.execution'
-import { Route as ApiSeriesMarketsRouteImport } from './routes/api.series.markets'
+import { Route as ApiMarketRouteImport } from './routes/api.market'
+import { Route as ApiMarketsRouteImport } from './routes/api.markets'
+import { Route as ApiResearchRouteImport } from './routes/api.research'
+import { Route as ApiSeriesRouteImport } from './routes/api.series'
 import { Route as ApiMarketsPageRouteImport } from './routes/api.markets.page'
+import { Route as ApiSeriesMarketsRouteImport } from './routes/api.series.markets'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSeriesRoute = ApiSeriesRouteImport.update({
-  id: '/api/series',
-  path: '/api/series',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiResearchRoute = ApiResearchRouteImport.update({
-  id: '/api/research',
-  path: '/api/research',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiMarketsRoute = ApiMarketsRouteImport.update({
-  id: '/api/markets',
-  path: '/api/markets',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiMarketRoute = ApiMarketRouteImport.update({
-  id: '/api/market',
-  path: '/api/market',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiExecutionRoute = ApiExecutionRouteImport.update({
@@ -48,15 +28,35 @@ const ApiExecutionRoute = ApiExecutionRouteImport.update({
   path: '/api/execution',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiSeriesMarketsRoute = ApiSeriesMarketsRouteImport.update({
-  id: '/markets',
-  path: '/markets',
-  getParentRoute: () => ApiSeriesRoute,
+const ApiMarketRoute = ApiMarketRouteImport.update({
+  id: '/api/market',
+  path: '/api/market',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMarketsRoute = ApiMarketsRouteImport.update({
+  id: '/api/markets',
+  path: '/api/markets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiResearchRoute = ApiResearchRouteImport.update({
+  id: '/api/research',
+  path: '/api/research',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSeriesRoute = ApiSeriesRouteImport.update({
+  id: '/api/series',
+  path: '/api/series',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMarketsPageRoute = ApiMarketsPageRouteImport.update({
   id: '/page',
   path: '/page',
   getParentRoute: () => ApiMarketsRoute,
+} as any)
+const ApiSeriesMarketsRoute = ApiSeriesMarketsRouteImport.update({
+  id: '/markets',
+  path: '/markets',
+  getParentRoute: () => ApiSeriesRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -141,25 +141,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/series': {
-      id: '/api/series'
-      path: '/api/series'
-      fullPath: '/api/series'
-      preLoaderRoute: typeof ApiSeriesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/research': {
-      id: '/api/research'
-      path: '/api/research'
-      fullPath: '/api/research'
-      preLoaderRoute: typeof ApiResearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/markets': {
-      id: '/api/markets'
-      path: '/api/markets'
-      fullPath: '/api/markets'
-      preLoaderRoute: typeof ApiMarketsRouteImport
+    '/api/execution': {
+      id: '/api/execution'
+      path: '/api/execution'
+      fullPath: '/api/execution'
+      preLoaderRoute: typeof ApiExecutionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/market': {
@@ -169,19 +155,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMarketRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/execution': {
-      id: '/api/execution'
-      path: '/api/execution'
-      fullPath: '/api/execution'
-      preLoaderRoute: typeof ApiExecutionRouteImport
+    '/api/markets': {
+      id: '/api/markets'
+      path: '/api/markets'
+      fullPath: '/api/markets'
+      preLoaderRoute: typeof ApiMarketsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/series/markets': {
-      id: '/api/series/markets'
-      path: '/markets'
-      fullPath: '/api/series/markets'
-      preLoaderRoute: typeof ApiSeriesMarketsRouteImport
-      parentRoute: typeof ApiSeriesRoute
+    '/api/research': {
+      id: '/api/research'
+      path: '/api/research'
+      fullPath: '/api/research'
+      preLoaderRoute: typeof ApiResearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/series': {
+      id: '/api/series'
+      path: '/api/series'
+      fullPath: '/api/series'
+      preLoaderRoute: typeof ApiSeriesRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/markets/page': {
       id: '/api/markets/page'
@@ -189,6 +182,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/markets/page'
       preLoaderRoute: typeof ApiMarketsPageRouteImport
       parentRoute: typeof ApiMarketsRoute
+    }
+    '/api/series/markets': {
+      id: '/api/series/markets'
+      path: '/markets'
+      fullPath: '/api/series/markets'
+      preLoaderRoute: typeof ApiSeriesMarketsRouteImport
+      parentRoute: typeof ApiSeriesRoute
     }
   }
 }
