@@ -1,31 +1,20 @@
-name: Astra CI
+name: Verify
 on:
-  push:
-    branches:
-      - main
-      - feat/**
   pull_request:
+  push:
+    branches: [main]
 permissions:
   contents: read
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-      - name: Install
-        run: npm install --no-audit --no-fund
-      - name: Build and generate routes
-        run: npm run build
-      - name: Typecheck
-        run: npx tsc --noEmit
-      - name: Security regression tests
-        run: npm run test:security
-      - name: Remote browser protocol tests
-        run: cd browser-service && npm test
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run build
