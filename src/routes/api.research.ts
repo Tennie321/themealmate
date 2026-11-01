@@ -3,13 +3,11 @@ import { generateText } from 'ai';
 import kalshi, { contractContext, executionSnapshot } from '../lib/kalshi-server.mjs';
 import { aiProvider } from '../lib/ai-provider.server';
 import { DEFAULT_MODEL, isModelId } from '../lib/models';
-import { denyIfPrivate } from '../lib/private-access.server';
 import { denyAIUnitBudget, denyExpensiveRequest, readValidatedBody } from '../lib/request-safety.server';
 import { searchSources, parseForecast, citedSources } from '../lib/signal-search.server';
 
 export async function handleResearch(request: Request): Promise<Response> {
   if (request.headers.get('origin') !== new URL(request.url).origin) return Response.json({ error: 'Invalid request origin.' }, { status: 403 });
-  const denied = await denyIfPrivate(request); if (denied) return denied;
   if (!process.env.LOVABLE_API_KEY) return Response.json({ error: 'Lovable AI is not configured for this deployment.' }, { status: 503 });
   const limit = denyExpensiveRequest(request, 'signal-research', 20); if (limit) return limit;
   let data: { ticker?: unknown; model?: unknown };
