@@ -2,6 +2,25 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseNewsRss, parseForecast, citedSources, gateForecast, searchSources, researchQueries } from '../src/lib/signal-search.server.ts';
 import kalshi from '../src/lib/kalshi-server.mjs';
+import { parseFredCpiCsv, cpiOfficialEvidence } from '../src/lib/official-evidence.server.ts';
+
+test('official CPI history supplies cited observations but no forecast', async () => {
+  const rows=['observation_date,CPIAUCSL'];
+  for(let month=1;month<=13;month++) rows.push(`${2025+Math.floor((month-1)/12)}-${String((month-1)%12+1).padStart(2,'0')}-01,${100+month}`);
+  const source=parseFredCpiCsv(rows.join('\n')+'\n');
+  assert.equal(source?.url,'https://fred.stlouisfed.org/series/CPIAUCSL');
+  assert.match(source.snippet,/2026-01: 113\.000/);
+  assert.match(source.snippet,/historical observations, not an October forecast/);
+  assert.equal(parseFredCpiCsv('not csv'),null);
+  assert.equal(await cpiOfficialEvidence({ticker:'KXBTC-26NOV02',title:'Bitcoin price'}),null);
+  const originalFetch=globalThis.fetch;
+  try {
+    globalThis.fetch=async()=>new Response(rows.join('\n')+'\n');
+    const result=await cpiOfficialEvidence({ticker:'KXCPI-26OCT-T0.5',title:'Will CPI rise?'});
+    assert.equal(result?.attempt.outcome,'ok');
+    assert.ok(result?.source);
+  } finally { globalThis.fetch=originalFetch; }
+});
 
 test('RSS parsing limits sources to search URLs and decodes headlines', () => {
   const xml='<rss><item><title>Price &amp; wages</title><link>https://news.google.com/rss/articles/123</link><pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate></item><item><title>Unsafe</title><link>javascript:alert(1)</link></item></rss>';
