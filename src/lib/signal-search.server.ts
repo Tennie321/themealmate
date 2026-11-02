@@ -6,17 +6,24 @@ function decodeXml(value: string): string {
     return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : '';
   }).replace(/&(?:amp|lt|gt|quot|apos);/g, match => ({ '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'" })[match] || match);
 }
-export function parseNewsRss(xml: string): ResearchSource[] {
+export function parseNewsRss(xml: string, feed: 'google' | 'bing' = 'google'): ResearchSource[] {
   const items = xml.match(/<item(?:\s[^>]*)?>[\s\S]*?<\/item>/gi) || [];
   const tag = (item: string, name: string) => decodeXml(item.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`, 'i'))?.[1] || '').replace(/<[^>]*>/g, '').trim();
   return items.slice(0, 15).map((item, index) => {
-    const url = tag(item, 'link');
-    try { if (new URL(url).hostname !== 'news.google.com') return null; } catch { return null; }
+    let url = tag(item, 'link');
+    try {
+      const parsed = new URL(url);
+      if (feed === 'google' ? parsed.hostname !== 'news.google.com' : !['bing.com', 'www.bing.com'].includes(parsed.hostname)) return null;
+      if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) return null;
+      if (feed === 'bing') parsed.protocol = 'https:';
+      url = parsed.toString();
+    } catch { return null; }
     return safeSource({ title: tag(item, 'title'), url, snippet: 'Headline only; the full article was not retrieved.', date: tag(item, 'pubDate') }, index);
   }).filter((source): source is ResearchSource => source !== null);
 }
 export async function searchSources(query: string, key?: string): Promise<{ sources: ResearchSource[]; provider: string }> {
   if (key) {
+    try {
     const response = await fetch('https://api.perplexity.ai/search', {
       method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, max_results: 8, max_tokens_per_page: 1100 }), signal: AbortSignal.timeout(20000),
@@ -24,13 +31,22 @@ export async function searchSources(query: string, key?: string): Promise<{ sour
     if (!response.ok) throw new Error('The configured live search service failed.');
     const data = await response.json() as { results?: unknown[] };
     const sources = (Array.isArray(data.results) ? data.results : []).map(safeSource).filter((x): x is ResearchSource => x !== null).slice(0, 8).map((x, i) => ({ ...x, id: i + 1 }));
-    return { sources, provider: 'Perplexity Search excerpts' };
+    if (sources.length) return { sources, provider: 'Perplexity Search excerpts' };
+    } catch { /* Fall back to free headline feeds, clearly labeled below. */ }
   }
-  const url = new URL('https://news.google.com/rss/search');
-  url.searchParams.set('q', query); url.searchParams.set('hl', 'en-US'); url.searchParams.set('gl', 'US'); url.searchParams.set('ceid', 'US:en');
-  const response = await fetch(url, { signal: AbortSignal.timeout(15000), headers: { Accept: 'application/rss+xml, application/xml' } });
-  if (!response.ok) throw new Error('Live news search is unavailable.');
-  return { sources: parseNewsRss(await response.text()).slice(0, 8).map((x, i) => ({ ...x, id: i + 1 })), provider: 'Google News RSS headlines only' };
+  const google = new URL('https://news.google.com/rss/search');
+  google.searchParams.set('q', query); google.searchParams.set('hl', 'en-US'); google.searchParams.set('gl', 'US'); google.searchParams.set('ceid', 'US:en');
+  const bing = new URL('https://www.bing.com/news/search');
+  bing.searchParams.set('q', query); bing.searchParams.set('format', 'rss');
+  for (const [url, feed, provider] of [[google, 'google', 'Google News RSS headlines only'], [bing, 'bing', 'Bing News RSS headlines only']] as const) {
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(10000), headers: { Accept: 'application/rss+xml, application/xml' } });
+      if (!response.ok) continue;
+      const sources = parseNewsRss(await response.text(), feed).slice(0, 8).map((x, i) => ({ ...x, id: i + 1 }));
+      if (sources.length) return { sources, provider };
+    } catch { /* Try the next source. */ }
+  }
+  throw new Error('Live news search is unavailable.');
 }
 export function parseForecast(text: string): { probability_yes: number | null; probability_low: number | null; probability_high: number | null; analysis: string } {
   try {
