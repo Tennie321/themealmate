@@ -1,11 +1,23 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseNewsRss, parseForecast, citedSources, gateForecast } from '../src/lib/signal-search.server.ts';
+import { parseNewsRss, parseForecast, citedSources, gateForecast, searchSources } from '../src/lib/signal-search.server.ts';
 import kalshi from '../src/lib/kalshi-server.mjs';
 
 test('RSS parsing limits sources to search URLs and decodes headlines', () => {
   const xml='<rss><item><title>Price &amp; wages</title><link>https://news.google.com/rss/articles/123</link><pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate></item><item><title>Unsafe</title><link>javascript:alert(1)</link></item></rss>';
   const sources=parseNewsRss(xml); assert.equal(sources.length,1); assert.equal(sources[0].title,'Price & wages'); assert.match(sources[0].snippet,/Headline only/);
+});
+test('news lookup falls back to Bing headlines without treating them as excerpts', async () => {
+  const originalFetch=globalThis.fetch;
+  try {
+    globalThis.fetch=async url => String(url).includes('news.google.com') ? new Response('',{status:503}) : new Response('<rss><item><title>CPI rises</title><link>http://www.bing.com/news/apiclick.aspx?url=test</link><description>Some text</description></item></rss>');
+    const result=await searchSources('CPI');
+    assert.equal(result.provider,'Bing News RSS headlines only');
+    assert.equal(result.sources.length,1);
+    assert.match(result.sources[0].snippet,/Headline only/);
+    assert.match(result.sources[0].url,/^https:\/\/www\.bing\.com\//);
+    assert.deepEqual(parseNewsRss('<item><title>bad</title><link>https://evil.test/</link></item>','bing'),[]);
+  } finally { globalThis.fetch=originalFetch; }
 });
 test('forecast validates probability and source citations', () => {
   let p=parseForecast('{"probability_yes":0.7,"probability_low":0.5,"probability_high":0.8,"analysis":"Evidence [1]"}'); assert.equal(p.probability_yes,.7); assert.equal(p.probability_low,.5);

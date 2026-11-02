@@ -29,7 +29,7 @@ export async function handleResearch(request: Request): Promise<Response> {
     stage = 'search';
     const search = await searchSources(query, process.env.PERPLEXITY_API_KEY);
     if (!search.sources.length) return Response.json({ error: 'No current sources were found. Try another market or configure live search.' }, { status: 422 });
-    const sufficientExcerpts = search.provider !== 'Google News RSS headlines only' && search.sources.some(s => s.snippet.trim().length >= 80);
+    const sufficientExcerpts = search.provider === 'Perplexity Search excerpts' && search.sources.some(s => s.snippet.trim().length >= 80);
     const evidenceLimit = sufficientExcerpts ? '' : ' The available sources are headlines or very short snippets only. Return null for all probabilities and do not state numerical probability estimates in prose.';
     const notes = search.sources.map(s => `[${s.id}] ${s.title}\nURL: ${s.url}\nDate: ${s.publishedAt || 'unknown'}\nExcerpt: ${s.snippet}`).join('\n\n');
     const contract = JSON.stringify({ ticker: market.ticker, title: market.title, subtitle: market.yes_sub_title, close_time: market.close_time, expiration_time: market.expiration_time, early_close_condition: market.early_close_condition, rules_primary: market.rules_primary, rules_secondary: market.rules_secondary, yes_ask: market.yes_ask_dollars, no_ask: market.no_ask_dollars, orderbook: snapshot.depth, context, researchTime });
