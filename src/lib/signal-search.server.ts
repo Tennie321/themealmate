@@ -10,24 +10,39 @@ export function parseNewsRss(xml: string, feed: 'google' | 'bing' = 'google'): R
   const items = xml.match(/<item(?:\s[^>]*)?>[\s\S]*?<\/item>/gi) || [];
   const tag = (item: string, name: string) => decodeXml(item.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`, 'i'))?.[1] || '').replace(/<[^>]*>/g, '').trim();
   return items.slice(0, 15).map((item, index) => {
-    let url = tag(item, 'link');
+    const rawLink = tag(item, 'link');
+    let url = rawLink;
+    let snippet = 'Headline only; the full article was not retrieved.';
     try {
       const parsed = new URL(url);
       if (feed === 'google' ? parsed.hostname !== 'news.google.com' : !['bing.com', 'www.bing.com'].includes(parsed.hostname)) return null;
       if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) return null;
-      if (feed === 'bing') parsed.protocol = 'https:';
-      url = parsed.toString();
+      if (feed === 'bing') {
+        const summary = tag(item, 'description').slice(0, 1100);
+        if (summary.length >= 60) snippet = `Bing News RSS summary; full article not retrieved: ${summary}`;
+        const publisher = parsed.pathname === '/news/apiclick.aspx' ? parsed.searchParams.get('url') : null;
+        if (publisher) try {
+          const target = new URL(publisher);
+          if (['http:', 'https:'].includes(target.protocol) && !target.username && !target.password) url = target.toString();
+        } catch { /* Keep the Bing link when publisher metadata is malformed. */ }
+        if (url === rawLink) parsed.protocol = 'https:';
+      }
+      if (url === rawLink) url = parsed.toString();
     } catch { return null; }
-    return safeSource({ title: tag(item, 'title'), url, snippet: 'Headline only; the full article was not retrieved.', date: tag(item, 'pubDate') }, index);
+    return safeSource({ title: tag(item, 'title'), url, snippet, date: tag(item, 'pubDate') }, index);
   }).filter((source): source is ResearchSource => source !== null);
 }
 export type SearchAttempt = { provider: string; outcome: 'ok' | 'empty' | 'http_error' | 'network_error' | 'invalid_feed'; status?: number; count: number };
 export type SearchResult = { sources: ResearchSource[]; provider: string; attempts: SearchAttempt[] };
 
 /** Search terms should describe the underlying event, not repeat the whole contract. */
-export function researchQueries(parts: Array<string | undefined | null>): string[] {
+export function researchQueries(parts: Array<string | undefined | null>, ticker?: string): string[] {
   const cleaned = parts.map(part => (part || '').replace(/\s+/g, ' ').trim()).filter(Boolean);
   const primary = cleaned[0] || '';
+  if (ticker?.startsWith('KXCPI-')) {
+    const month = primary.match(/\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+(20\d{2})\b/i);
+    if (month) return [`US CPI ${month[1]} ${month[2]} monthly inflation forecast`, `US consumer price index ${month[1]} ${month[2]}`];
+  }
   const shorter = primary.replace(/^(will|does|is|are|how much|how many)\s+/i, '').replace(/[?!.]+$/g, '').trim();
   return [...new Set([primary, shorter, cleaned[1]].filter((q): q is string => typeof q === 'string' && q.length >= 4))].slice(0, 2);
 }
@@ -55,20 +70,20 @@ export async function searchSources(query: string | string[], key?: string): Pro
     google.searchParams.set('q', q); google.searchParams.set('hl', 'en-US'); google.searchParams.set('gl', 'US'); google.searchParams.set('ceid', 'US:en');
     const bing = new URL('https://www.bing.com/news/search');
     bing.searchParams.set('q', q); bing.searchParams.set('format', 'rss');
-    return [{ url: google, feed: 'google' as const, provider: 'Google News RSS headlines only', label: `Google News ${index + 1}` }, { url: bing, feed: 'bing' as const, provider: 'Bing News RSS headlines only', label: `Bing News ${index + 1}` }];
+    return [{ url: google, feed: 'google' as const, provider: 'Google News RSS headlines only', label: `Google News ${index + 1}` }, { url: bing, feed: 'bing' as const, provider: 'Bing News RSS summaries or headlines', label: `Bing News ${index + 1}` }];
   });
   const results = await Promise.all(jobs.map(async ({ url, feed, provider, label }) => {
     try {
       const response = await fetch(url, { signal: AbortSignal.timeout(8000), headers: { Accept: 'application/rss+xml, application/xml' } });
-      if (!response.ok) return { sources: [], provider, attempt: { provider: label, outcome: 'http_error' as const, status: response.status, count: 0 } };
+      if (!response.ok) return { sources: [], provider, feed, attempt: { provider: label, outcome: 'http_error' as const, status: response.status, count: 0 } };
       const body = await response.text();
       const sources = parseNewsRss(body, feed).slice(0, 8);
       const outcome: SearchAttempt['outcome'] = sources.length ? 'ok' : /<item(?:\s|>)/i.test(body) ? 'invalid_feed' : 'empty';
-      return { sources, provider, attempt: { provider: label, outcome, count: sources.length } };
-    } catch { return { sources: [], provider, attempt: { provider: label, outcome: 'network_error' as const, count: 0 } }; }
+      return { sources, provider, feed, attempt: { provider: label, outcome, count: sources.length } };
+    } catch { return { sources: [], provider, feed, attempt: { provider: label, outcome: 'network_error' as const, count: 0 } }; }
   }));
   attempts.push(...results.map(x => x.attempt));
-  const found = results.find(x => x.sources.length);
+  const found = results.find(x => x.feed === 'bing' && x.sources.some(s => s.snippet.startsWith('Bing News RSS summary') && s.snippet.length >= 150)) || results.find(x => x.sources.length);
   return found ? { sources: found.sources.map((x, i) => ({ ...x, id: i + 1 })), provider: found.provider, attempts } : { sources: [], provider: 'Unavailable: no live sources retrieved', attempts };
 
 }
