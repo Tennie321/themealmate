@@ -31,7 +31,7 @@ test('news lookup falls back to Bing headlines without treating them as excerpts
   try {
     globalThis.fetch=async url => String(url).includes('news.google.com') ? new Response('',{status:503}) : new Response('<rss><item><title>CPI rises</title><link>http://www.bing.com/news/apiclick.aspx?url=test</link><description>Some text</description></item></rss>');
     const result=await searchSources('CPI');
-    assert.equal(result.provider,'Bing News RSS headlines only');
+    assert.equal(result.provider,'Bing News RSS summaries or headlines');
     assert.equal(result.sources.length,1);
     assert.match(result.sources[0].snippet,/Headline only/);
     assert.match(result.sources[0].url,/^https:\/\/www\.bing\.com\//);
@@ -39,8 +39,23 @@ test('news lookup falls back to Bing headlines without treating them as excerpts
     assert.deepEqual(parseNewsRss('<item><title>bad</title><link>https://evil.test/</link></item>','bing'),[]);
   } finally { globalThis.fetch=originalFetch; }
 });
+test('Bing summaries cite publisher links and take priority over bare headlines', async () => {
+  const originalFetch=globalThis.fetch;
+  const google='<rss><item><title>CPI headline</title><link>https://news.google.com/rss/articles/test</link></item></rss>';
+  const bing='<rss><item><title>CPI report</title><link>http://www.bing.com/news/apiclick.aspx?url=https%3A%2F%2Fwww.bls.gov%2Fnews.release%2Fcpi.htm</link><description>Official data show month-over-month CPI changes across several components of the index and document the latest reported values.</description></item></rss>';
+  try {
+    globalThis.fetch=async url=>new Response(String(url).includes('bing.com')?bing:google);
+    const result=await searchSources('CPI');
+    assert.equal(result.provider,'Bing News RSS summaries or headlines');
+    assert.equal(result.sources[0].url,'https://www.bls.gov/news.release/cpi.htm');
+    assert.match(result.sources[0].snippet,/Bing News RSS summary; full article not retrieved/);
+    assert.equal(result.attempts.length,2);
+    assert.deepEqual(parseNewsRss('<item><title>bad</title><link>https://www.bing.com/news/apiclick.aspx?url=javascript%3Aalert%281%29</link></item>','bing')[0].url.startsWith('https://www.bing.com/'),true);
+  } finally { globalThis.fetch=originalFetch; }
+});
 test('market-specific search gets a shorter second query and records empty feeds', async () => {
   assert.deepEqual(researchQueries(['Will CPI rise more than 1.0% in October 2026?', 'CPI in October']), ['Will CPI rise more than 1.0% in October 2026?', 'CPI rise more than 1.0% in October 2026']);
+  assert.deepEqual(researchQueries(['Will CPI rise more than 1.0% in October 2026?'], 'KXCPI-26OCT-T1.0'), ['US CPI October 2026 monthly inflation forecast', 'US consumer price index October 2026']);
   const originalFetch=globalThis.fetch;
   try {
     globalThis.fetch=async url => new URL(String(url)).searchParams.get('q')?.startsWith('CPI rise') && String(url).includes('google') ? new Response('<rss><item><title>CPI data</title><link>https://news.google.com/rss/articles/test</link></item></rss>') : new Response('<rss></rss>');
