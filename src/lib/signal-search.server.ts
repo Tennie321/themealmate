@@ -46,7 +46,8 @@ export async function searchSources(query: string, key?: string): Promise<{ sour
       if (sources.length) return { sources, provider };
     } catch { /* Try the next source. */ }
   }
-  throw new Error('Live news search is unavailable.');
+  return { sources: [], provider: 'Unavailable: no live sources retrieved' };
+
 }
 export function parseForecast(text: string): { probability_yes: number | null; probability_low: number | null; probability_high: number | null; analysis: string } {
   try {

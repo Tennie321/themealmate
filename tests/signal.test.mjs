@@ -19,6 +19,15 @@ test('news lookup falls back to Bing headlines without treating them as excerpts
     assert.deepEqual(parseNewsRss('<item><title>bad</title><link>https://evil.test/</link></item>','bing'),[]);
   } finally { globalThis.fetch=originalFetch; }
 });
+test('unavailable source providers return an explicitly empty result', async () => {
+  const originalFetch=globalThis.fetch;
+  try {
+    globalThis.fetch=async () => new Response('',{status:503});
+    const result=await searchSources('CPI');
+    assert.equal(result.provider,'Unavailable: no live sources retrieved');
+    assert.equal(result.sources.length,0);
+  } finally { globalThis.fetch=originalFetch; }
+});
 test('forecast validates probability and source citations', () => {
   let p=parseForecast('{"probability_yes":0.7,"probability_low":0.5,"probability_high":0.8,"analysis":"Evidence [1]"}'); assert.equal(p.probability_yes,.7); assert.equal(p.probability_low,.5);
   assert.equal(parseForecast('{"probability_yes":0.7,"probability_low":0.9,"probability_high":1}').probability_low,null); assert.equal(parseForecast('not json').probability_yes,null);
