@@ -21,32 +21,55 @@ export function parseNewsRss(xml: string, feed: 'google' | 'bing' = 'google'): R
     return safeSource({ title: tag(item, 'title'), url, snippet: 'Headline only; the full article was not retrieved.', date: tag(item, 'pubDate') }, index);
   }).filter((source): source is ResearchSource => source !== null);
 }
-export async function searchSources(query: string, key?: string): Promise<{ sources: ResearchSource[]; provider: string }> {
+export type SearchAttempt = { provider: string; outcome: 'ok' | 'empty' | 'http_error' | 'network_error' | 'invalid_feed'; status?: number; count: number };
+export type SearchResult = { sources: ResearchSource[]; provider: string; attempts: SearchAttempt[] };
+
+/** Search terms should describe the underlying event, not repeat the whole contract. */
+export function researchQueries(parts: Array<string | undefined | null>): string[] {
+  const cleaned = parts.map(part => (part || '').replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const primary = cleaned[0] || '';
+  const shorter = primary.replace(/^(will|does|is|are|how much|how many)\s+/i, '').replace(/[?!.]+$/g, '').trim();
+  return [...new Set([primary, shorter, cleaned[1]].filter((q): q is string => typeof q === 'string' && q.length >= 4))].slice(0, 2);
+}
+
+export async function searchSources(query: string | string[], key?: string): Promise<SearchResult> {
+  const queries = (Array.isArray(query) ? query : [query]).map(q => q.trim()).filter(Boolean).slice(0, 2);
+  const attempts: SearchAttempt[] = [];
   if (key) {
     try {
     const response = await fetch('https://api.perplexity.ai/search', {
       method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, max_results: 8, max_tokens_per_page: 1100 }), signal: AbortSignal.timeout(20000),
+      body: JSON.stringify({ query: queries[0], max_results: 8, max_tokens_per_page: 1100 }), signal: AbortSignal.timeout(15000),
     });
-    if (!response.ok) throw new Error('The configured live search service failed.');
-    const data = await response.json() as { results?: unknown[] };
-    const sources = (Array.isArray(data.results) ? data.results : []).map(safeSource).filter((x): x is ResearchSource => x !== null).slice(0, 8).map((x, i) => ({ ...x, id: i + 1 }));
-    if (sources.length) return { sources, provider: 'Perplexity Search excerpts' };
-    } catch { /* Fall back to free headline feeds, clearly labeled below. */ }
+    if (!response.ok) attempts.push({ provider: 'Perplexity', outcome: 'http_error', status: response.status, count: 0 });
+    else {
+      const data = await response.json() as { results?: unknown[] };
+      const sources = (Array.isArray(data.results) ? data.results : []).map(safeSource).filter((x): x is ResearchSource => x !== null).slice(0, 8).map((x, i) => ({ ...x, id: i + 1 }));
+      attempts.push({ provider: 'Perplexity', outcome: sources.length ? 'ok' : 'empty', count: sources.length });
+      if (sources.length) return { sources, provider: 'Perplexity Search excerpts', attempts };
+    }
+    } catch { attempts.push({ provider: 'Perplexity', outcome: 'network_error', count: 0 }); }
   }
-  const google = new URL('https://news.google.com/rss/search');
-  google.searchParams.set('q', query); google.searchParams.set('hl', 'en-US'); google.searchParams.set('gl', 'US'); google.searchParams.set('ceid', 'US:en');
-  const bing = new URL('https://www.bing.com/news/search');
-  bing.searchParams.set('q', query); bing.searchParams.set('format', 'rss');
-  for (const [url, feed, provider] of [[google, 'google', 'Google News RSS headlines only'], [bing, 'bing', 'Bing News RSS headlines only']] as const) {
+  const jobs = queries.flatMap((q, index) => {
+    const google = new URL('https://news.google.com/rss/search');
+    google.searchParams.set('q', q); google.searchParams.set('hl', 'en-US'); google.searchParams.set('gl', 'US'); google.searchParams.set('ceid', 'US:en');
+    const bing = new URL('https://www.bing.com/news/search');
+    bing.searchParams.set('q', q); bing.searchParams.set('format', 'rss');
+    return [{ url: google, feed: 'google' as const, provider: 'Google News RSS headlines only', label: `Google News ${index + 1}` }, { url: bing, feed: 'bing' as const, provider: 'Bing News RSS headlines only', label: `Bing News ${index + 1}` }];
+  });
+  const results = await Promise.all(jobs.map(async ({ url, feed, provider, label }) => {
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(10000), headers: { Accept: 'application/rss+xml, application/xml' } });
-      if (!response.ok) continue;
-      const sources = parseNewsRss(await response.text(), feed).slice(0, 8).map((x, i) => ({ ...x, id: i + 1 }));
-      if (sources.length) return { sources, provider };
-    } catch { /* Try the next source. */ }
-  }
-  return { sources: [], provider: 'Unavailable: no live sources retrieved' };
+      const response = await fetch(url, { signal: AbortSignal.timeout(8000), headers: { Accept: 'application/rss+xml, application/xml' } });
+      if (!response.ok) return { sources: [], provider, attempt: { provider: label, outcome: 'http_error' as const, status: response.status, count: 0 } };
+      const body = await response.text();
+      const sources = parseNewsRss(body, feed).slice(0, 8);
+      const outcome: SearchAttempt['outcome'] = sources.length ? 'ok' : /<item(?:\s|>)/i.test(body) ? 'invalid_feed' : 'empty';
+      return { sources, provider, attempt: { provider: label, outcome, count: sources.length } };
+    } catch { return { sources: [], provider, attempt: { provider: label, outcome: 'network_error' as const, count: 0 } }; }
+  }));
+  attempts.push(...results.map(x => x.attempt));
+  const found = results.find(x => x.sources.length);
+  return found ? { sources: found.sources.map((x, i) => ({ ...x, id: i + 1 })), provider: found.provider, attempts } : { sources: [], provider: 'Unavailable: no live sources retrieved', attempts };
 
 }
 export function parseForecast(text: string): { probability_yes: number | null; probability_low: number | null; probability_high: number | null; analysis: string } {
