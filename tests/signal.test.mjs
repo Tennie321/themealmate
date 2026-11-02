@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseNewsRss, parseForecast, citedSources, gateForecast, searchSources } from '../src/lib/signal-search.server.ts';
+import { parseNewsRss, parseForecast, citedSources, gateForecast, searchSources, researchQueries } from '../src/lib/signal-search.server.ts';
 import kalshi from '../src/lib/kalshi-server.mjs';
 
 test('RSS parsing limits sources to search URLs and decodes headlines', () => {
@@ -16,7 +16,20 @@ test('news lookup falls back to Bing headlines without treating them as excerpts
     assert.equal(result.sources.length,1);
     assert.match(result.sources[0].snippet,/Headline only/);
     assert.match(result.sources[0].url,/^https:\/\/www\.bing\.com\//);
+    assert.equal(result.attempts.find(x => x.provider === 'Google News 1').status,503);
     assert.deepEqual(parseNewsRss('<item><title>bad</title><link>https://evil.test/</link></item>','bing'),[]);
+  } finally { globalThis.fetch=originalFetch; }
+});
+test('market-specific search gets a shorter second query and records empty feeds', async () => {
+  assert.deepEqual(researchQueries(['Will CPI rise more than 1.0% in October 2026?', 'CPI in October']), ['Will CPI rise more than 1.0% in October 2026?', 'CPI rise more than 1.0% in October 2026']);
+  const originalFetch=globalThis.fetch;
+  try {
+    globalThis.fetch=async url => new URL(String(url)).searchParams.get('q')?.startsWith('CPI rise') && String(url).includes('google') ? new Response('<rss><item><title>CPI data</title><link>https://news.google.com/rss/articles/test</link></item></rss>') : new Response('<rss></rss>');
+    const result=await searchSources(researchQueries(['Will CPI rise more than 1.0% in October 2026?']));
+    assert.equal(result.sources.length,1);
+    assert.equal(result.attempts.length,4);
+    assert.equal(result.attempts[0].outcome,'empty');
+    assert.equal(result.attempts[2].outcome,'ok');
   } finally { globalThis.fetch=originalFetch; }
 });
 test('unavailable source providers return an explicitly empty result', async () => {
